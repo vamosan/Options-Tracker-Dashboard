@@ -1,7 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.resolve(process.cwd(), 'ledger.sqlite');
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL;
+const dbPath = isVercel ? path.join('/tmp', 'ledger.sqlite') : path.resolve(process.cwd(), 'ledger.sqlite');
 const db = new sqlite3.Database(dbPath);
 
 // Initialize table

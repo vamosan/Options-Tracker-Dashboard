@@ -14,7 +14,15 @@ export async function GET() {
             return NextResponse.json({ error: "Yahoo Finance library failed to load" }, { status: 500 });
         }
 
-        const quotes = await yf.quote(topTickers) as any[];
+        // Create a 5-second timeout promise to prevent Vercel from hanging indefinitely
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Yahoo Finance request timed out")), 5000)
+        );
+
+        const quotes = await Promise.race([
+            yf.quote(topTickers),
+            timeoutPromise
+        ]) as any[];
 
         const tickerData = quotes.map((quote: any) => ({
             symbol: quote.symbol,

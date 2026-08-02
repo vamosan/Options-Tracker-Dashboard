@@ -13,7 +13,7 @@
       "marketValue": 195,
       "pl": -150.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "3:00:08 PM",
+      "lastUpdated": "3:17:54 PM",
       "greeks": {
         "delta": -0.1402,
         "gamma": 0.0472,
@@ -35,11 +35,11 @@
       "premium": 3.6,
       "quantity": 1,
       "notes": "🤖 Bot Suggested (58% Conf, 🔥 BULLISH ALIGNMENT)",
-      "currentPrice": 0.41,
-      "marketValue": 41,
-      "pl": -319,
+      "currentPrice": 39.54,
+      "marketValue": 3954,
+      "pl": 3594,
       "status": "OPEN",
-      "lastUpdated": "3:00:09 PM",
+      "lastUpdated": "3:17:54 PM",
       "greeks": {
         "delta": 1,
         "gamma": 0,
@@ -48,8 +48,8 @@
         "iv": 0.3021918940969132
       },
       "recommendation": {
-        "signal": "TIME EXIT",
-        "color": "red"
+        "signal": "MAX PROFIT",
+        "color": "green"
       }
     },
     {
@@ -61,11 +61,11 @@
       "premium": 2.43,
       "quantity": 1,
       "notes": "🤖 Bot Suggested (35% Conf, UNALIGNED (Speculative))",
-      "currentPrice": 4.65,
-      "marketValue": 465.00000000000006,
-      "pl": 222.00000000000003,
+      "currentPrice": 34.13,
+      "marketValue": 3413.0000000000005,
+      "pl": 3170.0000000000005,
       "status": "OPEN",
-      "lastUpdated": "3:00:10 PM",
+      "lastUpdated": "3:17:55 PM",
       "greeks": {
         "delta": -0.9973,
         "gamma": 0.0007,
