@@ -1,0 +1,23 @@
+[
+  {
+    "id": "a500ee2b-e95e-469d-9d61-a6280a07008c",
+    "symbol": "INFY",
+    "type": "Call",
+    "strike": 1400,
+    "expiration": "2026-02-27",
+    "premium": 0.2,
+    "quantity": 100,
+    "entryDate": "2026-02-14T09:29:00.360Z",
+    "entryTime": "09:00",
+    "notes": "",
+    "currentPrice": 0.2,
+    "marketValue": 2000,
+    "pl": 0,
+    "status": "OPEN",
+    "lastUpdated": "12:58:14",
+    "recommendation": {
+      "signal": "SECURE HOLD",
+      "color": "cyan"
+    }
+  }
+]

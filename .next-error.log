@@ -1,0 +1,1779 @@
+
+> options-tracker@0.1.0 dev
+> node server.js
+
+⚠ `eslint` configuration in next.config.ts is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.ts options detected: 
+⚠     Unrecognized key(s) in object: 'eslint'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+> Ready on http://localhost:3001
+Client connected: OGVatMpjgAO-J17cAAAB
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 2.6s (compile: 431ms, render: 2.2s)
+Client disconnected: OGVatMpjgAO-J17cAAAB
+ GET / 200 in 3.3s (compile: 2.7s, render: 540ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+Client connected: 96_Gd8Vt8og_2wTjAAAD
+ POST / 200 in 98ms (compile: 23ms, render: 76ms)
+ POST / 200 in 25ms (compile: 8ms, render: 18ms)
+ POST / 200 in 27ms (compile: 7ms, render: 20ms)
+ GET /api/heatmap 200 in 278ms (compile: 8ms, render: 271ms)
+ POST / 200 in 21ms (compile: 6ms, render: 15ms)
+ POST / 200 in 20ms (compile: 6ms, render: 14ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 235ms (compile: 4ms, render: 230ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 285ms (compile: 4ms, render: 281ms)
+ GET / 200 in 83ms (compile: 12ms, render: 71ms)
+ GET / 200 in 153ms (compile: 27ms, render: 126ms)
+✓ Compiled in 525ms
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 746ms (compile: 150ms, render: 596ms)
+ GET / 200 in 749ms (compile: 332ms, render: 418ms)
+Client disconnected: 96_Gd8Vt8og_2wTjAAAD
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+Client connected: F9DyXntY_ckpWbXeAAAF
+ POST / 200 in 73ms (compile: 13ms, render: 60ms)
+ GET /api/heatmap 200 in 121ms (compile: 3ms, render: 118ms)
+ POST / 200 in 19ms (compile: 8ms, render: 11ms)
+ POST / 200 in 19ms (compile: 9ms, render: 10ms)
+ POST / 200 in 12ms (compile: 6ms, render: 6ms)
+ POST / 200 in 33ms (compile: 7ms, render: 26ms)
+✓ Compiled in 624ms
+ GET / 200 in 116ms (compile: 29ms, render: 86ms)
+ GET / 200 in 66ms (compile: 16ms, render: 49ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 248ms (compile: 5ms, render: 242ms)
+✓ Compiled in 1293ms
+✓ Compiled in 275ms
+✓ Compiled in 843ms
+Client disconnected: F9DyXntY_ckpWbXeAAAF
+Client connected: nbKr3Y4ECBGNcbG1AAAH
+ POST / 200 in 463ms (compile: 342ms, render: 122ms)
+ GET / 200 in 946ms (compile: 218ms, render: 728ms)
+ GET / 200 in 693ms (compile: 25ms, render: 668ms)
+Client connected: dXJOXXcayjc_fmNaAAAJ
+ POST / 200 in 30ms (compile: 8ms, render: 22ms)
+ POST / 200 in 59ms (compile: 21ms, render: 39ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ POST / 200 in 15ms (compile: 5ms, render: 9ms)
+ POST / 200 in 17ms (compile: 6ms, render: 11ms)
+ POST / 200 in 15ms (compile: 6ms, render: 9ms)
+ GET /api/heatmap 200 in 307ms (compile: 5ms, render: 302ms)
+Client disconnected: nbKr3Y4ECBGNcbG1AAAH
+ GET / 200 in 139ms (compile: 10ms, render: 129ms)
+Client disconnected: dXJOXXcayjc_fmNaAAAJ
+Client connected: z64Vq_PhgjeUiAMyAAAL
+ POST / 200 in 38ms (compile: 13ms, render: 24ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ POST / 200 in 17ms (compile: 7ms, render: 10ms)
+ POST / 200 in 25ms (compile: 9ms, render: 16ms)
+ POST / 200 in 24ms (compile: 9ms, render: 15ms)
+ POST / 200 in 19ms (compile: 8ms, render: 11ms)
+ GET /api/heatmap 200 in 272ms (compile: 5ms, render: 267ms)
+ GET / 200 in 890ms (compile: 219ms, render: 670ms)
+ GET / 200 in 579ms (compile: 18ms, render: 561ms)
+ GET / 200 in 593ms (compile: 46ms, render: 546ms)
+ GET / 200 in 484ms (compile: 78ms, render: 406ms)
+ GET / 200 in 326ms (compile: 9ms, render: 317ms)
+ GET / 200 in 282ms (compile: 68ms, render: 214ms)
+ GET / 200 in 208ms (compile: 20ms, render: 188ms)
+ GET / 200 in 111ms (compile: 9ms, render: 103ms)
+ GET / 200 in 78ms (compile: 8ms, render: 70ms)
+ GET / 200 in 39ms (compile: 7ms, render: 32ms)
+ GET /api/history?symbol=NVDA 200 in 2.2s (compile: 1937ms, render: 288ms)
+✓ Compiled in 483ms
+✓ Compiled in 2.7s
+ GET / 200 in 210ms (compile: 154ms, render: 56ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET / 200 in 548ms (compile: 82ms, render: 465ms)
+ GET /api/heatmap 200 in 2.6s (compile: 365ms, render: 2.3s)
+Client disconnected: z64Vq_PhgjeUiAMyAAAL
+Client connected: 5Q4TfydbvIezq3v3AAAN
+ POST / 200 in 147ms (compile: 25ms, render: 122ms)
+ POST / 200 in 15ms (compile: 8ms, render: 7ms)
+ POST / 200 in 19ms (compile: 9ms, render: 10ms)
+ POST / 200 in 16ms (compile: 9ms, render: 7ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ POST / 200 in 63ms (compile: 16ms, render: 47ms)
+ GET /api/heatmap 200 in 95ms (compile: 6ms, render: 89ms)
+ GET /api/history?symbol=NVDA 200 in 297ms (compile: 12ms, render: 285ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 287ms (compile: 21ms, render: 266ms)
+ GET /api/history?symbol=AMZN 200 in 230ms (compile: 1937µs, render: 228ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+Heatmap API fetch failed: TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 87.248.119.252:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+ GET /api/heatmap 500 in 10.8s (compile: 13ms, render: 10.8s)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 296ms (compile: 4ms, render: 292ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 213ms (compile: 3ms, render: 210ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 227ms (compile: 6ms, render: 220ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 207ms (compile: 4ms, render: 204ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 194ms (compile: 5ms, render: 189ms)
+ POST / 200 in 2.0s (compile: 12ms, render: 2.0s)
+ POST / 200 in 19ms (compile: 7ms, render: 12ms)
+ POST / 200 in 643ms (compile: 637ms, render: 6ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 203ms (compile: 3ms, render: 200ms)
+ POST / 200 in 698ms (compile: 17ms, render: 681ms)
+ POST / 200 in 143ms (compile: 8ms, render: 135ms)
+ POST / 200 in 21ms (compile: 9ms, render: 12ms)
+ POST / 200 in 448ms (compile: 438ms, render: 10ms)
+ POST / 200 in 40ms (compile: 28ms, render: 12ms)
+ POST / 200 in 307ms (compile: 296ms, render: 10ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 221ms (compile: 3ms, render: 218ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 146ms (compile: 3ms, render: 143ms)
+ GET /api/history?symbol=GOOGL 200 in 88ms (compile: 1806µs, render: 86ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 163ms (compile: 11ms, render: 152ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 666ms (compile: 200ms, render: 466ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 299ms (compile: 14ms, render: 285ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 241ms (compile: 12ms, render: 229ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 193ms (compile: 6ms, render: 187ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 239ms (compile: 7ms, render: 232ms)
+Please consider completing the survey at https://bit.ly/yahoo-finance-api-feedback if you haven't already; for more info see https://github.com/gadicc/yahoo-finance2/issues/764#issuecomment-2056623851.  This will only be shown once, but you can suppress this message in future with `new YahooFinance({ suppressNotices: ['yahooSurvey'] })`.
+ GET /api/heatmap 200 in 174ms (compile: 4ms, render: 170ms)
+Persisting failed: Unable to write SST file 00002401.sst
+
+Caused by:
+    The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Client disconnected: 5Q4TfydbvIezq3v3AAAN
+Client connected: 9z-50z4qkOLAI9-GAAAP
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+⨯ Error: ENOENT: no such file or directory, open 'C:\Users\prave\.gemini\antigravity\scratch\options-tracker\.next\dev\server\app\api\heatmap\[__metadata_id__]\route\app-paths-manifest.json'
+    at ignore-listed frames {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\prave\\.gemini\\antigravity\\scratch\\options-tracker\\.next\\dev\\server\\app\\api\\heatmap\\[__metadata_id__]\\route\\app-paths-manifest.json'
+}
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 290667 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 280866 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <DiskFileSystem as FileSystem>::read (TaskId 288845))
+
+Caused by:
+    0: Looking up data for TaskId 288845 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+-----
+[1m[31mFATAL[39m[0m: An unexpected Turbopack error occurred. A panic log has been written to C:\Users\prave\AppData\Local\Temp\next-panic-36e7c40c9e14ce580adbc22aeee00a3c.log.
+
+To help make Turbopack better, report this error by ]8;;https://github.com/vercel/next.js/discussions/new?category=turbopack-error-report&title=Turbopack%20Error%3A%20Failed%20to%20restore%20task%20data%20%28corrupted%20database%20or%20bug%29%3A%20Meta%20for%20%3CDiskFileSystem%20as%20FileSystem%3E%3A%3Aread%20%28TaskId%20288845%29%29&body=Turbopack%20version%3A%20%6023c46498%60%0ANext.js%20version%3A%20%600.0.0%60%0A%0AError%20message%3A%0A%60%60%60%0AFailed%20to%20restore%20task%20data%20%28corrupted%20database%20or%20bug%29%3A%20Meta%20for%20%3CDiskFileSystem%20as%20FileSystem%3E%3A%3Aread%20%28TaskId%20288845%29%29%0A%0ADebug%20info%3A%0A-%20Failed%20to%20restore%20task%20data%20%28corrupted%20database%20or%20bug%29%3A%20Meta%20for%20%3CDiskFileSystem%20as%20FileSystem%3E%3A%3Aread%20%28TaskId%20288845%29%29%0A%20%20%0A%20%20Caused%20by%3A%0A%20%20%20%20%20%200%3A%20Looking%20up%20data%20for%20TaskId%20288845%20from%20database%20failed%0A%20%20%20%20%20%201%3A%20Unable%20to%20open%20static%20sorted%20file%20referenced%20from%2000002335.meta%0A%20%20%20%20%20%202%3A%20Unable%20to%20open%20static%20sorted%20file%2000002328.sst%0A%20%20%20%20%20%203%3A%20The%20system%20cannot%20find%20the%20path%20specified.%20%28os%20error%203%29%0A%60%60%60&labels=Turbopack,Turbopack%20Panic%20Backtrace\clicking here.]8;;\
+-----
+
+⨯ Error [TurbopackInternalError]: Failed to restore task data (corrupted database or bug): Meta for <DiskFileSystem as FileSystem>::read (TaskId 288845))
+
+Debug info:
+- Failed to restore task data (corrupted database or bug): Meta for <DiskFileSystem as FileSystem>::read (TaskId 288845))
+  
+  Caused by:
+      0: Looking up data for TaskId 288845 from database failed
+      1: Unable to open static sorted file referenced from 00002335.meta
+      2: Unable to open static sorted file 00002328.sst
+      3: The system cannot find the path specified. (os error 3)
+    at <unknown> (TurbopackInternalError: Failed to restore task data (corrupted database or bug): Meta for <DiskFileSystem as FileSystem>::read (TaskId 288845))) {
+  location: 'C:\\actions-runner\\_work\\next.js\\next.js\\turbopack\\crates\\turbo-tasks-backend\\src\\backend\\operation\\mod.rs:156:17'
+}
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+  Reload env: .env.local
+⨯ Error: ENOENT: no such file or directory, open 'C:\Users\prave\.gemini\antigravity\scratch\options-tracker\.next\dev\server\app\page\build-manifest.json'
+    at ignore-listed frames {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\prave\\.gemini\\antigravity\\scratch\\options-tracker\\.next\\dev\\server\\app\\page\\build-manifest.json'
+}
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EsmAssetReference::get_referenced_asset (TaskId 248412))
+
+Caused by:
+    0: Looking up data for TaskId 248412 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EsmAssetReference::get_referenced_asset (TaskId 248412))
+
+Caused by:
+    0: Looking up data for TaskId 248412 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveResult::is_unresolvable (TaskId 402424))
+
+Caused by:
+    0: Looking up data for TaskId 402424 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for DataUriSource::new (TaskId 402422))
+
+Caused by:
+    0: Looking up data for TaskId 402422 from database failed
+    1: Unable to open static sorted file referenced from 00002382.meta
+    2: Unable to open static sorted file 00002378.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveResult::is_unresolvable (TaskId 402424))
+
+Caused by:
+    0: Looking up data for TaskId 402424 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for DataUriSource::new (TaskId 402422))
+
+Caused by:
+    0: Looking up data for TaskId 402422 from database failed
+    1: Unable to open static sorted file referenced from 00002382.meta
+    2: Unable to open static sorted file 00002378.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "<ModuleAssetContext as AssetContext>::resolve_asset", global_name: "turbopack@turbopack::ModuleAssetContext::AssetContext::resolve_asset", .. }, this: Some(RawVc::TaskCell(536, "turbopack::ModuleAssetContext#0")), arg: (FileSystemPath { fs: ResolvedVc(RawVc::TaskCell(8, "turbo_tasks_fs::DiskFileSystem#0")), path: "src/app/actions.ts" }, Vc(RawVc::TaskCell(402419, "turbopack_core::resolve::parse::Request#0")), Vc(RawVc::TaskCell(2276, "turbopack_core::resolve::options::ResolveOptions#0")), EcmaScriptModules(ImportPart(Export("fetchSmartMoneyFlow")))) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for get_side_effect_free_declaration (TaskId 309286))
+
+Caused by:
+    0: Looking up data for TaskId 309286 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "AssetIdent::new_inner", global_name: "turbopack-core@turbopack_core::ident::AssetIdent::new_inner", .. }, this: None, arg: (AssetIdent { path: FileSystemPath { fs: ResolvedVc(RawVc::TaskCell(8, "turbo_tasks_fs::DiskFileSystem#0")), path: "src/app/data:75c677" }, query: "", fragment: "", assets: [], modifiers: [], parts: [], layer: None, content_type: Some("text/javascript") },) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for AssetIdent::new_inner (TaskId 402632))
+
+Caused by:
+    0: Looking up data for TaskId 402632 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for AssetIdent::new_inner (TaskId 402632))
+
+Caused by:
+    0: Looking up data for TaskId 402632 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402639))
+
+Caused by:
+    0: Looking up data for TaskId 402639 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402639))
+
+Caused by:
+    0: Looking up data for TaskId 402639 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402639))
+
+Caused by:
+    0: Looking up data for TaskId 402639 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402639))
+
+Caused by:
+    0: Looking up data for TaskId 402639 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EcmascriptModuleAsset as ResolveOrigin>::get_inner_asset (TaskId 308610))
+
+Caused by:
+    0: Looking up data for TaskId 308610 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <ModuleAssetContext as AssetContext>::process (TaskId 73050))
+
+Caused by:
+    0: Looking up data for TaskId 73050 from database failed
+    1: Unable to open static sorted file referenced from 00002382.meta
+    2: Unable to open static sorted file 00002378.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <ModuleAssetContext as AssetContext>::process (TaskId 73050))
+
+Caused by:
+    0: Looking up data for TaskId 73050 from database failed
+    1: Unable to open static sorted file referenced from 00002382.meta
+    2: Unable to open static sorted file 00002378.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EcmascriptModuleAsset as EcmascriptChunkPlaceable>::get_exports (TaskId 309091))
+
+Caused by:
+    0: Looking up data for TaskId 309091 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for resolve (TaskId 102380))
+
+Caused by:
+    0: Looking up data for TaskId 102380 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ChunkableModuleReference>::chunking_type (TaskId 76560))
+
+Caused by:
+    0: Looking up data for TaskId 76560 from database failed
+    1: Unable to open static sorted file referenced from 00002360.meta
+    2: Unable to open static sorted file 00002355.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EsmAssetReference as ChunkableModuleReference>::chunking_type (TaskId 76602))
+
+Caused by:
+    0: Looking up data for TaskId 76602 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 77373 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002364.meta
+    1: Unable to open static sorted file 00002358.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 308632 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::process_resolve_result (TaskId 78053))
+
+Caused by:
+    0: Looking up data for TaskId 78053 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ChunkingContext::chunk_item_id_from_module (TaskId 227826))
+
+Caused by:
+    0: Looking up data for TaskId 227826 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for resolve (TaskId 27614))
+
+Caused by:
+    0: Looking up data for TaskId 27614 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 76904))
+
+Caused by:
+    0: Looking up data for TaskId 76904 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <ModuleAssetContext as AssetContext>::resolve_asset (TaskId 78039))
+
+Caused by:
+    0: Looking up data for TaskId 78039 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ChunkingContext::chunk_item_id_from_module (TaskId 227826))
+
+Caused by:
+    0: Looking up data for TaskId 227826 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 77373 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002364.meta
+    1: Unable to open static sorted file 00002358.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::process_resolve_result (TaskId 78053))
+
+Caused by:
+    0: Looking up data for TaskId 78053 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <ModuleAssetContext as AssetContext>::resolve_asset (TaskId 78039))
+
+Caused by:
+    0: Looking up data for TaskId 78039 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ChunkableModuleReference>::chunking_type (TaskId 402704))
+
+Caused by:
+    0: Looking up data for TaskId 402704 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ChunkableModuleReference>::chunking_type (TaskId 402704))
+
+Caused by:
+    0: Looking up data for TaskId 402704 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 203341 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002364.meta
+    1: Unable to open static sorted file 00002358.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::process_resolve_result (TaskId 78053))
+
+Caused by:
+    0: Looking up data for TaskId 78053 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 203341 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002364.meta
+    1: Unable to open static sorted file 00002358.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "<EsmAssetReference as ModuleReference>::resolve_reference", global_name: "turbopack-ecmascript@turbopack_ecmascript::references::esm::base::EsmAssetReference::ModuleReference::resolve_reference", .. }, this: Some(RawVc::TaskCell(73927, "turbopack_ecmascript::references::esm::base::EsmAssetReference#18")), arg: () } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ReferencedAsset::from_resolve_result (TaskId 203341))
+
+Caused by:
+    0: Looking up data for TaskId 203341 from database failed
+    1: Unable to open static sorted file referenced from 00002360.meta
+    2: Unable to open static sorted file 00002355.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "EsmAssetReference::get_referenced_asset", global_name: "turbopack-ecmascript@turbopack_ecmascript::references::esm::base::EsmAssetReference::get_referenced_asset", .. }, this: Some(RawVc::TaskCell(73664, "turbopack_ecmascript::references::esm::base::EsmAssetReference#13")), arg: () } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "<EsmAssetReference as ModuleReference>::resolve_reference", global_name: "turbopack-ecmascript@turbopack_ecmascript::references::esm::base::EsmAssetReference::ModuleReference::resolve_reference", .. }, this: Some(RawVc::TaskCell(73927, "turbopack_ecmascript::references::esm::base::EsmAssetReference#18")), arg: () } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ReferencedAsset::from_resolve_result (TaskId 203341))
+
+Caused by:
+    0: Looking up data for TaskId 203341 from database failed
+    1: Unable to open static sorted file referenced from 00002360.meta
+    2: Unable to open static sorted file 00002355.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NodeJsChunkingContext as ChunkingContext>::module_export_usage (TaskId 219771))
+
+Caused by:
+    0: Looking up data for TaskId 219771 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EsmAssetReference::get_referenced_asset (TaskId 224387))
+
+Caused by:
+    0: Looking up data for TaskId 224387 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EcmascriptModuleAsset as Module>::references (TaskId 114853))
+
+Caused by:
+    0: Looking up data for TaskId 114853 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402784))
+
+Caused by:
+    0: Looking up data for TaskId 402784 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402784))
+
+Caused by:
+    0: Looking up data for TaskId 402784 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "<EcmascriptModuleAsset as ResolveOrigin>::get_inner_asset", global_name: "turbopack-ecmascript@turbopack_ecmascript::EcmascriptModuleAsset::ResolveOrigin::get_inner_asset", .. }, this: Some(RawVc::TaskCell(73758, "turbopack_ecmascript::EcmascriptModuleAsset#0")), arg: (Vc(RawVc::TaskCell(402768, "turbopack_core::resolve::parse::Request#0")),) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "ReferencedAsset::from_resolve_result", global_name: "turbopack-ecmascript@turbopack_ecmascript::references::esm::base::ReferencedAsset::from_resolve_result", .. }, this: None, arg: (Vc(RawVc::TaskCell(81657, "turbopack_core::resolve::ModuleResolveResult#0")),) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EcmascriptModuleAsset as ResolveOrigin>::get_inner_asset (TaskId 402901))
+
+Caused by:
+    0: Looking up data for TaskId 402901 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402784))
+
+Caused by:
+    0: Looking up data for TaskId 402784 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 402784))
+
+Caused by:
+    0: Looking up data for TaskId 402784 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for AfterResolvePluginCondition::matches (TaskId 402930))
+
+Caused by:
+    0: Looking up data for TaskId 402930 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 177106 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for AfterResolvePluginCondition::matches (TaskId 402930))
+
+Caused by:
+    0: Looking up data for TaskId 402930 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 177106 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EcmascriptModuleAsset as ResolveOrigin>::origin_path (TaskId 73359))
+
+Caused by:
+    0: Looking up data for TaskId 73359 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EcmascriptChunk as Chunk>::ident (TaskId 308397))
+
+Caused by:
+    0: Looking up data for TaskId 308397 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <ModuleAssetContext as AssetContext>::resolve_asset (TaskId 78237))
+
+Caused by:
+    0: Looking up data for TaskId 78237 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "<DiskFileSystem as FileSystem>::raw_read_dir", global_name: "turbo-tasks-fs@turbo_tasks_fs::DiskFileSystem::FileSystem::raw_read_dir", .. }, this: Some(RawVc::TaskCell(8, "turbo_tasks_fs::DiskFileSystem#0")), arg: (FileSystemPath { fs: ResolvedVc(RawVc::TaskCell(8, "turbo_tasks_fs::DiskFileSystem#0")), path: "node_modules/@google/generative-ai/dist" },) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 76331 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <ModuleAssetContext as AssetContext>::resolve_asset (TaskId 78237))
+
+Caused by:
+    0: Looking up data for TaskId 78237 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 177153))
+
+Caused by:
+    0: Looking up data for TaskId 177153 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 177153))
+
+Caused by:
+    0: Looking up data for TaskId 177153 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 177153))
+
+Caused by:
+    0: Looking up data for TaskId 177153 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 177153))
+
+Caused by:
+    0: Looking up data for TaskId 177153 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for BeforeResolvePluginCondition::matches (TaskId 403035))
+
+Caused by:
+    0: Looking up data for TaskId 403035 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for BeforeResolvePluginCondition::matches (TaskId 403035))
+
+Caused by:
+    0: Looking up data for TaskId 403035 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Pattern::new_internal (TaskId 403059))
+
+Caused by:
+    0: Looking up data for TaskId 403059 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for AssetIdent::new_inner (TaskId 403061))
+
+Caused by:
+    0: Looking up data for TaskId 403061 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Pattern::new_internal (TaskId 403059))
+
+Caused by:
+    0: Looking up data for TaskId 403059 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for AssetIdent::new_inner (TaskId 403061))
+
+Caused by:
+    0: Looking up data for TaskId 403061 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 403078))
+
+Caused by:
+    0: Looking up data for TaskId 403078 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 403078))
+
+Caused by:
+    0: Looking up data for TaskId 403078 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for BeforeResolvePluginCondition::matches (TaskId 403035))
+
+Caused by:
+    0: Looking up data for TaskId 403035 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for BeforeResolvePluginCondition::matches (TaskId 403035))
+
+Caused by:
+    0: Looking up data for TaskId 403035 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveOrigin::resolve_options (TaskId 403147))
+
+Caused by:
+    0: Looking up data for TaskId 403147 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for resolve (TaskId 403156))
+
+Caused by:
+    0: Looking up data for TaskId 403156 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveOrigin::resolve_options (TaskId 403147))
+
+Caused by:
+    0: Looking up data for TaskId 403147 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for EsmAssetReference::get_referenced_asset (TaskId 226790))
+
+Caused by:
+    0: Looking up data for TaskId 226790 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 77154))
+
+Caused by:
+    0: Looking up data for TaskId 77154 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EcmascriptModuleAsset as ResolveOrigin>::asset_context (TaskId 77866))
+
+Caused by:
+    0: Looking up data for TaskId 77866 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ResolveOrigin::resolve_options (TaskId 77579))
+
+Caused by:
+    0: Looking up data for TaskId 77579 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EcmascriptModuleAsset as ResolveOrigin>::asset_context (TaskId 77866))
+
+Caused by:
+    0: Looking up data for TaskId 77866 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EcmascriptModuleAsset as ResolveOrigin>::asset_context (TaskId 77866))
+
+Caused by:
+    0: Looking up data for TaskId 77866 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::process_resolve_result (TaskId 80188))
+
+Caused by:
+    0: Looking up data for TaskId 80188 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EcmascriptModuleAsset as ResolveOrigin>::asset_context (TaskId 77866))
+
+Caused by:
+    0: Looking up data for TaskId 77866 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for EsmAssetReference::get_referenced_asset (TaskId 226843))
+
+Caused by:
+    0: Looking up data for TaskId 226843 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for Request::parse_inner (TaskId 75510))
+
+Caused by:
+    0: Looking up data for TaskId 75510 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for EsmAssetReference::get_referenced_asset (TaskId 226843))
+
+Caused by:
+    0: Looking up data for TaskId 226843 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for ReferencedAsset::from_resolve_result (TaskId 403213))
+
+Caused by:
+    0: Looking up data for TaskId 403213 from database failed
+    1: Unable to open static sorted file referenced from 00002360.meta
+    2: Unable to open static sorted file 00002355.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 77154))
+
+Caused by:
+    0: Looking up data for TaskId 77154 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (9884) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 76424 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EsmAssetReference::get_referenced_asset (TaskId 224387))
+
+Caused by:
+    0: Looking up data for TaskId 224387 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::process_resolve_result (TaskId 80188))
+
+Caused by:
+    0: Looking up data for TaskId 80188 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for EsmAssetReference::get_referenced_asset (TaskId 226843))
+
+Caused by:
+    0: Looking up data for TaskId 226843 from database failed
+    1: Unable to open static sorted file referenced from 00002381.meta
+    2: Unable to open static sorted file 00002377.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 77154))
+
+Caused by:
+    0: Looking up data for TaskId 77154 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptModuleAsset::new (TaskId 73821))
+
+Caused by:
+    0: Looking up data for TaskId 73821 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptModuleAsset::new (TaskId 73821))
+
+Caused by:
+    0: Looking up data for TaskId 73821 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "<NodeJsChunkingContext as ChunkingContext>::module_export_usage", global_name: "turbopack-nodejs@turbopack_nodejs::chunking_context::NodeJsChunkingContext::ChunkingContext::module_export_usage", .. }, this: Some(RawVc::TaskCell(49433, "turbopack_nodejs::chunking_context::NodeJsChunkingContext#0")), arg: (Vc(RawVc::TaskCell(73821, "turbopack_ecmascript::EcmascriptModuleAsset#0")),) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002334.meta
+    1: Unable to open static sorted file 00002331.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for EsmAssetReference::get_referenced_asset (TaskId 223074))
+
+Caused by:
+    0: Looking up data for TaskId 223074 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:963:22:
+Failed to lookup task type: Looking up task type for TaskId 230090 from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002333.meta
+    1: Unable to open static sorted file 00002330.sst
+    2: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for EsmAssetReference::get_referenced_asset (TaskId 223123))
+
+Caused by:
+    0: Looking up data for TaskId 223123 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 75440))
+
+Caused by:
+    0: Looking up data for TaskId 75440 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for ReferencedAsset::from_resolve_result (TaskId 203224))
+
+Caused by:
+    0: Looking up data for TaskId 203224 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 77154))
+
+Caused by:
+    0: Looking up data for TaskId 77154 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (24136) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (11420) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 77154))
+
+Caused by:
+    0: Looking up data for TaskId 77154 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 403327))
+
+Caused by:
+    0: Looking up data for TaskId 403327 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for Request::request_pattern (TaskId 403327))
+
+Caused by:
+    0: Looking up data for TaskId 403327 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for BeforeResolvePluginCondition::matches (TaskId 403394))
+
+Caused by:
+    0: Looking up data for TaskId 403394 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for BeforeResolvePluginCondition::matches (TaskId 403394))
+
+Caused by:
+    0: Looking up data for TaskId 403394 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (27260) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\mod.rs:1354:30:
+Failed to lookup task id: Looking up task id for CachedTaskType { native_fn: NativeFunction { name: "Pattern::new_internal", global_name: "turbopack-core@turbopack_core::resolve::pattern::Pattern::new_internal", .. }, this: None, arg: (Constant("data:text/javascript,%2F%2A%20__next_internal_action_entry_do_not_use__%20%5B%7B%2240541db38f6eacfb73dd1f5f5a514058eab74bd9fc%22%3A%22fetchCompanyNews%22%7D%2C%22src%2Fapp%2Factions.ts%22%2C%22%22%5D%20%2A%2F%22use%20turbopack%20no%20side%20effects%22%3Bimport%7BcreateServerReference%2CcallServer%2CfindSourceMapURL%7Dfrom%22private-next-rsc-action-client-wrapper%22%3Bconst%20%24%24RSC_SERVER_ACTION_13%3D%2F%2A%23__PURE__%2A%2FcreateServerReference%28%2240541db38f6eacfb73dd1f5f5a514058eab74bd9fc%22%2CcallServer%2Cvoid%200%2CfindSourceMapURL%2C%22fetchCompanyNews%22%29%3Bexport%7B%24%24RSC_SERVER_ACTION_13%20as%20fetchCompanyNews%7D%3B%0A%2F%2F%23%20sourceMappingURL%3Ddata%3Aapplication%2Fjson%3Bbase64%2CeyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcInVzZSBzZXJ2ZXJcIjtcclxuXHJcbmltcG9ydCBmcyBmcm9tIFwiZnNcIjtcclxuaW1wb3J0IHBhdGggZnJvbSBcInBhdGhcIjtcclxuaW1wb3J0IHlhaG9vRmluYW5jZSBmcm9tIFwieWFob28tZmluYW5jZTJcIjtcclxuaW1wb3J0IHsgZm9ybWF0LCBzdGFydE9mRGF5LCBzdWJEYXlzIH0gZnJvbSBcImRhdGUtZm5zXCI7XHJcbmltcG9ydCB7IFBvc2l0aW9uIH0gZnJvbSBcIkAvbGliL3R5cGVzXCI7XHJcbmltcG9ydCB7IGdldFJlY29tbWVuZGF0aW9uLCBnZW5lcmF0ZUR5bmFtaWNPcHBvcnR1bml0aWVzIH0gZnJvbSBcIkAvbGliL2ludGVsbGlnZW5jZVwiO1xyXG5pbXBvcnQgeyBjYWxjdWxhdGVHcmVla3MgfSBmcm9tIFwiQC9saWIvZ3JlZWtzXCI7XHJcbmltcG9ydCB7IHN1cGFiYXNlIH0gZnJvbSBcIkAvbGliL3N1cGFiYXNlXCI7XHJcbmltcG9ydCB7IEdvb2dsZUdlbmVyYXRpdmVBSSB9IGZyb20gXCJAZ29vZ2xlL2dlbmVyYXRpdmUtYWlcIjtcclxuXHJcbmNvbnN0IERBVEFfRElSID0gcGF0aC5qb2luKHByb2Nlc3MuY3dkKCksIFwiZGF0YVwiKTtcclxuY29uc3QgVVNFUlNfRElSID0gcGF0aC5qb2luKERBVEFfRElSLCBcInVzZXJzXCIpO1xyXG5cclxuLy8gRW5zdXJlIGJhc2UgZGlyZWN0b3JpZXMgZXhpc3RcclxuaWYgKCFmcy5leGlzdHNTeW5jKERBVEFfRElSKSkgZnMubWtkaXJTeW5jKERBVEFfRElSLCB7IHJlY3Vyc2l2ZTogdHJ1ZSB9KTtcclxuaWYgKCFmcy5leGlzdHNTeW5jKFVTRVJTX0RJUikpIGZzLm1rZGlyU3luYyhVU0VSU19ESVIsIHsgcmVjdXJzaXZlOiB0cnVlIH0pO1xyXG5cclxuZnVuY3Rpb24gZ2V0VXNlclBhdGhzKHVzZXJuYW1lOiBzdHJpbmcpIHtcclxuICAgIGNvbnN0IHVzZXJEaXIgPSBwYXRoLmpvaW4oVVNFUlNfRElSLCB1c2VybmFtZS50b0xvd2VyQ2FzZSgpLnRyaW0oKSk7XHJcbiAgICBpZiAoIWZzLmV4aXN0c1N5bmModXNlckRpcikpIHtcclxuICAgICAgICBmcy5ta2RpclN5bmModXNlckRpciwgeyByZWN1cnNpdmU6IHRydWUgfSk7XHJcbiAgICB9XHJcbiAgICByZXR1cm4ge1xyXG4gICAgICAgIHBvc2l0aW9uc0ZpbGU6IHBhdGguam9pbih1c2VyRGlyLCBcInBvc2l0aW9ucy5qc29uXCIpLFxyXG4gICAgICAgIGhpc3RvcnlGaWxlOiBwYXRoLmpvaW4odXNlckRpciwgXCJoaXN0b3J5Lmpzb25cIilcclxuICAgIH07XHJcbn1cclxuXHJcbi8vIEVudmlyb25tZW50IHZhcmlhYmxlcyBhY2Nlc3NlZCBkeW5hbWljYWxseSB3aXRoaW4gZnVuY3Rpb25zIHRvIHByZXZlbnQgY2xpZW50LXNpZGUgZXZhbHVhdGlvbiBpc3N1ZXNcclxuXHJcbnR5cGUgUG9seWdvbkxhc3RUcmFkZVJlc3BvbnNlID0ge1xyXG4gICAgc3RhdHVzOiBzdHJpbmc7XHJcbiAgICByZXN1bHRzPzoge1xyXG4gICAgICAgIHA%2FOiBudW1iZXI7IC8vIHByaWNlXHJcbiAgICAgICAgcz86IG51bWJlcjsgLy8gc2l6ZVxyXG4gICAgICAgIHQ%2FOiBudW1iZXI7IC8vIHRpbWVzdGFtcFxyXG4gICAgfTtcclxufTtcclxuXHJcbmFzeW5jIGZ1bmN0aW9uIGZldGNoUG9seWdvbk9wdGlvblByaWNlKHRpY2tlcjogc3RyaW5nKTogUHJvbWlzZTxudW1iZXIgfCBudWxsPiB7XHJcbiAgICBjb25zdCBwb2x5Z29uS2V5ID0gcHJvY2Vzcy5lbnYuUE9MWUdPTl9BUElfS0VZIHx8IFwiekVNOU15M3pkYVZxRHBlWmV4ODFkOWlLT0RmalI2MTBcIjtcclxuICAgIGlmICghcG9seWdvbktleSkgcmV0dXJuIG51bGw7XHJcblxyXG4gICAgLy8gMS4gVHJ5IExhc3QgVHJhZGUgKFBhaWQgcGxhbiBvciBNYXNzaXZlIEFQSSlcclxuICAgIHRyeSB7XHJcbiAgICAgICAgY29uc3QgdXJsID0gYGh0dHBzOi8vYXBpLm1hc3NpdmUuY29tL3YyL2xhc3QvdHJhZGUvJHt0aWNrZXJ9P2FwaUtleT0ke3BvbHlnb25LZXl9YDtcclxuICAgICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKHVybCwgeyBjYWNoZTogJ25vLXN0b3JlJyB9KTtcclxuICAgICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuanNvbigpO1xyXG4gICAgICAgIGlmIChkYXRhLnJlc3VsdHM%2FLnApIHJldHVybiBkYXRhLnJlc3VsdHMucDtcclxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XHJcbiAgICAgICAgLy8gRmFsbCB0aHJvdWdoXHJcbiAgICB9XHJcblxyXG4gICAgLy8gMi4gVHJ5IFByZXZpb3VzIENsb3NlIChGcmVlIHRpZXIgZmFsbGJhY2sgLyBNYXNzaXZlIEFQSSlcclxuICAgIHRyeSB7XHJcbiAgICAgICAgY29uc3QgdXJsID0gYGh0dHBzOi8vYXBpLm1hc3NpdmUuY29tL3YyL2FnZ3MvdGlja2VyLyR7dGlja2VyfS9wcmV2P2FkanVzdGVkPXRydWUmYXBpS2V5PSR7cG9seWdvbktleX1gO1xyXG4gICAgICAgIGNvbnN0IHJlc3BvbnNlID0gYXdhaXQgZmV0Y2godXJsLCB7IGNhY2hlOiAnbm8tc3RvcmUnIH0pO1xyXG4gICAgICAgIGNvbnN0IGRhdGEgPSBhd2FpdCByZXNwb25zZS5qc29uKCk7XHJcbiAgICAgICAgaWYgKGRhdGEucmVzdWx0cyAmJiBkYXRhLnJlc3VsdHMubGVuZ3RoID4gMCkge1xyXG4gICAgICAgICAgICByZXR1cm4gZGF0YS5yZXN1bHRzWzBdLmM7IC8vIENsb3NpbmcgcHJpY2VcclxuICAgICAgICB9XHJcbiAgICB9IGNhdGNoIChlcnJvcikge1xyXG4gICAgICAgIGNvbnNvbGUuZXJyb3IoXCJQb2x5Z29uL01hc3NpdmUgZmFsbGJhY2sgZmV0Y2ggZXJyb3I6XCIsIGVycm9yKTtcclxuICAgIH1cclxuXHJcbiAgICByZXR1cm4gbnVsbDtcclxufVxyXG5cclxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGZldGNoU3RvY2tQcmljZShzeW1ib2w6IHN0cmluZykge1xyXG4gICAgdHJ5IHtcclxuICAgICAgICBjb25zdCBwb2x5Z29uS2V5ID0gcHJvY2Vzcy5lbnYuUE9MWUdPTl9BUElfS0VZIHx8IFwiekVNOU15M3pkYVZxRHBlWmV4ODFkOWlLT0RmalI2MTBcIjtcclxuICAgICAgICBpZiAocG9seWdvbktleSkge1xyXG4gICAgICAgICAgICAvLyBUcnkgUG9seWdvbi9NYXNzaXZlIFByZXZpb3VzIENsb3NlIGZvciB0aGUgdW5kZXJseWluZ1xyXG4gICAgICAgICAgICBjb25zdCB1cmwgPSBgaHR0cHM6Ly9hcGkubWFzc2l2ZS5jb20vdjIvYWdncy90aWNrZXIvJHtzeW1ib2x9L3ByZXY%2FYWRqdXN0ZWQ9dHJ1ZSZhcGlLZXk9JHtwb2x5Z29uS2V5fWA7XHJcbiAgICAgICAgICAgIGNvbnN0IHJlc3BvbnNlID0gYXdhaXQgZmV0Y2godXJsLCB7IGNhY2hlOiAnbm8tc3RvcmUnIH0pO1xyXG4gICAgICAgICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuanNvbigpO1xyXG4gICAgICAgICAgICBpZiAoZGF0YS5yZXN1bHRzICYmIGRhdGEucmVzdWx0cy5sZW5ndGggPiAwKSB7XHJcbiAgICAgICAgICAgICAgICBjb25zdCBwcmV2ID0gZGF0YS5yZXN1bHRzWzBdO1xyXG4gICAgICAgICAgICAgICAgcmV0dXJuIHtcclxuICAgICAgICAgICAgICAgICAgICBwcmljZTogcHJldi5jLFxyXG4gICAgICAgICAgICAgICAgICAgIGNoYW5nZTogcHJldi5jIC0gcHJldi5vLFxyXG4gICAgICAgICAgICAgICAgICAgIGNoYW5nZVBlcmNlbnQ6ICgocHJldi5jIC0gcHJldi5vKSAvIHByZXYubykgKiAxMDBcclxuICAgICAgICAgICAgICAgIH07XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICB9XHJcbiAgICB9IGNhdGNoIChlKSB7XHJcbiAgICAgICAgY29uc29sZS53YXJuKGBNYXNzaXZlIEFQSSBzdG9jayBmZXRjaCBmYWlsZWQgZm9yICR7c3ltYm9sfWAsIGUpO1xyXG4gICAgfVxyXG5cclxuICAgIHRyeSB7XHJcbiAgICAgICAgaWYgKCF5YWhvb0ZpbmFuY2UgfHwgdHlwZW9mIHlhaG9vRmluYW5jZS5xdW90ZSAhPT0gJ2Z1bmN0aW9uJykge1xyXG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoXCJ5YWhvb0ZpbmFuY2UucXVvdGUgaXMgbm90IGEgZnVuY3Rpb24gLSBMaWJyYXJ5IGZhaWxlZCB0byBsb2FkXCIpO1xyXG4gICAgICAgIH1cclxuICAgICAgICBjb25zdCBxdW90ZSA9IGF3YWl0IHlhaG9vRmluYW5jZS5xdW90ZShzeW1ib2wpIGFzIGFueTtcclxuICAgICAgICByZXR1cm4ge1xyXG4gICAgICAgICAgICBwcmljZTogcXVvdGUucmVndWxhck1hcmtldFByaWNlIHx8IDAsXHJcbiAgICAgICAgICAgIGNoYW5nZTogcXVvdGUucmVndWxhck1hcmtldENoYW5nZSB8fCAwLFxyXG4gICAgICAgICAgICBjaGFuZ2VQZXJjZW50OiBxdW90ZS5yZWd1bGFyTWFya2V0Q2hhbmdlUGVyY2VudCB8fCAwXHJcbiAgICAgICAgfTtcclxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XHJcbiAgICAgICAgY29uc29sZS5lcnJvcihgRXJyb3IgZmV0Y2hpbmcgc3RvY2sgcHJpY2UgZm9yICR7c3ltYm9sfTpgLCBlcnJvcik7XHJcbiAgICAgICAgLy8gRmFsbGJhY2sgZmFrZSBkYXRhIHNvIHRoZSBVSSBkb2Vzbid0IGNyYXNoIGNvbXBsZXRlbHkgZHVyaW5nIGRldmVsb3BtZW50XHJcbiAgICAgICAgcmV0dXJuIHsgcHJpY2U6IE1hdGgucmFuZG9tKCkgKiA1MDAsIGNoYW5nZTogMCwgY2hhbmdlUGVyY2VudDogMCB9O1xyXG4gICAgfVxyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gZmV0Y2hPcHRpb25QcmljZShzeW1ib2w6IHN0cmluZywgdHlwZTogXCJDYWxsXCIgfCBcIlB1dFwiLCBzdHJpa2U6IG51bWJlciwgZXhwaXJhdGlvbjogc3RyaW5nKSB7XHJcbiAgICB0cnkge1xyXG4gICAgICAgIGNvbnN0IHBvbHlnb25LZXkgPSBwcm9jZXNzLmVudi5QT0xZR09OX0FQSV9LRVkgfHwgXCJ6RU05TXkzemRhVnFEcGVaZXg4MWQ5aUtPRGZqUjYxMFwiO1xyXG4gICAgICAgIGlmIChwb2x5Z29uS2V5KSB7XHJcbiAgICAgICAgICAgIGNvbnN0IGV4cERhdGUgPSBuZXcgRGF0ZShleHBpcmF0aW9uKTtcclxuICAgICAgICAgICAgY29uc3QgeXkgPSBmb3JtYXQoZXhwRGF0ZSwgXCJ5eVwiKTtcclxuICAgICAgICAgICAgY29uc3QgbW0gPSBmb3JtYXQoZXhwRGF0ZSwgXCJNTVwiKTtcclxuICAgICAgICAgICAgY29uc3QgZGQgPSBmb3JtYXQoZXhwRGF0ZSwgXCJkZFwiKTtcclxuICAgICAgICAgICAgY29uc3QgdHlwZUNoYXIgPSB0eXBlID09PSBcIkNhbGxcIiA%2FIFwiQ1wiIDogXCJQXCI7XHJcbiAgICAgICAgICAgIGNvbnN0IHN0cmlrZVN0cmluZyA9IChzdHJpa2UgKiAxMDAwKS50b1N0cmluZygpLnBhZFN0YXJ0KDgsIFwiMFwiKTtcclxuICAgICAgICAgICAgY29uc3QgcG9seWdvblRpY2tlciA9IGBPOiR7c3ltYm9sfSR7eXl9JHttbX0ke2RkfSR7dHlwZUNoYXJ9JHtzdHJpa2VTdHJpbmd9YDtcclxuXHJcbiAgICAgICAgICAgIGNvbnN0IHBvbHlnb25QcmljZSA9IGF3YWl0IGZldGNoUG9seWdvbk9wdGlvblByaWNlKHBvbHlnb25UaWNrZXIpO1xyXG4gICAgICAgICAgICBpZiAocG9seWdvblByaWNlICE9PSBudWxsKSByZXR1cm4gcG9seWdvblByaWNlO1xyXG4gICAgICAgIH1cclxuICAgIH0gY2F0Y2ggKGUpIHtcclxuICAgICAgICBjb25zb2xlLndhcm4oXCJQb2x5Z29uL01hc3NpdmUgYXR0ZW1wdHMgZmFpbGVkXCIsIGUpO1xyXG4gICAgfVxyXG5cclxuICAgIC8vIDMuIExhc3QgcmVzb3J0OiBZYWhvbyBVbmRlcmx5aW5nIChBbHJlYWR5IGludGVncmF0ZWQsIGJ1dCB3ZSBub3RlIGl0J3MgdW5kZXJseWluZylcclxuICAgIHRyeSB7XHJcbiAgICAgICAgaWYgKCF5YWhvb0ZpbmFuY2UgfHwgdHlwZW9mIHlhaG9vRmluYW5jZS5xdW90ZSAhPT0gJ2Z1bmN0aW9uJykgcmV0dXJuIG51bGw7XHJcbiAgICAgICAgY29uc3QgcXVvdGUgPSBhd2FpdCB5YWhvb0ZpbmFuY2UucXVvdGUoc3ltYm9sKSBhcyBhbnk7XHJcbiAgICAgICAgcmV0dXJuIHF1b3RlLnJlZ3VsYXJNYXJrZXRQcmljZSB8fCBudWxsO1xyXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcclxuICAgICAgICBjb25zb2xlLmVycm9yKFwiRXJyb3IgZmV0Y2hpbmcgcHJpY2UgKFlhaG9vKTpcIiwgZXJyb3IpO1xyXG4gICAgICAgIHJldHVybiBudWxsO1xyXG4gICAgfVxyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gZ2V0UG9ydGZvbGlvRGF0YSh1c2VybmFtZTogc3RyaW5nKSB7XHJcbiAgICBpZiAoIXVzZXJuYW1lKSByZXR1cm4geyBwb3NpdGlvbnM6IFtdLCBoaXN0b3J5OiBbXSB9O1xyXG4gICAgdHJ5IHtcclxuICAgICAgICAvLyAxLiBHZXQgb3IgY3JlYXRlIHByb2ZpbGVcclxuICAgICAgICBsZXQgeyBkYXRhOiBwcm9maWxlLCBlcnJvcjogcHJvZmlsZUVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZVxyXG4gICAgICAgICAgICAuZnJvbSgncHJvZmlsZXMnKVxyXG4gICAgICAgICAgICAuc2VsZWN0KCdpZCcpXHJcbiAgICAgICAgICAgIC5lcSgndXNlcm5hbWUnLCB1c2VybmFtZS50b0xvd2VyQ2FzZSgpLnRyaW0oKSlcclxuICAgICAgICAgICAgLnNpbmdsZSgpO1xyXG5cclxuICAgICAgICBpZiAocHJvZmlsZUVycm9yICYmIHByb2ZpbGVFcnJvci5jb2RlID09PSAnUEdSU1QxMTYnKSB7IC8vIE5vdCBmb3VuZFxyXG4gICAgICAgICAgICBjb25zdCB7IGRhdGE6IG5ld1Byb2ZpbGUsIGVycm9yOiBjcmVhdGVFcnJvciB9ID0gYXdhaXQgc3VwYWJhc2VcclxuICAgICAgICAgICAgICAgIC5mcm9tKCdwcm9maWxlcycpXHJcbiAgICAgICAgICAgICAgICAuaW5zZXJ0KHsgdXNlcm5hbWU6IHVzZXJuYW1lLnRvTG93ZXJDYXNlKCkudHJpbSgpIH0pXHJcbiAgICAgICAgICAgICAgICAuc2VsZWN0KClcclxuICAgICAgICAgICAgICAgIC5zaW5nbGUoKTtcclxuICAgICAgICAgICAgaWYgKGNyZWF0ZUVycm9yKSB0aHJvdyBjcmVhdGVFcnJvcjtcclxuICAgICAgICAgICAgcHJvZmlsZSA9IG5ld1Byb2ZpbGU7XHJcbiAgICAgICAgfSBlbHNlIGlmIChwcm9maWxlRXJyb3IpIHtcclxuICAgICAgICAgICAgdGhyb3cgcHJvZmlsZUVycm9yO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgaWYgKCFwcm9maWxlKSByZXR1cm4geyBwb3NpdGlvbnM6IFtdLCBoaXN0b3J5OiBbXSB9O1xyXG5cclxuICAgICAgICAvLyAyLiBGZXRjaCBhbGwgdHJhZGVzIGZvciB0aGlzIHByb2ZpbGVcclxuICAgICAgICBjb25zdCB7IGRhdGE6IHRyYWRlcywgZXJyb3I6IHRyYWRlc0Vycm9yIH0gPSBhd2FpdCBzdXBhYmFzZVxyXG4gICAgICAgICAgICAuZnJvbSgndHJhZGVzJylcclxuICAgICAgICAgICAgLnNlbGVjdCgnKicpXHJcbiAgICAgICAgICAgIC5lcSgncHJvZmlsZV9pZCcsIHByb2ZpbGUuaWQpO1xyXG5cclxuICAgICAgICBpZiAodHJhZGVzRXJyb3IpIHRocm93IHRyYWRlc0Vycm9yO1xyXG5cclxuICAgICAgICAvLyAzLiBNYXAgdG8gaW50ZXJuYWwgUG9zaXRpb24gdHlwZVxyXG4gICAgICAgIGNvbnN0IHBvc2l0aW9uczogUG9zaXRpb25bXSA9ICh0cmFkZXMgfHwgW10pXHJcbiAgICAgICAgICAgIC5maWx0ZXIoKHQ6IGFueSkgPT4gdC5zdGF0dXMgPT09ICdPUEVOJylcclxuICAgICAgICAgICAgLm1hcCgodDogYW55KSA9PiAoe1xyXG4gICAgICAgICAgICAgICAgaWQ6IHQuaWQsXHJcbiAgICAgICAgICAgICAgICBzeW1ib2w6IHQuc3ltYm9sLFxyXG4gICAgICAgICAgICAgICAgdHlwZTogdC50eXBlIGFzIGFueSxcclxuICAgICAgICAgICAgICAgIHN0cmlrZTogTnVtYmVyKHQuc3RyaWtlKSxcclxuICAgICAgICAgICAgICAgIGV4cGlyYXRpb246IHQuZXhwaXJhdGlvbixcclxuICAgICAgICAgICAgICAgIHByZW1pdW06IE51bWJlcih0LnByZW1pdW0pLFxyXG4gICAgICAgICAgICAgICAgcXVhbnRpdHk6IHQucXVhbnRpdHksXHJcbiAgICAgICAgICAgICAgICBlbnRyeURhdGU6IHQuZW50cnlfZGF0ZSxcclxuICAgICAgICAgICAgICAgIGVudHJ5VGltZTogdC5lbnRyeV90aW1lLFxyXG4gICAgICAgICAgICAgICAgbm90ZXM6IHQubm90ZXMsXHJcbiAgICAgICAgICAgICAgICBzdGF0dXM6ICdPUEVOJyxcclxuICAgICAgICAgICAgICAgIGN1cnJlbnRQcmljZTogTnVtYmVyKHQucHJlbWl1bSksIC8vIERlZmF1bHQsIHdpbGwgYmUgdXBkYXRlZCBieSBjbGllbnRcclxuICAgICAgICAgICAgICAgIG1hcmtldFZhbHVlOiBOdW1iZXIodC5wcmVtaXVtKSAqIHQucXVhbnRpdHkgKiAxMDAsXHJcbiAgICAgICAgICAgICAgICBwbDogMFxyXG4gICAgICAgICAgICB9KSk7XHJcblxyXG4gICAgICAgIGNvbnN0IGhpc3Rvcnk6IFBvc2l0aW9uW10gPSAodHJhZGVzIHx8IFtdKVxyXG4gICAgICAgICAgICAuZmlsdGVyKCh0OiBhbnkpID0%2BIHQuc3RhdHVzID09PSAnQ0xPU0VEJylcclxuICAgICAgICAgICAgLm1hcCgodDogYW55KSA9PiAoe1xyXG4gICAgICAgICAgICAgICAgaWQ6IHQuaWQsXHJcbiAgICAgICAgICAgICAgICBzeW1ib2w6IHQuc3ltYm9sLFxyXG4gICAgICAgICAgICAgICAgdHlwZTogdC50eXBlIGFzIGFueSxcclxuICAgICAgICAgICAgICAgIHN0cmlrZTogTnVtYmVyKHQuc3RyaWtlKSxcclxuICAgICAgICAgICAgICAgIGV4cGlyYXRpb246IHQuZXhwaXJhdGlvbixcclxuICAgICAgICAgICAgICAgIHByZW1pdW06IE51bWJlcih0LnByZW1pdW0pLFxyXG4gICAgICAgICAgICAgICAgcXVhbnRpdHk6IHQucXVhbnRpdHksXHJcbiAgICAgICAgICAgICAgICBlbnRyeURhdGU6IHQuZW50cnlfZGF0ZSxcclxuICAgICAgICAgICAgICAgIGVudHJ5VGltZTogdC5lbnRyeV90aW1lLFxyXG4gICAgICAgICAgICAgICAgbm90ZXM6IHQubm90ZXMsXHJcbiAgICAgICAgICAgICAgICBzdGF0dXM6ICdDTE9TRUQnLFxyXG4gICAgICAgICAgICAgICAgZXhpdFByaWNlOiBOdW1iZXIodC5leGl0X3ByaWNlKSxcclxuICAgICAgICAgICAgICAgIGV4aXREYXRlOiB0LmV4aXRfZGF0ZSxcclxuICAgICAgICAgICAgICAgIHJlYWxpemVkUGw6IE51bWJlcih0LnJlYWxpemVkX3BsKSxcclxuICAgICAgICAgICAgICAgIGN1cnJlbnRQcmljZTogTnVtYmVyKHQuZXhpdF9wcmljZSB8fCAwKSxcclxuICAgICAgICAgICAgICAgIG1hcmtldFZhbHVlOiAwLFxyXG4gICAgICAgICAgICAgICAgcGw6IE51bWJlcih0LnJlYWxpemVkX3BsIHx8IDApXHJcbiAgICAgICAgICAgIH0pKTtcclxuXHJcbiAgICAgICAgcmV0dXJuIHsgcG9zaXRpb25zLCBoaXN0b3J5IH07XHJcbiAgICB9IGNhdGNoIChlcnJvcikge1xyXG4gICAgICAgIGNvbnNvbGUuZXJyb3IoYEVycm9yIHJlYWRpbmcgcG9ydGZvbGlvIGRhdGEgZm9yICR7dXNlcm5hbWV9OmAsIGVycm9yKTtcclxuICAgICAgICByZXR1cm4geyBwb3NpdGlvbnM6IFtdLCBoaXN0b3J5OiBbXSB9O1xyXG4gICAgfVxyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gc2F2ZVBvc2l0aW9ucyh1c2VybmFtZTogc3RyaW5nLCBwb3NpdGlvbnM6IFBvc2l0aW9uW10pIHtcclxuICAgIGlmICghdXNlcm5hbWUpIHJldHVybiB7IHN1Y2Nlc3M6IGZhbHNlIH07XHJcbiAgICB0cnkge1xyXG4gICAgICAgIGNvbnN0IHsgZGF0YTogcHJvZmlsZSB9ID0gYXdhaXQgc3VwYWJhc2VcclxuICAgICAgICAgICAgLmZyb20oJ3Byb2ZpbGVzJylcclxuICAgICAgICAgICAgLnNlbGVjdCgnaWQnKVxyXG4gICAgICAgICAgICAuZXEoJ3VzZXJuYW1lJywgdXNlcm5hbWUudG9Mb3dlckNhc2UoKS50cmltKCkpXHJcbiAgICAgICAgICAgIC5zaW5nbGUoKTtcclxuXHJcbiAgICAgICAgaWYgKCFwcm9maWxlKSByZXR1cm4geyBzdWNjZXNzOiBmYWxzZSwgZXJyb3I6IFwiUHJvZmlsZSBub3QgZm91bmRcIiB9O1xyXG5cclxuICAgICAgICAvLyBVcHNlcnQgdHJhZGVzXHJcbiAgICAgICAgY29uc3QgdHJhZGVEYXRhID0gcG9zaXRpb25zLm1hcChwID0%2BICh7XHJcbiAgICAgICAgICAgIGlkOiBwLmlkLmluY2x1ZGVzKCctJykgPyBwLmlkIDogdW5kZWZpbmVkLCAvLyBDaGVjayBpZiBpdCdzIGEgVVVJRFxyXG4gICAgICAgICAgICBwcm9maWxlX2lkOiBwcm9maWxlLmlkLFxyXG4gICAgICAgICAgICBzeW1ib2w6IHAuc3ltYm9sLFxyXG4gICAgICAgICAgICB0eXBlOiBwLnR5cGUsXHJcbiAgICAgICAgICAgIHN0cmlrZTogcC5zdHJpa2UsXHJcbiAgICAgICAgICAgIGV4cGlyYXRpb246IHAuZXhwaXJhdGlvbixcclxuICAgICAgICAgICAgcHJlbWl1bTogcC5wcmVtaXVtLFxyXG4gICAgICAgICAgICBxdWFudGl0eTogcC5xdWFudGl0eSxcclxuICAgICAgICAgICAgbm90ZXM6IHAubm90ZXMsXHJcbiAgICAgICAgICAgIHN0YXR1czogJ09QRU4nLFxyXG4gICAgICAgICAgICBlbnRyeV9kYXRlOiBwLmVudHJ5RGF0ZSB8fCBuZXcgRGF0ZSgpLnRvSVNPU3RyaW5nKCkuc3BsaXQoJ1QnKVswXSxcclxuICAgICAgICAgICAgZW50cnlfdGltZTogcC5lbnRyeVRpbWUgfHwgXCIwMDowMFwiXHJcbiAgICAgICAgfSkpO1xyXG5cclxuICAgICAgICBjb25zdCB7IGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZVxyXG4gICAgICAgICAgICAuZnJvbSgndHJhZGVzJylcclxuICAgICAgICAgICAgLnVwc2VydCh0cmFkZURhdGEsIHsgb25Db25mbGljdDogJ2lkJyB9KTtcclxuXHJcbiAgICAgICAgaWYgKGVycm9yKSB0aHJvdyBlcnJvcjtcclxuICAgICAgICByZXR1cm4geyBzdWNjZXNzOiB0cnVlIH07XHJcbiAgICB9IGNhdGNoIChlcnJvcikge1xyXG4gICAgICAgIGNvbnNvbGUuZXJyb3IoYEVycm9yIHNhdmluZyBwb3NpdGlvbnMgZm9yICR7dXNlcm5hbWV9OmAsIGVycm9yKTtcclxuICAgICAgICByZXR1cm4geyBzdWNjZXNzOiBmYWxzZSwgZXJyb3I6IFN0cmluZyhlcnJvcikgfTtcclxuICAgIH1cclxufVxyXG5cclxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHNhdmVIaXN0b3J5KHVzZXJuYW1lOiBzdHJpbmcsIGhpc3Rvcnk6IFBvc2l0aW9uW10pIHtcclxuICAgIGlmICghdXNlcm5hbWUpIHJldHVybiB7IHN1Y2Nlc3M6IGZhbHNlIH07XHJcbiAgICB0cnkge1xyXG4gICAgICAgIGNvbnN0IHsgZGF0YTogcHJvZmlsZSB9ID0gYXdhaXQgc3VwYWJhc2VcclxuICAgICAgICAgICAgLmZyb20oJ3Byb2ZpbGVzJylcclxuICAgICAgICAgICAgLnNlbGVjdCgnaWQnKVxyXG4gICAgICAgICAgICAuZXEoJ3VzZXJuYW1lJywgdXNlcm5hbWUudG9Mb3dlckNhc2UoKS50cmltKCkpXHJcbiAgICAgICAgICAgIC5zaW5nbGUoKTtcclxuXHJcbiAgICAgICAgaWYgKCFwcm9maWxlKSByZXR1cm4geyBzdWNjZXNzOiBmYWxzZSwgZXJyb3I6IFwiUHJvZmlsZSBub3QgZm91bmRcIiB9O1xyXG5cclxuICAgICAgICBjb25zdCB0cmFkZURhdGEgPSBoaXN0b3J5Lm1hcChwID0%2BICh7XHJcbiAgICAgICAgICAgIGlkOiBwLmlkLmluY2x1ZGVzKCctJykgPyBwLmlkIDogdW5kZWZpbmVkLFxyXG4gICAgICAgICAgICBwcm9maWxlX2lkOiBwcm9maWxlLmlkLFxyXG4gICAgICAgICAgICBzeW1ib2w6IHAuc3ltYm9sLFxyXG4gICAgICAgICAgICB0eXBlOiBwLnR5cGUsXHJcbiAgICAgICAgICAgIHN0cmlrZTogcC5zdHJpa2UsXHJcbiAgICAgICAgICAgIGV4cGlyYXRpb246IHAuZXhwaXJhdGlvbixcclxuICAgICAgICAgICAgcHJlbWl1bTogcC5wcmVtaXVtLFxyXG4gICAgICAgICAgICBxdWFudGl0eTogcC5xdWFudGl0eSxcclxuICAgICAgICAgICAgbm90ZXM6IHAubm90ZXMsXHJcbiAgICAgICAgICAgIHN0YXR1czogJ0NMT1NFRCcsXHJcbiAgICAgICAgICAgIGVudHJ5X2RhdGU6IHAuZW50cnlEYXRlLFxyXG4gICAgICAgICAgICBlbnRyeV90aW1lOiBwLmVudHJ5VGltZSxcclxuICAgICAgICAgICAgZXhpdF9wcmljZTogcC5leGl0UHJpY2UsXHJcbiAgICAgICAgICAgIGV4aXRfZGF0ZTogcC5leGl0RGF0ZSxcclxuICAgICAgICAgICAgcmVhbGl6ZWRfcGw6IHAucmVhbGl6ZWRQbFxyXG4gICAgICAgIH0pKTtcclxuXHJcbiAgICAgICAgY29uc3QgeyBlcnJvciB9ID0gYXdhaXQgc3VwYWJhc2VcclxuICAgICAgICAgICAgLmZyb20oJ3RyYWRlcycpXHJcbiAgICAgICAgICAgIC51cHNlcnQodHJhZGVEYXRhLCB7IG9uQ29uZmxpY3Q6ICdpZCcgfSk7XHJcblxyXG4gICAgICAgIGlmIChlcnJvcikgdGhyb3cgZXJyb3I7XHJcbiAgICAgICAgcmV0dXJuIHsgc3VjY2VzczogdHJ1ZSB9O1xyXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcclxuICAgICAgICBjb25zb2xlLmVycm9yKGBFcnJvciBzYXZpbmcgaGlzdG9yeSBmb3IgJHt1c2VybmFtZX06YCwgZXJyb3IpO1xyXG4gICAgICAgIHJldHVybiB7IHN1Y2Nlc3M6IGZhbHNlLCBlcnJvcjogU3RyaW5nKGVycm9yKSB9O1xyXG4gICAgfVxyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gZGVsZXRlVHJhZGUoaWQ6IHN0cmluZykge1xyXG4gICAgdHJ5IHtcclxuICAgICAgICBjb25zdCB7IGVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZVxyXG4gICAgICAgICAgICAuZnJvbSgndHJhZGVzJylcclxuICAgICAgICAgICAgLmRlbGV0ZSgpXHJcbiAgICAgICAgICAgIC5lcSgnaWQnLCBpZCk7XHJcblxyXG4gICAgICAgIGlmIChlcnJvcikgdGhyb3cgZXJyb3I7XHJcbiAgICAgICAgcmV0dXJuIHsgc3VjY2VzczogdHJ1ZSB9O1xyXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcclxuICAgICAgICBjb25zb2xlLmVycm9yKFwiRXJyb3IgZGVsZXRpbmcgdHJhZGU6XCIsIGVycm9yKTtcclxuICAgICAgICByZXR1cm4geyBzdWNjZXNzOiBmYWxzZSwgZXJyb3I6IFN0cmluZyhlcnJvcikgfTtcclxuICAgIH1cclxufVxyXG5cclxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGFuYWx5emVUcmFkZShwb3NpdGlvbjogUG9zaXRpb24pIHtcclxuICAgIGNvbnN0IHJlYyA9IGdldFJlY29tbWVuZGF0aW9uKHBvc2l0aW9uKTtcclxuXHJcbiAgICAvLyBDYWxjdWxhdGUgR3JlZWtzXHJcbiAgICAvLyBBcHByb3hpbWF0aW9uIGZvciBJViBpZiBub3QgcHJvdmlkZWQgKHN0YW5kYXJkaXplZCBmb3IgdGhlIGRlbW8vaGV1cmlzdGljIGVuZ2luZSlcclxuICAgIGNvbnN0IGl2ID0gMC4zNTsgLy8gMzUlIElWIGRlZmF1bHRcclxuICAgIGNvbnN0IHIgPSAwLjA1OyAvLyA1JSByaXNrLWZyZWUgcmF0ZVxyXG4gICAgY29uc3QgdG9kYXkgPSBuZXcgRGF0ZSgpO1xyXG4gICAgY29uc3QgZXhwaXJ5ID0gbmV3IERhdGUocG9zaXRpb24uZXhwaXJhdGlvbik7XHJcbiAgICBjb25zdCBUID0gTWF0aC5tYXgoMC4wMDEsIChleHBpcnkuZ2V0VGltZSgpIC0gdG9kYXkuZ2V0VGltZSgpKSAvICgxMDAwICogNjAgKiA2MCAqIDI0ICogMzY1KSk7XHJcblxyXG4gICAgLy8gV2UgbmVlZCB0aGUgdW5kZXJseWluZyBwcmljZSBmb3IgZ3JlZWtzLiBcclxuICAgIC8vIElmIGN1cnJlbnRQcmljZSBpcyB0aGUgb3B0aW9uIHByaWNlLCB3ZSBuZWVkIHRvIGZldGNoIHRoZSB1bmRlcmx5aW5nLlxyXG4gICAgY29uc3QgdW5kZXJseWluZyA9IGF3YWl0IGZldGNoU3RvY2tQcmljZShwb3NpdGlvbi5zeW1ib2wpO1xyXG4gICAgY29uc3QgUyA9IHVuZGVybHlpbmc%2FLnByaWNlIHx8IHBvc2l0aW9uLmN1cnJlbnRQcmljZTsgLy8gRmFsbGJhY2tcclxuXHJcbiAgICBjb25zdCBncmVla3MgPSBjYWxjdWxhdGVHcmVla3MoUywgcG9zaXRpb24uc3RyaWtlLCBULCByLCBpdiwgcG9zaXRpb24udHlwZSk7XHJcblxyXG4gICAgcmV0dXJuIHtcclxuICAgICAgICByZWNvbW1lbmRhdGlvbjogcmVjLnNpZ25hbCxcclxuICAgICAgICBzdGF0dXNDb2xvcjogcmVjLmNvbG9yLFxyXG4gICAgICAgIGFkdmljZTogcmVjLmFkdmljZSxcclxuICAgICAgICBjb25maWRlbmNlOiByZWMuY29uZmlkZW5jZSxcclxuICAgICAgICByaXNrTGV2ZWw6IHJlYy5yaXNrLFxyXG4gICAgICAgIGludGVsOiByZWMuaW50ZWwsXHJcbiAgICAgICAgZ3JlZWtzLFxyXG4gICAgICAgIHN0YXRzOiB7XHJcbiAgICAgICAgICAgIGRheXNSZW1haW5pbmc6IE1hdGguY2VpbChUICogMzY1KSxcclxuICAgICAgICAgICAgcGxQZXJjZW50OiAocG9zaXRpb24ucGwgLyAocG9zaXRpb24ucHJlbWl1bSAqIHBvc2l0aW9uLnF1YW50aXR5ICogMTAwKSkgKiAxMDAsXHJcbiAgICAgICAgICAgIHRpbWVWYWx1ZVJpc2s6IFQgPCAwLjEgPyBcIkhpZ2hcIiA6IFwiTG93XCJcclxuICAgICAgICB9XHJcbiAgICB9O1xyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gZ2V0R2VtaW5pVHJhZGVSZXZpZXcocG9zaXRpb246IFBvc2l0aW9uKSB7XHJcbiAgICBjb25zdCBhcGlLZXkgPSBwcm9jZXNzLmVudi5HRU1JTklfQVBJX0tFWSB8fCBcIkFJemFTeUFpNGZSZnJ5WlVVV0JwYm1tTEVFTHItbXZKSVU1dlF6Z1wiO1xyXG4gICAgaWYgKCFhcGlLZXkpIHtcclxuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoXCJHRU1JTklfQVBJX0tFWSBpcyBub3QgY29uZmlndXJlZFwiKTtcclxuICAgIH1cclxuXHJcbiAgICB0cnkge1xyXG4gICAgICAgIGNvbnN0IGdlbkFJID0gbmV3IEdvb2dsZUdlbmVyYXRpdmVBSShhcGlLZXkpO1xyXG4gICAgICAgIGNvbnN0IG1vZGVsID0gZ2VuQUkuZ2V0R2VuZXJhdGl2ZU1vZGVsKHsgbW9kZWw6IFwiZ2VtaW5pLTEuNS1mbGFzaFwiIH0pO1xyXG5cclxuICAgICAgICAvLyAxLiBHYXRoZXIgY29udGV4dDogSGlzdG9yaWNhbCBEYXRhICgzMCBkYXlzKVxyXG4gICAgICAgIGxldCBoaXN0b3JpY2FsRGF0YTogYW55W10gPSBbXTtcclxuICAgICAgICB0cnkge1xyXG4gICAgICAgICAgICBsZXQgeWYgPSB5YWhvb0ZpbmFuY2U7XHJcbiAgICAgICAgICAgIGlmICh0eXBlb2YgeWYgPT09ICdmdW5jdGlvbicpIHlmID0gbmV3ICh5ZiBhcyBhbnkpKCk7XHJcbiAgICAgICAgICAgIGNvbnN0IHJlc3VsdCA9IGF3YWl0IHlmLmNoYXJ0KHBvc2l0aW9uLnN5bWJvbCwge1xyXG4gICAgICAgICAgICAgICAgcGVyaW9kMTogc3ViRGF5cyhuZXcgRGF0ZSgpLCAzMCksXHJcbiAgICAgICAgICAgICAgICBwZXJpb2QyOiBuZXcgRGF0ZSgpLFxyXG4gICAgICAgICAgICAgICAgaW50ZXJ2YWw6ICcxZCdcclxuICAgICAgICAgICAgfSkgYXMgYW55O1xyXG4gICAgICAgICAgICBoaXN0b3JpY2FsRGF0YSA9IHJlc3VsdC5xdW90ZXMubWFwKChxOiBhbnkpID0%2BICh7XHJcbiAgICAgICAgICAgICAgICBkYXRlOiBxLmRhdGUsXHJcbiAgICAgICAgICAgICAgICBjbG9zZTogcS5jbG9zZVxyXG4gICAgICAgICAgICB9KSk7XHJcbiAgICAgICAgfSBjYXRjaCAoZSkge1xyXG4gICAgICAgICAgICBjb25zb2xlLndhcm4oXCJHZW1pbmkgUmV2aWV3OiBGYWlsZWQgdG8gZmV0Y2ggaGlzdG9yaWNhbCBjb250ZXh0XCIsIGUpO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gMi4gR2F0aGVyIGNvbnRleHQ6IFJlY2VudCBOZXdzXHJcbiAgICAgICAgY29uc3QgbmV3cyA9IGF3YWl0IGZldGNoQ29tcGFueU5ld3MocG9zaXRpb24uc3ltYm9sKTtcclxuICAgICAgICBjb25zdCBuZXdzU3VtbWFyeSA9IG5ld3MubWFwKChuOiBhbnkpID0%2BIG4uaGVhZGxpbmUpLmpvaW4oXCJcXG4tIFwiKTtcclxuXHJcbiAgICAgICAgLy8gMy4gQ29uc3RydWN0IFByb21wdFxyXG4gICAgICAgIGNvbnN0IHByb21wdCA9IGBcclxuICAgICAgICAgICAgWW91IGFyZSBhIHByb2Zlc3Npb25hbCBvcHRpb25zIHRyYWRlciBhbmQgbWFya2V0IGFuYWx5c3QuIEFuYWx5emUgdGhlIGZvbGxvd2luZyB0cmFkZSBhbmQgcHJvdmlkZSBhIHJlY29tbWVuZGF0aW9uLlxyXG4gICAgICAgICAgICBcclxuICAgICAgICAgICAgQ09OVFJBQ1QgREVUQUlMUzpcclxuICAgICAgICAgICAgLSBTeW1ib2w6ICR7cG9zaXRpb24uc3ltYm9sfVxyXG4gICAgICAgICAgICAtIFR5cGU6ICR7cG9zaXRpb24udHlwZX1cclxuICAgICAgICAgICAgLSBTdHJpa2U6ICQke3Bvc2l0aW9uLnN0cmlrZX1cclxuICAgICAgICAgICAgLSBFeHBpcmF0aW9uOiAke3Bvc2l0aW9uLmV4cGlyYXRpb259XHJcbiAgICAgICAgICAgIC0gUXVhbnRpdHk6ICR7cG9zaXRpb24ucXVhbnRpdHl9XHJcbiAgICAgICAgICAgIC0gRW50cnkgUHJlbWl1bTogJCR7cG9zaXRpb24ucHJlbWl1bX1cclxuICAgICAgICAgICAgXHJcbiAgICAgICAgICAgIENVUlJFTlQgREFUQTpcclxuICAgICAgICAgICAgLSBDdXJyZW50IE9wdGlvbiBQcmljZTogJCR7cG9zaXRpb24uY3VycmVudFByaWNlfVxyXG4gICAgICAgICAgICAtIEN1cnJlbnQgUC9MOiAkJHtwb3NpdGlvbi5wbC50b0ZpeGVkKDIpfVxyXG4gICAgICAgICAgICAtIEdyZWVrczogRGVsdGEgJHtwb3NpdGlvbi5ncmVla3M%2FLmRlbHRhPy50b0ZpeGVkKDIpfSwgVGhldGEgJHtwb3NpdGlvbi5ncmVla3M%2FLnRoZXRhPy50b0ZpeGVkKDIpfSwgSVYgJHtwb3NpdGlvbi5ncmVla3M%2FLml2Py50b0ZpeGVkKDIpfVxyXG4gICAgICAgICAgICBcclxuICAgICAgICAgICAgTUFSS0VUIENPTlRFWFQ6XHJcbiAgICAgICAgICAgIC0gUmVjZW50IFBlcmZvcm1hbmNlOiAke2hpc3RvcmljYWxEYXRhLmxlbmd0aCA%2BIDAgPyBcIkxhc3QgMzAgZGF5cyBwcmljZSBhY3Rpb24gcHJvdmlkZWRcIiA6IFwiTm90IGF2YWlsYWJsZVwifVxyXG4gICAgICAgICAgICAtIFJlY2VudCBOZXdzIEhlYWRsaW5lczpcclxuICAgICAgICAgICAgJHtuZXdzU3VtbWFyeSB8fCBcIk5vIHJlY2VudCBtYWpvciBoZWFkbGluZXMuXCJ9XHJcbiAgICAgICAgICAgIFxyXG4gICAgICAgICAgICBUQVNLOlxyXG4gICAgICAgICAgICAxLiBFdmFsdWF0ZSBtYXJrZXQgc2VudGltZW50IGZvciAke3Bvc2l0aW9uLnN5bWJvbH0uXHJcbiAgICAgICAgICAgIDIuIEFuYWx5emUgb3B0aW9ucyBtYXJrZXQgZm9yY2VzIChUaW1lIGRlY2F5IHZzIFByaWNlIG1vdmVtZW50KS5cclxuICAgICAgICAgICAgMy4gUHJvdmlkZSBhIGRlZmluaXRpdmUgcmVjb21tZW5kYXRpb246IEhPTEQsIFNFTEwgKFRha2UgUHJvZml0KSwgb3IgU0VMTCAoQ3V0IExvc3MpLlxyXG4gICAgICAgICAgICA0LiBQcm92aWRlIGEgY29uZmlkZW5jZSBzY29yZSAoMC0xMDApLlxyXG4gICAgICAgICAgICBcclxuICAgICAgICAgICAgUkVTUE9OU0UgRk9STUFUIChKU09OIE9OTFkpOlxyXG4gICAgICAgICAgICB7XHJcbiAgICAgICAgICAgICAgICBcInNlbnRpbWVudFwiOiBcIkJ1bGxpc2ggfCBCZWFyaXNoIHwgTmV1dHJhbFwiLFxyXG4gICAgICAgICAgICAgICAgXCJhbmFseXNpc1wiOiBcIjItMyBzZW50ZW5jZXMgb24gbWFya2V0IGZvcmNlcyBhbmQgc2VudGltZW50XCIsXHJcbiAgICAgICAgICAgICAgICBcInJlY29tbWVuZGF0aW9uXCI6IFwiSE9MRCB8IFNFTEwgKFRha2UgUHJvZml0KSB8IFNFTEwgKEN1dCBMb3NzKVwiLFxyXG4gICAgICAgICAgICAgICAgXCJhZHZpY2VcIjogXCIxIHNob3J0IGRpcmVjdCBzZW50ZW5jZSBvZiBhZHZpY2VcIixcclxuICAgICAgICAgICAgICAgIFwiY29uZmlkZW5jZVwiOiBudW1iZXIsXHJcbiAgICAgICAgICAgICAgICBcImZvcmNlc1wiOiB7XHJcbiAgICAgICAgICAgICAgICAgICAgXCJ0aGV0YVwiOiBcIkltcGFjdCBvZiB0aW1lIGRlY2F5IGRlc2NyaXB0aW9uXCIsXHJcbiAgICAgICAgICAgICAgICAgICAgXCJkZWx0YVwiOiBcIkltcGFjdCBvZiBwcmljZSBtb3ZlbWVudCBkZXNjcmlwdGlvblwiXHJcbiAgICAgICAgICAgICAgICB9XHJcbiAgICAgICAgICAgIH1cclxuICAgICAgICBgO1xyXG5cclxuICAgICAgICBjb25zdCByZXN1bHQgPSBhd2FpdCBtb2RlbC5nZW5lcmF0ZUNvbnRlbnQocHJvbXB0KTtcclxuICAgICAgICBjb25zdCByZXNwb25zZVRleHQgPSByZXN1bHQucmVzcG9uc2UudGV4dCgpO1xyXG5cclxuICAgICAgICAvLyBFeHRyYWN0IEpTT04gKHNvbWV0aW1lcyBBSSB3cmFwcyBpdCBpbiBtYXJrZG93biBibG9ja3MpXHJcbiAgICAgICAgY29uc3QganNvbk1hdGNoID0gcmVzcG9uc2VUZXh0Lm1hdGNoKC9cXHtbXFxzXFxTXSpcXH0vKTtcclxuICAgICAgICBjb25zdCBhbmFseXNpcyA9IGpzb25NYXRjaCA%2FIEpTT04ucGFyc2UoanNvbk1hdGNoWzBdKSA6IEpTT04ucGFyc2UocmVzcG9uc2VUZXh0KTtcclxuXHJcbiAgICAgICAgcmV0dXJuIGFuYWx5c2lzO1xyXG4gICAgfSBjYXRjaCAoZXJyb3I6IGFueSkge1xyXG4gICAgICAgIGNvbnNvbGUuZXJyb3IoXCJHZW1pbmkgQUkgUmV2aWV3IEVycm9yOlwiLCBlcnJvcik7XHJcbiAgICAgICAgdGhyb3cgbmV3IEVycm9yKGVycm9yLm1lc3NhZ2UgfHwgXCJUYWlsb3JlZCBBSSBhbmFseXNpcyBmYWlsZWRcIik7XHJcbiAgICB9XHJcbn1cclxuXHJcbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBjaGF0V2l0aEdlbWluaShwb3NpdGlvbjogUG9zaXRpb24sIGhpc3Rvcnk6IHsgcm9sZTogc3RyaW5nOyBwYXJ0czogeyB0ZXh0OiBzdHJpbmcgfVtdIH1bXSwgdXNlck1lc3NhZ2U6IHN0cmluZykge1xyXG4gICAgY29uc3QgYXBpS2V5ID0gcHJvY2Vzcy5lbnYuR0VNSU5JX0FQSV9LRVkgfHwgXCJBSXphU3lBaTRmUmZyeVpVVVdCcGJtbUxFRUxyLW12SklVNXZRemdcIjtcclxuICAgIGlmICghYXBpS2V5KSB0aHJvdyBuZXcgRXJyb3IoXCJHRU1JTklfQVBJX0tFWSBub3QgZm91bmRcIik7XHJcblxyXG4gICAgY29uc29sZS5sb2coYEdlbWluaSBDaGF0OiBTdGFydGluZyBkaXNjdXNzaW9uIGZvciAke3Bvc2l0aW9uLnN5bWJvbH0gd2l0aCAke2hpc3RvcnkubGVuZ3RofSB0dXJucyBvZiBoaXN0b3J5LmApO1xyXG5cclxuICAgIHRyeSB7XHJcbiAgICAgICAgY29uc3QgZ2VuQUkgPSBuZXcgR29vZ2xlR2VuZXJhdGl2ZUFJKGFwaUtleSk7XHJcbiAgICAgICAgY29uc3QgbW9kZWwgPSBnZW5BSS5nZXRHZW5lcmF0aXZlTW9kZWwoeyBtb2RlbDogXCJnZW1pbmktMS41LWZsYXNoXCIgfSk7XHJcblxyXG4gICAgICAgIC8vIDEuIFJlLWZldGNoIGNvbnRleHQgZm9yIHRoZSBzeXN0ZW1pYyBwcm9tcHRcclxuICAgICAgICBjb25zdCB1bmRlcmx5aW5nID0gYXdhaXQgZmV0Y2hTdG9ja1ByaWNlKHBvc2l0aW9uLnN5bWJvbCk7XHJcbiAgICAgICAgY29uc3QgbmV3cyA9IGF3YWl0IGZldGNoQ29tcGFueU5ld3MocG9zaXRpb24uc3ltYm9sKTtcclxuICAgICAgICBjb25zdCBuZXdzU3VtbWFyeSA9IG5ld3MubWFwKChuOiBhbnkpID0%2BIG4uaGVhZGxpbmUpLmpvaW4oXCJcXG4tIFwiKTtcclxuXHJcbiAgICAgICAgY29uc3Qgc3lzdGVtQ29udGV4dCA9IGBcclxuICAgICAgICAgICAgWW91IGFyZSBhIHByb2Zlc3Npb25hbCBvcHRpb25zIHRyYWRlci4gWW91IGFyZSBkaXNjdXNzaW5nIHRoaXMgc3BlY2lmaWMgdHJhZGU6XHJcbiAgICAgICAgICAgIC0gJHtwb3NpdGlvbi5zeW1ib2x9ICQke3Bvc2l0aW9uLnN0cmlrZX0gJHtwb3NpdGlvbi50eXBlfSBleHBpcmluZyAke3Bvc2l0aW9uLmV4cGlyYXRpb259LlxyXG4gICAgICAgICAgICAtIFVuZGVybHlpbmcgUHJpY2U6ICQke3VuZGVybHlpbmc%2FLnByaWNlIHx8IFwiTi9BXCJ9XHJcbiAgICAgICAgICAgIC0gQ3VycmVudCBHcmVla3M6IERlbHRhICR7cG9zaXRpb24uZ3JlZWtzPy5kZWx0YT8udG9GaXhlZCgyKX0sIFRoZXRhICR7cG9zaXRpb24uZ3JlZWtzPy50aGV0YT8udG9GaXhlZCgyKX0sIElWICR7cG9zaXRpb24uZ3JlZWtzPy5pdj8udG9GaXhlZCgyKX1cclxuICAgICAgICAgICAgLSBSZWNlbnQgTmV3cyBIZWFkbGluZXM6XHJcbiAgICAgICAgICAgICR7bmV3c1N1bW1hcnkgfHwgXCJObyBtYWpvciBoZWFkbGluZXMgZm91bmQuXCJ9XHJcblxyXG4gICAgICAgICAgICBBbnN3ZXIgdGhlIHVzZXIncyBxdWVzdGlvbnMgYWJvdXQgdGhpcyB0cmFkZS4gQmUgY29uY2lzZSwgcHJvZmVzc2lvbmFsLCBhbmQgZGF0YS1kcml2ZW4uXHJcbiAgICAgICAgICAgIElmIHRoZXkgYXNrIGFib3V0IHJpc2tzLCBtZW50aW9uIFRoZXRhIGRlY2F5IG9yIERlbHRhIGV4cG9zdXJlLlxyXG4gICAgICAgICAgICBBY2tub3dsZWRnZSBjb250ZXh0IHdpdGggJ1VuZGVyc3Rvb2QnIGluIHRoZSBmaXJzdCB0dXJuLlxyXG4gICAgICAgIGA7XHJcblxyXG4gICAgICAgIC8vIEVuc3VyZSByb2xlcyBhbHRlcm5hdGUgY29ycmVjdGx5OiB1c2VyIC0%2BIG1vZGVsIC0%2BIHVzZXIgLT4gbW9kZWxcclxuICAgICAgICAvLyBXZSBzdGFydCB3aXRoIGEgc3lzdGVtIGNvbnRleHQgZnJvbSB0aGUgJ3VzZXInIGFuZCBhbiBhY2tub3dsZWRnbWVudCBmcm9tIHRoZSAnbW9kZWwnLlxyXG4gICAgICAgIGNvbnN0IGluaXRpYWxIaXN0b3J5ID0gW1xyXG4gICAgICAgICAgICB7IHJvbGU6IFwidXNlclwiLCBwYXJ0czogW3sgdGV4dDogXCJTeXN0ZW0gQ29udGV4dDogXCIgKyBzeXN0ZW1Db250ZXh0ICsgXCJcXG5cXG5QbGVhc2UgYWNrbm93bGVkZ2Ugd2l0aCAnVW5kZXJzdG9vZCcuXCIgfV0gfSxcclxuICAgICAgICAgICAgeyByb2xlOiBcIm1vZGVsXCIsIHBhcnRzOiBbeyB0ZXh0OiBcIlVuZGVyc3Rvb2QuIEkgaGF2ZSB0aGUgdHJhZGUgZGF0YSBmb3IgXCIgKyBwb3NpdGlvbi5zeW1ib2wgKyBcIi4gSG93IGNhbiBJIGhlbHAgeW91IGFuYWx5emUgaXQ%2FXCIgfV0gfVxyXG4gICAgICAgIF07XHJcblxyXG4gICAgICAgIC8vIElmIHRoZSBmaXJzdCBtZXNzYWdlIGluIHRoZSBwcm92aWRlZCBoaXN0b3J5IGlzIGZyb20gdGhlICdtb2RlbCcsIHdlIGNhbiBqdXN0IGFwcGVuZCBpdC5cclxuICAgICAgICAvLyBJZiBpdCB3YXMgZnJvbSBhICd1c2VyJyAodW5saWtlbHkgd2l0aCBvdXIgY3VycmVudCBVSSksIHdlJ2QgbmVlZCBtb3JlIGxvZ2ljLlxyXG4gICAgICAgIGNvbnN0IGNoYXQgPSBtb2RlbC5zdGFydENoYXQoe1xyXG4gICAgICAgICAgICBoaXN0b3J5OiBbLi4uaW5pdGlhbEhpc3RvcnksIC4uLmhpc3RvcnldXHJcbiAgICAgICAgfSk7XHJcblxyXG4gICAgICAgIGNvbnNvbGUubG9nKGBHZW1pbmkgQ2hhdDogU2VuZGluZyBtZXNzYWdlIC0gXCIke3VzZXJNZXNzYWdlLnN1YnN0cmluZygwLCA1MCl9Li4uXCJgKTtcclxuICAgICAgICBjb25zdCByZXN1bHQgPSBhd2FpdCBjaGF0LnNlbmRNZXNzYWdlKHVzZXJNZXNzYWdlKTtcclxuICAgICAgICBjb25zdCByZXNwb25zZVRleHQgPSByZXN1bHQucmVzcG9uc2UudGV4dCgpO1xyXG4gICAgICAgIGNvbnNvbGUubG9nKGBHZW1pbmkgQ2hhdDogUmVjZWl2ZWQgcmVzcG9uc2UgKCR7cmVzcG9uc2VUZXh0Lmxlbmd0aH0gY2hhcnMpYCk7XHJcblxyXG4gICAgICAgIHJldHVybiByZXNwb25zZVRleHQ7XHJcbiAgICB9IGNhdGNoIChlcnJvcjogYW55KSB7XHJcbiAgICAgICAgY29uc29sZS5lcnJvcihcIkdlbWluaSBDaGF0IENyaXRpY2FsIEVycm9yOlwiLCBlcnJvcik7XHJcbiAgICAgICAgcmV0dXJuIGBJJ20gaGF2aW5nIHRyb3VibGUgcHJvY2Vzc2luZyB0aGF0IHJpZ2h0IG5vdy4gRXJyb3I6ICR7ZXJyb3IubWVzc2FnZSB8fCAnVW5rbm93biBBUEkgZmFpbHVyZSd9YDtcclxuICAgIH1cclxufVxyXG5cclxuY29uc3QgUE9MWUdPTl9CQVNFX1VSTCA9IFwiaHR0cHM6Ly9hcGkubWFzc2l2ZS5jb21cIjtcclxuXHJcbmFzeW5jIGZ1bmN0aW9uIGZldGNoUG9seWdvbihlbmRwb2ludDogc3RyaW5nLCBwYXJhbXM6IFJlY29yZDxzdHJpbmcsIHN0cmluZz4gPSB7fSkge1xyXG4gICAgY29uc3QgYXBpS2V5ID0gcHJvY2Vzcy5lbnYuUE9MWUdPTl9BUElfS0VZIHx8IFwiekVNOU15M3pkYVZxRHBlWmV4ODFkOWlLT0RmalI2MTBcIjtcclxuICAgIGlmICghYXBpS2V5KSByZXR1cm4gbnVsbDtcclxuICAgIGNvbnN0IHF1ZXJ5U3RyaW5nID0gbmV3IFVSTFNlYXJjaFBhcmFtcyh7IC4uLnBhcmFtcywgYXBpS2V5IH0pLnRvU3RyaW5nKCk7XHJcbiAgICBjb25zdCB1cmwgPSBgJHtQT0xZR09OX0JBU0VfVVJMfSR7ZW5kcG9pbnR9PyR7cXVlcnlTdHJpbmd9YDtcclxuICAgIHRyeSB7XHJcbiAgICAgICAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2godXJsLCB7IG5leHQ6IHsgcmV2YWxpZGF0ZTogNjAgfSB9KTsgLy8gQ2FjaGUgMSBtaW5cclxuICAgICAgICBpZiAoIXJlcy5vaykgdGhyb3cgbmV3IEVycm9yKGBQb2x5Z29uL01hc3NpdmUgQVBJIEVycm9yOiAke3Jlcy5zdGF0dXN9YCk7XHJcbiAgICAgICAgcmV0dXJuIGF3YWl0IHJlcy5qc29uKCk7XHJcbiAgICB9IGNhdGNoIChlKSB7XHJcbiAgICAgICAgY29uc29sZS5lcnJvcihgUG9seWdvbi9NYXNzaXZlIEZldGNoIEVycm9yICgke2VuZHBvaW50fSk6YCwgZSk7XHJcbiAgICAgICAgcmV0dXJuIG51bGw7XHJcbiAgICB9XHJcbn1cclxuXHJcbi8vIEZhbGxiYWNrIHRvIHJvYnVzdCBtb2NrIGRhdGEgaWYgQVBJIGZhaWxzIG9yIGlzIHJlc3RyaWN0ZWQgKEZyZWUgVGllcilcclxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGZldGNoU21hcnRNb25leUZsb3coKSB7XHJcbiAgICAvLyBTaW11bGF0ZSBBUEkgZGVsYXkgZm9yIHJlYWxpc21cclxuICAgIGF3YWl0IG5ldyBQcm9taXNlKHJlc29sdmUgPT4gc2V0VGltZW91dChyZXNvbHZlLCA4MDApKTtcclxuXHJcbiAgICBjb25zdCB0aWNrZXJzID0gW1wiU1BZXCIsIFwiUVFRXCIsIFwiTlZEQVwiLCBcIlRTTEFcIiwgXCJBTURcIiwgXCJNRVRBXCIsIFwiQU1aTlwiLCBcIkFBUExcIl07XHJcbiAgICBjb25zdCBmbG93RGF0YTogYW55W10gPSBbXTtcclxuXHJcbiAgICBjb25zdCBub3cgPSBuZXcgRGF0ZSgpO1xyXG4gICAgY29uc3QgZXhwaXJ5RGF0ZSA9IG5ldyBEYXRlKG5vdyk7XHJcbiAgICBleHBpcnlEYXRlLnNldERhdGUobm93LmdldERhdGUoKSArICg1IC0gbm93LmdldERheSgpICsgNykgJSA3KTsgLy8gTmV4dCBGcmlkYXlcclxuICAgIGNvbnN0IGV4cGlyeVN0ciA9IGV4cGlyeURhdGUudG9JU09TdHJpbmcoKS5zcGxpdCgnVCcpWzBdO1xyXG5cclxuICAgIC8vIEdlbmVyYXRlIHJlYWxpc3RpYy1sb29raW5nIFwiU21hcnQgTW9uZXlcIiBmbG93XHJcbiAgICB0aWNrZXJzLmZvckVhY2godGlja2VyID0%2BIHtcclxuICAgICAgICAvLyBSYW5kb21seSBkZWNpZGUgaWYgdGhpcyB0aWNrZXIgaGFzIFwiZmxvd1wiIHRvZGF5XHJcbiAgICAgICAgaWYgKE1hdGgucmFuZG9tKCkgPiAwLjMpIHtcclxuICAgICAgICAgICAgY29uc3QgdHlwZXMgPSBbXCJjYWxsXCIsIFwicHV0XCJdO1xyXG4gICAgICAgICAgICBjb25zdCB0eXBlID0gdHlwZXNbTWF0aC5mbG9vcihNYXRoLnJhbmRvbSgpICogdHlwZXMubGVuZ3RoKV0gYXMgXCJjYWxsXCIgfCBcInB1dFwiO1xyXG4gICAgICAgICAgICBjb25zdCBzZW50aW1lbnQgPSB0eXBlID09PSBcImNhbGxcIiA%2FIFwiQnVsbGlzaFwiIDogXCJCZWFyaXNoXCI7XHJcblxyXG4gICAgICAgICAgICAvLyBCYXNlIHByaWNlIHJlZmVyZW5jZSAoYXBwcm94aW1hdGUgdG8gZ2VuZXJhdGUgcmVhbGlzdGljIHN0cmlrZXMpXHJcbiAgICAgICAgICAgIGNvbnN0IGJhc2VQcmljZSA9IHRpY2tlciA9PT0gXCJTUFlcIiA%2FIDUwMCA6IHRpY2tlciA9PT0gXCJOVkRBXCIgPyA5MDAgOiB0aWNrZXIgPT09IFwiVFNMQVwiID8gMTgwIDogMTUwO1xyXG4gICAgICAgICAgICBjb25zdCBzdHJpa2UgPSBNYXRoLnJvdW5kKGJhc2VQcmljZSAqICgxICsgKE1hdGgucmFuZG9tKCkgKiAwLjEgLSAwLjA1KSkpO1xyXG5cclxuICAgICAgICAgICAgY29uc3Qgdm9sdW1lID0gTWF0aC5mbG9vcihNYXRoLnJhbmRvbSgpICogNTAwMCkgKyA1MDA7XHJcbiAgICAgICAgICAgIGNvbnN0IHByZW1pdW0gPSAoTWF0aC5yYW5kb20oKSAqIDEwICsgMC41KS50b0ZpeGVkKDIpO1xyXG5cclxuICAgICAgICAgICAgZmxvd0RhdGEucHVzaCh7XHJcbiAgICAgICAgICAgICAgICBzeW1ib2w6IHRpY2tlcixcclxuICAgICAgICAgICAgICAgIGNvbnRyYWN0OiBgJHt0aWNrZXJ9ICR7ZXhwaXJ5U3RyfSAke3N0cmlrZX0ke3R5cGUgPT09ICdjYWxsJyA%2FICdDJyA6ICdQJ31gLFxyXG4gICAgICAgICAgICAgICAgdHlwZTogdHlwZSxcclxuICAgICAgICAgICAgICAgIHN0cmlrZTogc3RyaWtlLFxyXG4gICAgICAgICAgICAgICAgZXhwaXJ5OiBleHBpcnlTdHIsXHJcbiAgICAgICAgICAgICAgICBwcmljZTogcGFyc2VGbG9hdChwcmVtaXVtKSxcclxuICAgICAgICAgICAgICAgIHZvbHVtZTogdm9sdW1lLFxyXG4gICAgICAgICAgICAgICAgc2VudGltZW50OiBzZW50aW1lbnQsXHJcbiAgICAgICAgICAgICAgICBzY29yZTogTWF0aC5mbG9vcihNYXRoLnJhbmRvbSgpICogNDApICsgNjAsIC8vIFNjb3JlIDYwLTEwMFxyXG4gICAgICAgICAgICAgICAgdGltZXN0YW1wOiBuZXcgRGF0ZSgpLnRvTG9jYWxlVGltZVN0cmluZygpXHJcbiAgICAgICAgICAgIH0pO1xyXG4gICAgICAgIH1cclxuICAgIH0pO1xyXG5cclxuICAgIC8vIEFkZCBzb21lIFwiV2hhbGVcIiB0cmFkZXNcclxuICAgIGZsb3dEYXRhLnB1c2goe1xyXG4gICAgICAgIHN5bWJvbDogXCJTUFlcIixcclxuICAgICAgICBjb250cmFjdDogYFNQWSAke2V4cGlyeVN0cn0gNTEwQ2AsXHJcbiAgICAgICAgdHlwZTogXCJjYWxsXCIsXHJcbiAgICAgICAgc3RyaWtlOiA1MTAsXHJcbiAgICAgICAgZXhwaXJ5OiBleHBpcnlTdHIsXHJcbiAgICAgICAgcHJpY2U6IDMuNDUsXHJcbiAgICAgICAgdm9sdW1lOiAxMjUwMCxcclxuICAgICAgICBzZW50aW1lbnQ6IFwiQnVsbGlzaFwiLFxyXG4gICAgICAgIHNjb3JlOiA5OCxcclxuICAgICAgICB0aW1lc3RhbXA6IG5ldyBEYXRlKCkudG9Mb2NhbGVUaW1lU3RyaW5nKClcclxuICAgIH0pO1xyXG5cclxuICAgIHJldHVybiBmbG93RGF0YS5zb3J0KChhLCBiKSA9PiBiLnNjb3JlIC0gYS5zY29yZSkuc2xpY2UoMCwgMTUpO1xyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gbGlzdFByb2ZpbGVzKCkge1xyXG4gICAgdHJ5IHtcclxuICAgICAgICBjb25zdCBwcm9maWxlcyA9IGZzLnJlYWRkaXJTeW5jKFVTRVJTX0RJUikuZmlsdGVyKGZpbGUgPT4gZnMuc3RhdFN5bmMocGF0aC5qb2luKFVTRVJTX0RJUiwgZmlsZSkpLmlzRGlyZWN0b3J5KCkpO1xyXG4gICAgICAgIHJldHVybiBwcm9maWxlcztcclxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XHJcbiAgICAgICAgY29uc29sZS5lcnJvcihcIkVycm9yIGxpc3RpbmcgcHJvZmlsZXM6XCIsIGVycm9yKTtcclxuICAgICAgICByZXR1cm4gW107XHJcbiAgICB9XHJcbn1cclxuXHJcbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBnZXRMaXZlVHJhZGVPcHBvcnR1bml0aWVzKCkge1xyXG4gICAgLy8gV2F0Y2hsaXN0IGZvciBTY2FubmVyXHJcbiAgICBjb25zdCB3YXRjaGxpc3QgPSBbXCJOVkRBXCIsIFwiU1BZXCIsIFwiUVFRXCIsIFwiVFNMQVwiLCBcIkFNRFwiLCBcIkFBUExcIiwgXCJNU0ZUXCIsIFwiQU1aTlwiXTtcclxuICAgIGNvbnN0IG9wcG9ydHVuaXRpZXM6IGFueVtdID0gW107XHJcblxyXG4gICAgYXdhaXQgUHJvbWlzZS5hbGwod2F0Y2hsaXN0Lm1hcChhc3luYyAoc3ltYm9sKSA9PiB7XHJcbiAgICAgICAgdHJ5IHtcclxuICAgICAgICAgICAgLy8gRmV0Y2ggUmVhbCBRdW90ZVxyXG4gICAgICAgICAgICBjb25zdCBxdW90ZSA9IGF3YWl0IGZldGNoU3RvY2tQcmljZShzeW1ib2wpOyAvLyBVc2VzIGludGVybmFsIFlhaG9vL1BvbHlnb24gbG9naWNcclxuICAgICAgICAgICAgaWYgKCFxdW90ZSkgcmV0dXJuO1xyXG5cclxuICAgICAgICAgICAgY29uc3QgY2hhbmdlUGVyY2VudCA9IHF1b3RlLmNoYW5nZVBlcmNlbnQgfHwgMDtcclxuICAgICAgICAgICAgY29uc3QgcHJpY2UgPSBxdW90ZS5wcmljZTtcclxuXHJcbiAgICAgICAgICAgIC8vIEhldXJpc3RpYyBTaWduYWwgR2VuZXJhdGlvbiBiYXNlZCBvbiBSRUFMIFByaWNlIEFjdGlvblxyXG4gICAgICAgICAgICBpZiAoY2hhbmdlUGVyY2VudCA%2BIDEuNSkge1xyXG4gICAgICAgICAgICAgICAgb3Bwb3J0dW5pdGllcy5wdXNoKHtcclxuICAgICAgICAgICAgICAgICAgICBzeW1ib2wsXHJcbiAgICAgICAgICAgICAgICAgICAgdHlwZTogXCJDQUxMXCIsXHJcbiAgICAgICAgICAgICAgICAgICAgc3RyYXRlZ3k6IFwiTW9tZW50dW0gQnJlYWtvdXRcIixcclxuICAgICAgICAgICAgICAgICAgICBjb252aWN0aW9uOiBcIkhpZ2hcIixcclxuICAgICAgICAgICAgICAgICAgICBwcmljZTogcHJpY2UsXHJcbiAgICAgICAgICAgICAgICAgICAgcmVhc29uOiBgJHtzeW1ib2x9IGlzIHN1cmdpbmcgKCske2NoYW5nZVBlcmNlbnQudG9GaXhlZCgyKX0lKS4gVHJlbmQgZm9sbG93aW5nIHNldHVwLmAsXHJcbiAgICAgICAgICAgICAgICAgICAgZW50cnk6IChwcmljZSAqIDEuMDEpLnRvRml4ZWQoMiksXHJcbiAgICAgICAgICAgICAgICAgICAgdGFyZ2V0OiAocHJpY2UgKiAxLjA1KS50b0ZpeGVkKDIpLFxyXG4gICAgICAgICAgICAgICAgICAgIHN0b3A6IChwcmljZSAqIDAuOTgpLnRvRml4ZWQoMilcclxuICAgICAgICAgICAgICAgIH0pO1xyXG4gICAgICAgICAgICB9IGVsc2UgaWYgKGNoYW5nZVBlcmNlbnQgPCAtMS41KSB7XHJcbiAgICAgICAgICAgICAgICBvcHBvcnR1bml0aWVzLnB1c2goe1xyXG4gICAgICAgICAgICAgICAgICAgIHN5bWJvbCxcclxuICAgICAgICAgICAgICAgICAgICB0eXBlOiBcIlBVVFwiLFxyXG4gICAgICAgICAgICAgICAgICAgIHN0cmF0ZWd5OiBcIlRyZW5kIFJldmVyc2FsIC8gRHJvcFwiLFxyXG4gICAgICAgICAgICAgICAgICAgIGNvbnZpY3Rpb246IFwiSGlnaFwiLFxyXG4gICAgICAgICAgICAgICAgICAgIHByaWNlOiBwcmljZSxcclxuICAgICAgICAgICAgICAgICAgICByZWFzb246IGAke3N5bWJvbH0gaXMgY29ycmVjdGluZyAoLSR7TWF0aC5hYnMoY2hhbmdlUGVyY2VudCkudG9GaXhlZCgyKX0lKS4gQmVhcmlzaCBtb21lbnR1bS5gLFxyXG4gICAgICAgICAgICAgICAgICAgIGVudHJ5OiAocHJpY2UgKiAwLjk5KS50b0ZpeGVkKDIpLFxyXG4gICAgICAgICAgICAgICAgICAgIHRhcmdldDogKHByaWNlICogMC45NSkudG9GaXhlZCgyKSxcclxuICAgICAgICAgICAgICAgICAgICBzdG9wOiAocHJpY2UgKiAxLjAyKS50b0ZpeGVkKDIpXHJcbiAgICAgICAgICAgICAgICB9KTtcclxuICAgICAgICAgICAgfSBlbHNlIGlmIChNYXRoLmFicyhjaGFuZ2VQZXJjZW50KSA8IDAuMykge1xyXG4gICAgICAgICAgICAgICAgb3Bwb3J0dW5pdGllcy5wdXNoKHtcclxuICAgICAgICAgICAgICAgICAgICBzeW1ib2wsXHJcbiAgICAgICAgICAgICAgICAgICAgdHlwZTogXCJJUk9OIENPTkRPUlwiLFxyXG4gICAgICAgICAgICAgICAgICAgIHN0cmF0ZWd5OiBcIlJhbmdlIEJvdW5kXCIsXHJcbiAgICAgICAgICAgICAgICAgICAgY29udmljdGlvbjogXCJNZWRpdW1cIixcclxuICAgICAgICAgICAgICAgICAgICBwcmljZTogcHJpY2UsXHJcbiAgICAgICAgICAgICAgICAgICAgcmVhc29uOiBgJHtzeW1ib2x9IGlzIGNvbnNvbGlkYXRpbmcgKCR7Y2hhbmdlUGVyY2VudC50b0ZpeGVkKDIpfSUpLiBWb2xhdGlsaXR5IGNydXNoIHNldHVwLmAsXHJcbiAgICAgICAgICAgICAgICAgICAgZW50cnk6IHByaWNlLnRvRml4ZWQoMiksXHJcbiAgICAgICAgICAgICAgICAgICAgdGFyZ2V0OiBcIlRoZXRhIERlY2F5XCIsXHJcbiAgICAgICAgICAgICAgICAgICAgc3RvcDogXCJIaWdoIFZvbCBFdmVudFwiXHJcbiAgICAgICAgICAgICAgICB9KTtcclxuICAgICAgICAgICAgfVxyXG4gICAgICAgIH0gY2F0Y2ggKGUpIHtcclxuICAgICAgICAgICAgY29uc29sZS5lcnJvcihgU2Nhbm5lciBFcnJvciAoJHtzeW1ib2x9KTpgLCBlKTtcclxuICAgICAgICB9XHJcbiAgICB9KSk7XHJcblxyXG4gICAgcmV0dXJuIG9wcG9ydHVuaXRpZXM7XHJcbn1cclxuXHJcbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBmZXRjaE1hcmtldE5ld3MoKSB7XHJcbiAgICBjb25zdCBmaW5uaHViS2V5ID0gcHJvY2Vzcy5lbnYuRklOTkhVQl9BUElfS0VZO1xyXG4gICAgaWYgKCFmaW5uaHViS2V5KSB7XHJcbiAgICAgICAgY29uc29sZS53YXJuKFwiZmV0Y2hNYXJrZXROZXdzOiBObyBBUEkgS2V5IGZvdW5kXCIpO1xyXG4gICAgICAgIHJldHVybiBbXTtcclxuICAgIH1cclxuICAgIHRyeSB7XHJcbiAgICAgICAgY29uc3QgdXJsID0gYGh0dHBzOi8vZmlubmh1Yi5pby9hcGkvdjEvbmV3cz9jYXRlZ29yeT1nZW5lcmFsJnRva2VuPSR7Zmlubmh1YktleX1gO1xyXG4gICAgICAgIGNvbnNvbGUubG9nKGBGZXRjaGluZyBNYXJrZXQgTmV3czogJHt1cmwucmVwbGFjZShmaW5uaHViS2V5LCBcIlJFREFDVEVEXCIpfWApO1xyXG5cclxuICAgICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKHVybCwgeyBuZXh0OiB7IHJldmFsaWRhdGU6IDMwMCB9IH0pOyAvLyBDYWNoZSBmb3IgNSBtaW5zXHJcbiAgICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xyXG4gICAgICAgICAgICBjb25zb2xlLmVycm9yKGBGaW5uaHViIE1hcmtldCBOZXdzIEZhaWxlZDogJHtyZXNwb25zZS5zdGF0dXN9ICR7cmVzcG9uc2Uuc3RhdHVzVGV4dH1gKTtcclxuICAgICAgICAgICAgcmV0dXJuIFtdO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgY29uc3QgZGF0YSA9IGF3YWl0IHJlc3BvbnNlLmpzb24oKTtcclxuICAgICAgICBjb25zb2xlLmxvZyhgTWFya2V0IE5ld3MgSW1wYWN0OiBGb3VuZCAke0FycmF5LmlzQXJyYXkoZGF0YSkgPyBkYXRhLmxlbmd0aCA6IDB9IGFydGljbGVzYCk7XHJcbiAgICAgICAgcmV0dXJuIEFycmF5LmlzQXJyYXkoZGF0YSkgPyBkYXRhLnNsaWNlKDAsIDE1KSA6IFtdO1xyXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcclxuICAgICAgICBjb25zb2xlLmVycm9yKFwiRmlubmh1YiBNYXJrZXQgTmV3cyBFcnJvcjpcIiwgZXJyb3IpO1xyXG4gICAgICAgIHJldHVybiBbXTtcclxuICAgIH1cclxufVxyXG5cclxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGZldGNoQ29tcGFueU5ld3Moc3ltYm9sOiBzdHJpbmcpIHtcclxuICAgIGNvbnN0IGZpbm5odWJLZXkgPSBwcm9jZXNzLmVudi5GSU5OSFVCX0FQSV9LRVk7XHJcbiAgICBpZiAoIWZpbm5odWJLZXkgfHwgIXN5bWJvbCkge1xyXG4gICAgICAgIGNvbnNvbGUud2FybihcImZldGNoQ29tcGFueU5ld3M6IE1pc3NpbmcgS2V5IG9yIFN5bWJvbFwiKTtcclxuICAgICAgICByZXR1cm4gW107XHJcbiAgICB9XHJcbiAgICB0cnkge1xyXG4gICAgICAgIGNvbnN0IHRvID0gZm9ybWF0KG5ldyBEYXRlKCksIFwieXl5eS1NTS1kZFwiKTtcclxuICAgICAgICBjb25zdCBmcm9tID0gZm9ybWF0KHN1YkRheXMobmV3IERhdGUoKSwgNyksIFwieXl5eS1NTS1kZFwiKTsgLy8gTGFzdCA3IGRheXNcclxuICAgICAgICBjb25zdCB1cmwgPSBgaHR0cHM6Ly9maW5uaHViLmlvL2FwaS92MS9jb21wYW55LW5ld3M%2Fc3ltYm9sPSR7c3ltYm9sfSZmcm9tPSR7ZnJvbX0mdG89JHt0b30mdG9rZW49JHtmaW5uaHViS2V5fWA7XHJcbiAgICAgICAgY29uc29sZS5sb2coYEZldGNoaW5nIE5ld3MgZm9yICR7c3ltYm9sfTogJHtmcm9tfSB0byAke3RvfWApO1xyXG5cclxuICAgICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKHVybCwgeyBuZXh0OiB7IHJldmFsaWRhdGU6IDMwMCB9IH0pO1xyXG4gICAgICAgIGlmICghcmVzcG9uc2Uub2spIHtcclxuICAgICAgICAgICAgY29uc29sZS5lcnJvcihgRmlubmh1YiBDb21wYW55IE5ld3MgRmFpbGVkOiAke3Jlc3BvbnNlLnN0YXR1c31gKTtcclxuICAgICAgICAgICAgcmV0dXJuIFtdO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgY29uc3QgZGF0YSA9IGF3YWl0IHJlc3BvbnNlLmpzb24oKTtcclxuICAgICAgICBjb25zb2xlLmxvZyhgQ29tcGFueSBOZXdzICgke3N5bWJvbH0pOiBGb3VuZCAke0FycmF5LmlzQXJyYXkoZGF0YSkgPyBkYXRhLmxlbmd0aCA6IDB9IGFydGljbGVzYCk7XHJcbiAgICAgICAgcmV0dXJuIEFycmF5LmlzQXJyYXkoZGF0YSkgPyBkYXRhLnNsaWNlKDAsIDEwKSA6IFtdO1xyXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcclxuICAgICAgICBjb25zb2xlLmVycm9yKGBGaW5uaHViIE5ld3MgRXJyb3IgZm9yICR7c3ltYm9sfTpgLCBlcnJvcik7XHJcbiAgICAgICAgcmV0dXJuIFtdO1xyXG4gICAgfVxyXG59XHJcblxyXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gZ2V0VG9wVm9sdW1lVGlja2VycygpIHtcclxuICAgIC8vIExpc3Qgb2YgdGhlIG1vc3QgaGVhdmlseSB0cmFkZWQgc3RvY2tzIGJ5IHZvbHVtZVxyXG4gICAgY29uc3QgdG9wVGlja2VycyA9IFtcIk5WREFcIiwgXCJUU0xBXCIsIFwiQUFQTFwiLCBcIkFNRFwiLCBcIlNQWVwiLCBcIlFRUVwiLCBcIkFNWk5cIiwgXCJNU0ZUXCIsIFwiTUVUQVwiLCBcIkdPT0dMXCJdO1xyXG5cclxuICAgIHRyeSB7XHJcbiAgICAgICAgLy8gdjMuMTMuMCByZXF1aXJlcyBleHBsaWNpdCBjbGFzcyBpbnN0YW50aWF0aW9uXHJcbiAgICAgICAgbGV0IHlmID0geWFob29GaW5hbmNlO1xyXG4gICAgICAgIGlmICh0eXBlb2YgeWYgPT09ICdmdW5jdGlvbicpIHtcclxuICAgICAgICAgICAgeWYgPSBuZXcgKHlmIGFzIGFueSkoKTtcclxuICAgICAgICB9XHJcblxyXG4gICAgICAgIGlmICgheWYgfHwgdHlwZW9mIHlmLnF1b3RlICE9PSAnZnVuY3Rpb24nKSB7XHJcbiAgICAgICAgICAgIGNvbnNvbGUuZXJyb3IoXCJZYWhvbyBGaW5hbmNlIGxpYnJhcnkgbG9hZGluZyBlcnJvcjpcIiwgeyB5ZiB9KTtcclxuICAgICAgICAgICAgcmV0dXJuIFtdO1xyXG4gICAgICAgIH1cclxuXHJcbiAgICAgICAgLy8gRmV0Y2ggYWxsIHF1b3RlcyBpbiBhIFNJTkdMRSBiYXRjaCByZXF1ZXN0IHRvIHByZXNlcnZlIG1hc3NpdmUvcG9seWdvbiBBUEkgbGltaXRzICg1L21pbilcclxuICAgICAgICBjb25zdCBxdW90ZXMgPSBhd2FpdCB5Zi5xdW90ZSh0b3BUaWNrZXJzKSBhcyBhbnlbXTtcclxuXHJcbiAgICAgICAgY29uc3QgdGlja2VyRGF0YSA9IHF1b3Rlcy5tYXAocXVvdGUgPT4gKHtcclxuICAgICAgICAgICAgc3ltYm9sOiBxdW90ZS5zeW1ib2wsXHJcbiAgICAgICAgICAgIHByaWNlOiBxdW90ZS5yZWd1bGFyTWFya2V0UHJpY2UgfHwgMCxcclxuICAgICAgICAgICAgY2hhbmdlOiBxdW90ZS5yZWd1bGFyTWFya2V0Q2hhbmdlIHx8IDAsXHJcbiAgICAgICAgICAgIGNoYW5nZVBlcmNlbnQ6IHF1b3RlLnJlZ3VsYXJNYXJrZXRDaGFuZ2VQZXJjZW50IHx8IDAsXHJcbiAgICAgICAgfSkpO1xyXG5cclxuICAgICAgICAvLyBLZWVwIHRoZSBvcmlnaW5hbCBvcmRlclxyXG4gICAgICAgIHJldHVybiB0b3BUaWNrZXJzXHJcbiAgICAgICAgICAgIC5tYXAodCA9PiB0aWNrZXJEYXRhLmZpbmQoZCA9PiBkLnN5bWJvbCA9PT0gdCkpXHJcbiAgICAgICAgICAgIC5maWx0ZXIoQm9vbGVhbik7XHJcblxyXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcclxuICAgICAgICBjb25zb2xlLmVycm9yKFwiQmF0Y2ggZmV0Y2ggZmFpbGVkIGZvciB0b3Agdm9sdW1lIHRpY2tlcnM6XCIsIGVycm9yKTtcclxuICAgICAgICByZXR1cm4gW107XHJcbiAgICB9XHJcbn1cclxuIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJ1UkFxcEJzQiwrTEFBQSJ9"),) } from database failed
+
+Caused by:
+    0: Unable to open static sorted file referenced from 00002363.meta
+    1: Unable to open static sorted file 00002359.sst
+    2: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (27088) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <NextNodeSharedRuntimeResolvePlugin as AfterResolvePlugin>::after_resolve_condition (TaskId 3586))
+
+Caused by:
+    0: Looking up data for TaskId 3586 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (17096) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <EsmAssetReference as ModuleReference>::resolve_reference (TaskId 77154))
+
+Caused by:
+    0: Looking up data for TaskId 77154 from database failed
+    1: Unable to open static sorted file referenced from 00002354.meta
+    2: Unable to open static sorted file 00002349.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Client disconnected: 9z-50z4qkOLAI9-GAAAP
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::resolve_asset (TaskId 403476))
+
+Caused by:
+    0: Looking up data for TaskId 403476 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (19980) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Meta for <ModuleAssetContext as AssetContext>::resolve_asset (TaskId 403476))
+
+Caused by:
+    0: Looking up data for TaskId 403476 from database failed
+    1: Unable to open static sorted file referenced from 00002335.meta
+    2: Unable to open static sorted file 00002328.sst
+    3: The system cannot find the path specified. (os error 3)
+
+thread 'tokio-runtime-worker' (23604) panicked at C:\actions-runner\_work\next.js\next.js\turbopack\crates\turbo-tasks-backend\src\backend\operation\mod.rs:156:17:
+Failed to restore task data (corrupted database or bug): Data for EcmascriptInputTransforms::extend (TaskId 74051))
+
+Caused by:
+    0: Looking up data for TaskId 74051 from database failed
+    1: Unable to open static sorted file referenced from 00002341.meta
+    2: Unable to open static sorted file 00002338.sst
+    3: The system cannot find the path specified. (os error 3)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+^C
