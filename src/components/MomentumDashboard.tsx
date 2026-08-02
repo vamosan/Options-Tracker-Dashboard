@@ -323,27 +323,7 @@ export function MomentumDashboard({ onAddTrade }: MomentumDashboardProps) {
                         zeroDteAlerts.map((alert, idx) => renderAlertCard(alert, idx))
                     )}
                     
-                    {/* Status Box */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl mt-8">
-                        <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-                            <BarChart2 className="h-4 w-4 text-fuchsia-500" />
-                            How This Works
-                        </h3>
-                        <div className="space-y-3 text-xs text-slate-400">
-                            <p>
-                                <strong className="text-white block">1. Quantitative Scan</strong>
-                                Monitors watchlists for explosive options flow (Volume &gt; OI by 2.5x).
-                            </p>
-                            <p>
-                                <strong className="text-white block">2. Qualitative Catalyst</strong>
-                                Triggers an immediate scrape of the Yahoo Finance RSS feed.
-                            </p>
-                            <p>
-                                <strong className="text-white block">3. VADER Sentiment Scoring</strong>
-                                Uses NLP to score headlines from -1 to +1.
-                            </p>
-                        </div>
-                    </div>
+
                 </div>
             </div>
             
