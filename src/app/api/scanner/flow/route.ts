@@ -31,7 +31,9 @@ export async function GET() {
                                 for (const opt of contracts) {
                                     const volume = opt.volume || 0;
                                     const oi = opt.openInterest || 0;
-                                    const lastPrice = opt.lastPrice || 0;
+                                    const bid = opt.bid || 0;
+                                    const ask = opt.ask || 0;
+                                    const lastPrice = opt.lastPrice || ((bid + ask) / 2) || 0;
                                     
                                     const premiumTraded = volume * lastPrice * 100;
                                     const premiumPositioned = oi * lastPrice * 100;
@@ -39,7 +41,7 @@ export async function GET() {
                                     const isBlockTrade = premiumTraded >= 100000;
                                     const isWhalePosition = premiumPositioned >= 250000;
 
-                                    if ((isBlockTrade || isWhalePosition) && lastPrice > 0.10) {
+                                    if ((isBlockTrade || isWhalePosition)) {
                                         const moneyness = type === 'Call' 
                                             ? ((currentPrice - opt.strike) / opt.strike) * 100
                                             : ((opt.strike - currentPrice) / currentPrice) * 100;
@@ -88,72 +90,7 @@ export async function GET() {
         allFlows.sort((a, b) => b.premiumTraded - a.premiumTraded);
         
         // Return top 25 to avoid overwhelming UI
-        const results = allFlows.slice(0, 25);
-
-        // Fallback for weekend demonstration if no live data is found
-        if (results.length === 0) {
-            results.push(
-                {
-                    id: `sim-1`,
-                    symbol: "NVDA",
-                    contractSymbol: "NVDA260821C00140000",
-                    type: "Call",
-                    strike: 140,
-                    expiration: "2026-08-21",
-                    volume: 12500,
-                    openInterest: 8400,
-                    lastPrice: 4.25,
-                    underlyingPrice: 135.50,
-                    premiumTraded: 12500 * 4.25 * 100,
-                    isPositioning: false,
-                    impliedVolatility: 45.2,
-                    sweepType: "BULLISH",
-                    isOtm: true,
-                    moneyness: "3.32",
-                    timestamp: new Date().toISOString()
-                },
-                {
-                    id: `sim-2`,
-                    symbol: "TSLA",
-                    contractSymbol: "TSLA260814P00200000",
-                    type: "Put",
-                    strike: 200,
-                    expiration: "2026-08-14",
-                    volume: 8900,
-                    openInterest: 2100,
-                    lastPrice: 6.10,
-                    underlyingPrice: 212.30,
-                    premiumTraded: 8900 * 6.10 * 100,
-                    isPositioning: false,
-                    impliedVolatility: 62.1,
-                    sweepType: "BEARISH",
-                    isOtm: true,
-                    moneyness: "-5.79",
-                    timestamp: new Date().toISOString()
-                },
-                {
-                    id: `sim-3`,
-                    symbol: "SPY",
-                    contractSymbol: "SPY260918C00550000",
-                    type: "Call",
-                    strike: 550,
-                    expiration: "2026-09-18",
-                    volume: 0,
-                    openInterest: 45000,
-                    lastPrice: 12.50,
-                    underlyingPrice: 545.10,
-                    premiumTraded: 45000 * 12.50 * 100,
-                    isPositioning: true,
-                    impliedVolatility: 14.5,
-                    sweepType: "BULLISH",
-                    isOtm: true,
-                    moneyness: "0.89",
-                    timestamp: new Date().toISOString()
-                }
-            );
-        }
-        
-        return NextResponse.json(results);
+        return NextResponse.json(allFlows.slice(0, 25));
     } catch (error) {
         console.error("Institutional Flow Scanner Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
