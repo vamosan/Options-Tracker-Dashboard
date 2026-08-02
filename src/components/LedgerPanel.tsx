@@ -25,7 +25,7 @@ export default function LedgerPanel() {
     const fetchLedger = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/ledger');
+            const res = await fetch('/api/ledger', { cache: 'no-store' });
             const data = await res.json();
             if (Array.isArray(data)) {
                 setSignals(data);
