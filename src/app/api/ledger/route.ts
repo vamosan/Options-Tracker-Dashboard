@@ -14,9 +14,11 @@ export async function GET() {
         for (const signal of signals) {
             if (signal.win_status === 'PENDING' && signal.entry_price > 0) {
                 try {
-                    // Get current quote
-                    const quote = await yahooFinance.quote(signal.symbol);
-                    const currentPrice = quote.regularMarketPrice || quote.price;
+                    // Get current quote from Finnhub to avoid Vercel Yahoo Finance IPv6 block
+                    const finnhubKey = process.env.Finnhub_API_Key || "d69m4lhr01qhe6mo0g6gd69m4lhr01qhe6mo0g70";
+                    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${signal.symbol}&token=${finnhubKey}`);
+                    const quote = await res.json();
+                    const currentPrice = quote.c;
                     
                     if (currentPrice) {
                         let profitPct = 0;
