@@ -13,7 +13,7 @@
       "marketValue": 1436,
       "pl": 1091,
       "status": "OPEN",
-      "lastUpdated": "12:48:00 PM",
+      "lastUpdated": "1:36:31 PM",
       "greeks": {
         "delta": -0.2675,
         "gamma": 0.0398,
@@ -39,7 +39,7 @@
       "marketValue": 41,
       "pl": -319,
       "status": "OPEN",
-      "lastUpdated": "12:48:00 PM",
+      "lastUpdated": "1:36:31 PM",
       "greeks": {
         "delta": 1,
         "gamma": 0,
@@ -65,7 +65,7 @@
       "marketValue": 465.00000000000006,
       "pl": 222.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "12:48:01 PM",
+      "lastUpdated": "1:36:31 PM",
       "greeks": {
         "delta": -1,
         "gamma": 0,

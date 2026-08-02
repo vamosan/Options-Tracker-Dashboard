@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import { MomentumNewsTicker } from "./MomentumNewsTicker";
 import { AgenticDeskPanel } from "./AgenticDeskPanel";
+import { InstitutionalFlowRadar } from "./InstitutionalFlowRadar";
 import LedgerPanel from "./LedgerPanel";
 
 interface MomentumAlert {
@@ -345,6 +346,8 @@ export function MomentumDashboard({ onAddTrade }: MomentumDashboardProps) {
                     </div>
                 </div>
             </div>
+            
+            <InstitutionalFlowRadar onAddTrade={onAddTrade} />
             
             <LedgerPanel />
         </div>

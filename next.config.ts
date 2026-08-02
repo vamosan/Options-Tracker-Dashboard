@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['sqlite3'],
+  outputFileTracingIncludes: {
+    '/api/**/*': ['./ledger.sqlite'],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

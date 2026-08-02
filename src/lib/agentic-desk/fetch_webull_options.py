@@ -14,7 +14,7 @@ def fetch_options(symbol):
     
     try:
         res = client.instrument.get_option_contracts(underlying_symbols=symbol)
-        print(json.dumps({"raw_res": res}))
+        print(json.dumps(res.json()))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
