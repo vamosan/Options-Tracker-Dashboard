@@ -9,11 +9,11 @@
       "premium": 3.45,
       "quantity": 1,
       "notes": "🤖 Bot Suggested (27% Conf, UNALIGNED (Speculative))",
-      "currentPrice": 14.36,
-      "marketValue": 1436,
-      "pl": 1091,
+      "currentPrice": 1.95,
+      "marketValue": 195,
+      "pl": -150.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "2:41:19 PM",
+      "lastUpdated": "3:00:08 PM",
       "greeks": {
         "delta": -0.1402,
         "gamma": 0.0472,
@@ -22,8 +22,8 @@
         "iv": 0.2
       },
       "recommendation": {
-        "signal": "MAX PROFIT",
-        "color": "green"
+        "signal": "TIME EXIT",
+        "color": "red"
       }
     },
     {
@@ -39,7 +39,7 @@
       "marketValue": 41,
       "pl": -319,
       "status": "OPEN",
-      "lastUpdated": "2:41:20 PM",
+      "lastUpdated": "3:00:09 PM",
       "greeks": {
         "delta": 1,
         "gamma": 0,
@@ -65,7 +65,7 @@
       "marketValue": 465.00000000000006,
       "pl": 222.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "2:41:21 PM",
+      "lastUpdated": "3:00:10 PM",
       "greeks": {
         "delta": -0.9973,
         "gamma": 0.0007,

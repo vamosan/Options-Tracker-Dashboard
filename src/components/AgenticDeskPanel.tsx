@@ -12,6 +12,25 @@ export function AgenticDeskPanel() {
     const [batchResults, setBatchResults] = useState<any[] | null>(null);
     const [executing, setExecuting] = useState<string | false>(false);
     const [executionResult, setExecutionResult] = useState<string | null>(null);
+    
+    const [gridResults, setGridResults] = useState<any[] | null>(null);
+    const [isGridLoading, setIsGridLoading] = useState(true);
+
+    React.useEffect(() => {
+        let isMounted = true;
+        const fetchGrid = async () => {
+            try {
+                const data = await runMarketScanner();
+                if (isMounted) setGridResults(data);
+            } catch (error) {
+                console.error("Failed to load grid", error);
+            } finally {
+                if (isMounted) setIsGridLoading(false);
+            }
+        };
+        fetchGrid();
+        return () => { isMounted = false; };
+    }, []);
 
     const handleAnalyze = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -130,9 +149,54 @@ export function AgenticDeskPanel() {
                 {/* Results Section */}
                 <div className="w-full md:w-2/3 flex-1 bg-slate-950/50 rounded-2xl border border-slate-800/50 p-6 min-h-[180px]">
                     {activeTab === "single" && !result && !isLoading && (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                            <BarChart3 className="h-8 w-8 mb-2 opacity-50" />
-                            <p className="text-sm font-medium">Enter a ticker to generate a scorecard</p>
+                        <div className="h-full flex flex-col">
+                            <h4 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+                                <Activity className="h-5 w-5 text-indigo-400" />
+                                Market Heatmap
+                            </h4>
+                            {isGridLoading ? (
+                                <div className="grid grid-cols-3 gap-3 flex-1">
+                                    {[1,2,3,4,5,6,7,8,9].map(i => (
+                                        <div key={i} className="bg-slate-900/50 rounded-xl animate-pulse border border-slate-800 h-24"></div>
+                                    ))}
+                                </div>
+                            ) : gridResults ? (
+                                <div className="grid grid-cols-3 gap-3">
+                                    {gridResults.map(r => {
+                                        const score = r.pillar_total || 0;
+                                        const isGreen = score > 0;
+                                        const isRed = score < 0;
+                                        const isYellow = score === 0;
+                                        
+                                        return (
+                                            <button 
+                                                key={r.symbol}
+                                                onClick={() => {
+                                                    setTicker(r.symbol);
+                                                    setResult(r);
+                                                }}
+                                                className={`p-3 rounded-xl border flex flex-col items-center justify-center transition-all group hover:scale-105 shadow-lg ${
+                                                    isGreen ? 'bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 
+                                                    isRed ? 'bg-red-500/10 border-red-500/30 hover:border-red-500/60 shadow-[0_0_15px_rgba(244,63,94,0.1)]' : 
+                                                    'bg-yellow-500/10 border-yellow-500/30 hover:border-yellow-500/60 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
+                                                }`}
+                                            >
+                                                <span className={`text-lg font-black ${isGreen ? 'text-emerald-400' : isRed ? 'text-red-400' : 'text-yellow-400'}`}>
+                                                    {r.symbol}
+                                                </span>
+                                                <span className="text-[10px] uppercase font-bold text-slate-400 mt-1">
+                                                    Score: {score > 0 ? '+' : ''}{score}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-slate-500 py-10">
+                                    <BarChart3 className="h-8 w-8 mb-2 opacity-50" />
+                                    <p className="text-sm font-medium">Enter a ticker to generate a scorecard</p>
+                                </div>
+                            )}
                         </div>
                     )}
                     
