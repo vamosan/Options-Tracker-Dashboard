@@ -62,10 +62,37 @@ export async function runAgenticAnalysis(symbol: string) {
             holding: false
         };
 
-        const tmpDir = path.join(process.cwd(), 'tmp');
-        await fs.mkdir(tmpDir, { recursive: true });
+        // If on Vercel, use system /tmp. Otherwise use local tmp.
+        const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'tmp');
+        if (!process.env.VERCEL) {
+            await fs.mkdir(tmpDir, { recursive: true });
+        }
         
         const tmpFile = path.join(tmpDir, `${symbol}_input.json`);
+        
+        // If on Vercel, we can just skip the file writing entirely and return the mock!
+        if (process.env.VERCEL) {
+            const score = symbol.length > 3 ? 2 : -1;
+            return {
+                symbol: symbol,
+                n_bars: 200,
+                warning: null,
+                pillars: {
+                    trend: { score: score, detail: "Mocked Vercel Data" },
+                    momentum: { score: score > 0 ? 1 : -1, detail: "Mocked Vercel Data" },
+                    macro_sentiment: { score: 0, detail: "Mocked" }
+                },
+                pillar_total: score + (score > 0 ? 1 : -1),
+                decision: {
+                    action: score > 0 ? "RE-ENTRY" : "EXIT",
+                    rationale: "Vercel serverless demo mode (Python not available)",
+                    framing: "Mocked data because Vercel Serverless lacks Python.",
+                    flags: { exhaustion: [], bearish: [], rebound: [], death_cross: false }
+                },
+                indicators: {}
+            };
+        }
+
         await fs.writeFile(tmpFile, JSON.stringify(inputData));
 
         // Run the python script
