@@ -19,7 +19,20 @@ db.serialize(() => {
             win_status TEXT DEFAULT 'PENDING',
             confidence_score REAL DEFAULT 0
         )
-    `);
+    `, () => {
+        // Seed database if running on Vercel so it's not totally empty on demo loads
+        if (isVercel) {
+            db.get("SELECT COUNT(*) as count FROM signals", (err, row) => {
+                if (!err && row.count === 0) {
+                    const stmt = db.prepare(`INSERT INTO signals (symbol, action, rationale, entry_price, confidence_score) VALUES (?, ?, ?, ?, ?)`);
+                    stmt.run(['NVDA', 'CALL 150', 'Explosive upside flow > 500k premium', 135.50, 95]);
+                    stmt.run(['TSLA', 'PUT 200', 'Bearish institutional sweep', 212.30, 88]);
+                    stmt.run(['SPY', 'CALL 550', 'Trend continuation breakout', 545.10, 92]);
+                    stmt.finalize();
+                }
+            });
+        }
+    });
 });
 
 /**

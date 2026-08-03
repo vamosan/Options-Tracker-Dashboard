@@ -70,14 +70,42 @@ export async function runAgenticAnalysis(symbol: string) {
 
         // Run the python script
         const scriptPath = path.join(process.cwd(), 'src', 'lib', 'agentic-desk', 'score.py');
-        const { stdout, stderr } = await execAsync(`python "${scriptPath}" "${tmpFile}" --json`, {
-            env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
-        });
-
-        // Clean up
-        await fs.unlink(tmpFile).catch(() => {});
-
-        return JSON.parse(stdout);
+        try {
+            const { stdout, stderr } = await execAsync(`python "${scriptPath}" "${tmpFile}" --json`, {
+                env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
+            });
+            // Clean up
+            await fs.unlink(tmpFile).catch(() => {});
+            return JSON.parse(stdout);
+        } catch (execError: any) {
+            // Clean up
+            await fs.unlink(tmpFile).catch(() => {});
+            
+            // If running on Vercel (where Python isn't available), mock the response
+            if (process.env.VERCEL) {
+                // Generate a deterministic-looking mock score based on symbol string length
+                const score = symbol.length > 3 ? 2 : -1;
+                return {
+                    symbol: symbol,
+                    n_bars: 200,
+                    warning: null,
+                    pillars: {
+                        trend: { score: score, detail: "Mocked Vercel Data" },
+                        momentum: { score: score > 0 ? 1 : -1, detail: "Mocked Vercel Data" },
+                        macro_sentiment: { score: 0, detail: "Mocked" }
+                    },
+                    pillar_total: score + (score > 0 ? 1 : -1),
+                    decision: {
+                        action: score > 0 ? "RE-ENTRY" : "EXIT",
+                        rationale: "Vercel serverless demo mode (Python not available)",
+                        framing: "Mocked data because Vercel Serverless lacks Python.",
+                        flags: { exhaustion: [], bearish: [], rebound: [], death_cross: false }
+                    },
+                    indicators: {}
+                };
+            }
+            throw execError;
+        }
     } catch (error: any) {
         console.error("Agentic Analysis Error:", error);
         return { error: error.message };
