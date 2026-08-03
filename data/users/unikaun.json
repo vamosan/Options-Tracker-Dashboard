@@ -13,7 +13,7 @@
       "marketValue": 1436,
       "pl": 1091,
       "status": "OPEN",
-      "lastUpdated": "8:52:35 AM",
+      "lastUpdated": "9:14:16 AM",
       "greeks": {
         "delta": -0.1402,
         "gamma": 0.0472,
@@ -39,7 +39,7 @@
       "marketValue": 41,
       "pl": -319,
       "status": "OPEN",
-      "lastUpdated": "8:52:36 AM",
+      "lastUpdated": "9:14:16 AM",
       "greeks": {
         "delta": 1,
         "gamma": 0,
@@ -61,11 +61,11 @@
       "premium": 2.43,
       "quantity": 1,
       "notes": "🤖 Bot Suggested (35% Conf, UNALIGNED (Speculative))",
-      "currentPrice": 34.12,
-      "marketValue": 3411.9999999999995,
-      "pl": 3169,
+      "currentPrice": 4.65,
+      "marketValue": 465.00000000000006,
+      "pl": 222.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "8:52:36 AM",
+      "lastUpdated": "9:14:17 AM",
       "greeks": {
         "delta": -0.9973,
         "gamma": 0.0007,
