@@ -288,6 +288,16 @@ export function AgenticDeskPanel() {
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex justify-between items-start mb-6 border-b border-slate-800 pb-4">
                                 <div>
+                                    <button 
+                                        onClick={() => {
+                                            setResult(null);
+                                            setTicker("");
+                                            setExecutionResult(null);
+                                        }}
+                                        className="text-indigo-400 hover:text-indigo-300 text-xs font-bold uppercase flex items-center gap-1 mb-2 transition-colors"
+                                    >
+                                        ← Back to Grid
+                                    </button>
                                     <h4 className="text-2xl font-black text-white">{result.symbol}</h4>
                                     <p className="text-xs text-slate-400">Agentic Three-Pillar Scorecard</p>
                                 </div>
