@@ -25,7 +25,7 @@ const MomentumDashboard = dynamic(() => import("@/components/MomentumDashboard")
 const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'analytics' | 'news' | 'scanner' | 'momentum'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'analytics' | 'news' | 'scanner' | 'momentum' | 'edge'>('dashboard');
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -317,6 +317,13 @@ export default function Home() {
               <Zap className="h-3.5 w-3.5" />
               <span className="text-xs font-black uppercase tracking-tight">Momentum</span>
             </button>
+            <button
+              onClick={() => setActiveTab("edge")}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "edge" ? "bg-indigo-500/10 border-indigo-500/50 text-indigo-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-indigo-400"}`}
+            >
+              <Activity className="h-3.5 w-3.5" />
+              <span className="text-xs font-black uppercase tracking-tight">Edge Scanner</span>
+            </button>
 
             <div className="h-5 w-px bg-slate-800 mx-1 flex-shrink-0" />
 
@@ -503,6 +510,12 @@ export default function Home() {
         {activeTab === "momentum" && (
           <div className="animate-in slide-in-from-bottom max-w-[1400px]">
             <MomentumDashboard onAddTrade={handleAddTrade} />
+          </div>
+        )}
+
+        {activeTab === "edge" && (
+          <div className="w-full h-[85vh] animate-in slide-in-from-bottom max-w-[1600px] mx-auto">
+            <iframe src="http://localhost:7777" className="w-full h-full rounded-2xl border border-slate-800" />
           </div>
         )}
 
