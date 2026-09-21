@@ -8,6 +8,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const execAsync = promisify(exec);
+import { scoreSymbol } from '@/lib/agentic-desk/score';
 
 export async function runAgenticAnalysis(symbol: string) {
     try {
@@ -31,85 +32,10 @@ export async function runAgenticAnalysis(symbol: string) {
 
             closes = historical.map((day: any) => day.close);
 
-        // Prepare the input JSON for the scoring engine
-        const inputData = {
-            symbol: symbol,
-            close: closes,
-            macro_score: 0, // Default neutral macro for now
-            holding: false
-        };
+        // Run the agentic scoring logic directly in Node.js/TypeScript!
+        const scoreResult = scoreSymbol(closes, symbol, 0, false);
+        return scoreResult;
 
-        // If on Vercel, use system /tmp. Otherwise use local tmp.
-        const tmpDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'tmp');
-        if (!process.env.VERCEL) {
-            await fs.mkdir(tmpDir, { recursive: true });
-        }
-        
-        const tmpFile = path.join(tmpDir, `${symbol}_input.json`);
-        
-        // If on Vercel, we can just skip the file writing entirely and return the mock!
-        if (process.env.VERCEL) {
-            const score = symbol.length > 3 ? 2 : -1;
-            return {
-                symbol: symbol,
-                n_bars: 200,
-                warning: null,
-                pillars: {
-                    trend: { score: score, detail: "Mocked Vercel Data" },
-                    momentum: { score: score > 0 ? 1 : -1, detail: "Mocked Vercel Data" },
-                    macro_sentiment: { score: 0, detail: "Mocked" }
-                },
-                pillar_total: score + (score > 0 ? 1 : -1),
-                decision: {
-                    action: score > 0 ? "RE-ENTRY" : "EXIT",
-                    rationale: "Vercel serverless demo mode (Python not available)",
-                    framing: "Mocked data because Vercel Serverless lacks Python.",
-                    flags: { exhaustion: [], bearish: [], rebound: [], death_cross: false }
-                },
-                indicators: {}
-            };
-        }
-
-        await fs.writeFile(tmpFile, JSON.stringify(inputData));
-
-        // Run the python script
-        const scriptPath = path.join(process.cwd(), 'src', 'lib', 'agentic-desk', 'score.py');
-        try {
-            const { stdout, stderr } = await execAsync(`python "${scriptPath}" "${tmpFile}" --json`, {
-                env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
-            });
-            // Clean up
-            await fs.unlink(tmpFile).catch(() => {});
-            return JSON.parse(stdout);
-        } catch (execError: any) {
-            // Clean up
-            await fs.unlink(tmpFile).catch(() => {});
-            
-            // If running on Vercel (where Python isn't available), mock the response
-            if (process.env.VERCEL) {
-                // Generate a deterministic-looking mock score based on symbol string length
-                const score = symbol.length > 3 ? 2 : -1;
-                return {
-                    symbol: symbol,
-                    n_bars: 200,
-                    warning: null,
-                    pillars: {
-                        trend: { score: score, detail: "Mocked Vercel Data" },
-                        momentum: { score: score > 0 ? 1 : -1, detail: "Mocked Vercel Data" },
-                        macro_sentiment: { score: 0, detail: "Mocked" }
-                    },
-                    pillar_total: score + (score > 0 ? 1 : -1),
-                    decision: {
-                        action: score > 0 ? "RE-ENTRY" : "EXIT",
-                        rationale: "Vercel serverless demo mode (Python not available)",
-                        framing: "Mocked data because Vercel Serverless lacks Python.",
-                        flags: { exhaustion: [], bearish: [], rebound: [], death_cross: false }
-                    },
-                    indicators: {}
-                };
-            }
-            throw execError;
-        }
     } catch (error: any) {
         console.error("Agentic Analysis Error:", error);
         return { error: error.message };
