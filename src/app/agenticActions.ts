@@ -11,36 +11,14 @@ const execAsync = promisify(exec);
 
 export async function runAgenticAnalysis(symbol: string) {
     try {
-        // 1. Try to fetch data using official Webull OpenAPI Python SDK
         let closes: number[] = [];
-        let usingWebull = true;
         
-        try {
-            const webullScriptPath = path.join(process.cwd(), 'src', 'lib', 'agentic-desk', 'fetch_webull.py');
-            const { stdout } = await execAsync(`python "${webullScriptPath}" "${symbol}"`, {
-                env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
-            });
-            
-            const webullData = JSON.parse(stdout.trim());
-            if (webullData.error || !webullData.close || webullData.close.length < 200) {
-                console.warn(`Webull API returned error or insufficient data for ${symbol}. Falling back to Yahoo Finance.`, webullData.error);
-                usingWebull = false;
-            } else {
-                closes = webullData.close;
-                console.log(`Successfully fetched data for ${symbol} using Webull OpenAPI SDK!`);
-            }
-        } catch (webullError) {
-            console.error(`Webull API script failed for ${symbol}:`, webullError);
-            usingWebull = false;
-        }
+        // Fetch data using Yahoo Finance
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 365); // 1 year back
         
-        // 2. Fallback to Yahoo Finance if Webull is unauthorized/pending
-        if (!usingWebull) {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 365); // 1 year back
-            
-            const chartData = await yahooFinance.chart(symbol, {
+        const chartData = await yahooFinance.chart(symbol, {
                 period1: startDate,
                 interval: '1d'
             });
@@ -52,7 +30,6 @@ export async function runAgenticAnalysis(symbol: string) {
             }
 
             closes = historical.map((day: any) => day.close);
-        }
 
         // Prepare the input JSON for the scoring engine
         const inputData = {
