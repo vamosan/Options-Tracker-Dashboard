@@ -23,13 +23,14 @@ import { AlertHistoryPanel } from "@/components/AlertHistoryPanel";
 const ScannerDashboard = dynamic(() => import("@/components/ScannerDashboard").then((mod) => mod.ScannerDashboard), { ssr: false });
 const MomentumDashboard = dynamic(() => import("@/components/MomentumDashboard").then((mod) => mod.MomentumDashboard), { ssr: false });
 import { PreMarketWatchlist } from "@/components/PreMarketWatchlist";
+import { AlpacaBotDashboard } from "@/components/AlpacaBotDashboard";
 
 const LOCAL_STORAGE_KEY = 'options_tracker_positions';
 const CLOSED_POSITIONS_KEY = 'options_tracker_closed';
 const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'analytics' | 'news' | 'scanner' | 'momentum' | 'premarket'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'analytics' | 'news' | 'scanner' | 'momentum' | 'premarket' | 'alpaca'>('dashboard');
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -328,6 +329,13 @@ export default function Home() {
               <Activity className="h-3.5 w-3.5" />
               <span className="text-xs font-black uppercase tracking-tight">Pre-Market</span>
             </button>
+            <button
+              onClick={() => setActiveTab("alpaca")}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "alpaca" ? "bg-violet-500/10 border-violet-500/50 text-violet-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-violet-400"}`}
+            >
+              <Bot className="h-3.5 w-3.5" />
+              <span className="text-xs font-black uppercase tracking-tight">Alpaca Bot</span>
+            </button>
 
             <div className="h-5 w-px bg-slate-800 mx-1 flex-shrink-0" />
 
@@ -520,6 +528,12 @@ export default function Home() {
         {activeTab === "premarket" && (
           <div className="animate-in slide-in-from-bottom max-w-[1400px]">
             <PreMarketWatchlist />
+          </div>
+        )}
+
+        {activeTab === "alpaca" && (
+          <div className="animate-in slide-in-from-bottom max-w-[1400px]">
+            <AlpacaBotDashboard />
           </div>
         )}
 
