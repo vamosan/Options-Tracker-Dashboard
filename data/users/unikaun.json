@@ -13,7 +13,7 @@
       "marketValue": 1436,
       "pl": 1091,
       "status": "OPEN",
-      "lastUpdated": "9:14:16 AM",
+      "lastUpdated": "4:18:11 PM",
       "greeks": {
         "delta": -0.1402,
         "gamma": 0.0472,
@@ -24,32 +24,6 @@
       "recommendation": {
         "signal": "MAX PROFIT",
         "color": "green"
-      }
-    },
-    {
-      "id": "PAPER-1785337717149",
-      "symbol": "AMD",
-      "type": "Call",
-      "strike": 437.5,
-      "expiration": "2026-07-29T00:00:00.000Z",
-      "premium": 3.6,
-      "quantity": 1,
-      "notes": "🤖 Bot Suggested (58% Conf, 🔥 BULLISH ALIGNMENT)",
-      "currentPrice": 0.41,
-      "marketValue": 41,
-      "pl": -319,
-      "status": "OPEN",
-      "lastUpdated": "9:14:16 AM",
-      "greeks": {
-        "delta": 1,
-        "gamma": 0,
-        "theta": -0.0599,
-        "vega": 0,
-        "iv": 0.302190608261776
-      },
-      "recommendation": {
-        "signal": "TIME EXIT",
-        "color": "red"
       }
     },
     {
@@ -65,7 +39,61 @@
       "marketValue": 465.00000000000006,
       "pl": 222.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "9:14:17 AM",
+      "lastUpdated": "4:18:12 PM",
+      "greeks": {
+        "delta": -1,
+        "gamma": 0,
+        "theta": 0.0469,
+        "vega": 0,
+        "iv": 0.2
+      },
+      "recommendation": {
+        "signal": "MAX PROFIT",
+        "color": "green"
+      }
+    },
+    {
+      "id": "PAPER-1785766220485",
+      "symbol": "SPY",
+      "type": "Put",
+      "strike": 755,
+      "expiration": "2026-08-03T00:00:00.000Z",
+      "premium": 3.77,
+      "quantity": 1,
+      "notes": "🤖 Bot Suggested (32% Conf, ⚠️ BULLISH NEWS / BEARISH FLOW (Divergence))",
+      "currentPrice": 7.8,
+      "marketValue": 780,
+      "pl": 402.99999999999994,
+      "status": "OPEN",
+      "lastUpdated": "4:18:12 PM",
+      "greeks": {
+        "delta": -0.9522,
+        "gamma": 0.021,
+        "theta": -0.545,
+        "vega": 0.0235,
+        "iv": 0.2
+      },
+      "recommendation": {
+        "signal": "MAX PROFIT",
+        "color": "green"
+      }
+    }
+  ],
+  "history": [
+    {
+      "id": "PAPER-1785337722564",
+      "symbol": "AAPL",
+      "type": "Put",
+      "strike": 342.5,
+      "expiration": "2026-07-29T00:00:00.000Z",
+      "premium": 2.43,
+      "quantity": 1,
+      "notes": "🤖 Bot Suggested (35% Conf, UNALIGNED (Speculative))",
+      "currentPrice": 34.12,
+      "marketValue": 3411.9999999999995,
+      "pl": 3169,
+      "status": "CLOSED",
+      "lastUpdated": "9:39:45 AM",
       "greeks": {
         "delta": -0.9973,
         "gamma": 0.0007,
@@ -76,10 +104,40 @@
       "recommendation": {
         "signal": "MAX PROFIT",
         "color": "green"
-      }
-    }
-  ],
-  "history": [
+      },
+      "exitPrice": 34.12,
+      "exitDate": "2026-08-03T12:24:56.087Z",
+      "realizedPl": 3169
+    },
+    {
+      "id": "PAPER-1785337717149",
+      "symbol": "AMD",
+      "type": "Call",
+      "strike": 437.5,
+      "expiration": "2026-07-29T00:00:00.000Z",
+      "premium": 3.6,
+      "quantity": 1,
+      "notes": "🤖 Bot Suggested (58% Conf, 🔥 BULLISH ALIGNMENT)",
+      "currentPrice": 39.53,
+      "marketValue": 3953,
+      "pl": 3593,
+      "status": "CLOSED",
+      "lastUpdated": "9:39:45 AM",
+      "greeks": {
+        "delta": 1,
+        "gamma": 0,
+        "theta": -0.0599,
+        "vega": 0,
+        "iv": 0.302190608261776
+      },
+      "recommendation": {
+        "signal": "MAX PROFIT",
+        "color": "green"
+      },
+      "exitPrice": 39.53,
+      "exitDate": "2026-08-03T12:24:40.346Z",
+      "realizedPl": 3593
+    },
     {
       "id": "PAPER-1785332205145",
       "symbol": "QQQ",

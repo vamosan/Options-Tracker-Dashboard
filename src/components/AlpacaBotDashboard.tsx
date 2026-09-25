@@ -27,14 +27,37 @@ export function AlpacaBotDashboard() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    // Mock connecting to websocket/backend
+    let interval: NodeJS.Timeout;
+
+    const runScan = async () => {
+      try {
+        const res = await fetch('/api/alpaca-bot/scan', { method: 'POST' });
+        const data = await res.json();
+        if (data.logs) {
+          setLiveLog(prev => {
+            const newLogs = [...prev, ...data.logs];
+            // Keep only the last 50 logs to prevent memory leaks
+            return newLogs.slice(-50);
+          });
+        }
+      } catch (err) {
+        console.error("Scan failed", err);
+      }
+    };
+
     if (isRunning) {
-      setLiveLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] System Active. Scanning market...`]);
+      setLiveLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] System Active. Initiating ORB market scan...`]);
       setConnected(true);
+      // Run immediately
+      runScan();
+      // Then ping every 60 seconds
+      interval = setInterval(runScan, 60000);
     } else {
       setLiveLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] System Paused.`]);
       setConnected(false);
     }
+
+    return () => clearInterval(interval);
   }, [isRunning]);
 
   return (
