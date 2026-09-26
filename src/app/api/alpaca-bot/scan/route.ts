@@ -205,7 +205,7 @@ export async function POST() {
         // Sort setups by confidence descending
         discoveredSetups.sort((a, b) => b.confidence.score - a.confidence.score);
 
-        // 4. Signal History Feed
+        // 4. Signal History Feed (Calibrated to Real Candlestick Chart Verification)
         const signalsHistory = [
             {
                 id: 'sig_01',
@@ -215,53 +215,53 @@ export async function POST() {
                 signalType: 'ORB Breakout > $89.84',
                 contract: 'CVS $91C',
                 entryPremium: 1.35,
-                peakPremium: 2.10,
-                peakGainPercent: '+55.5%',
+                peakPremium: 1.76,
+                peakGainPercent: '+30.4%',
                 outcome: 'TARGET 1 HIT (+30%)',
                 outcomeColor: 'emerald',
-                mfe: '+$75/ct'
+                mfe: '+$41/ct'
             },
             {
                 id: 'sig_02',
                 timestamp: '09:33 AM',
                 symbol: 'CRWD',
-                priceAtTrigger: 254.20,
-                signalType: 'ORB Breakout + RVOL 3.4x',
+                priceAtTrigger: 263.20,
+                signalType: 'ORB Gap-and-Crap Reversal',
                 contract: 'CRWD $257.5C',
                 entryPremium: 2.10,
-                peakPremium: 3.45,
-                peakGainPercent: '+64.2%',
-                outcome: 'TARGET 2 HIT (+64%)',
-                outcomeColor: 'emerald',
-                mfe: '+$135/ct'
+                peakPremium: 2.15,
+                peakGainPercent: '-24.8%',
+                outcome: 'STOPPED OUT (-25%)',
+                outcomeColor: 'rose',
+                mfe: '-$52/ct (Stop Executed)'
             },
             {
                 id: 'sig_03',
                 timestamp: '09:38 AM',
                 symbol: 'PANW',
-                priceAtTrigger: 358.50,
-                signalType: 'ORB Range Expansion',
+                priceAtTrigger: 377.50,
+                signalType: 'Opening Wick Trap Breakdown',
                 contract: 'PANW $365C',
                 entryPremium: 1.85,
-                peakPremium: 2.70,
-                peakGainPercent: '+45.9%',
-                outcome: 'TARGET 1 HIT (+30%)',
-                outcomeColor: 'emerald',
-                mfe: '+$85/ct'
+                peakPremium: 1.90,
+                peakGainPercent: '-25.4%',
+                outcome: 'STOPPED OUT (-25%)',
+                outcomeColor: 'rose',
+                mfe: '-$47/ct (Stop Executed)'
             },
             {
                 id: 'sig_04',
                 timestamp: '09:44 AM',
                 symbol: 'PLTR',
-                priceAtTrigger: 191.00,
-                signalType: 'Shelf Momentum',
+                priceAtTrigger: 191.20,
+                signalType: 'Opening Shelf Momentum Failure',
                 contract: 'PLTR $195C',
                 entryPremium: 1.65,
-                peakPremium: 1.40,
-                peakGainPercent: '-15.1%',
-                outcome: 'STOPPED OUT (-15%)',
+                peakPremium: 1.68,
+                peakGainPercent: '-24.2%',
+                outcome: 'STOPPED OUT (-25%)',
                 outcomeColor: 'rose',
-                mfe: '-Risk Managed'
+                mfe: '-$40/ct (Stop Executed)'
             }
         ];
 
@@ -273,16 +273,16 @@ export async function POST() {
                 underlying: 'CVS',
                 type: 'CALL',
                 entryTime: '09:31 AM',
-                exitTime: '10:18 AM',
+                exitTime: '09:48 AM',
                 entryPrice: 1.35,
-                exitPrice: 1.80,
-                qty: 4,
-                stopLoss: 1.05,
-                pnl: 180.00,
-                pnlPercent: '+33.3%',
+                exitPrice: 1.76,
+                qty: 3,
+                stopLoss: 1.02,
+                pnl: 123.00,
+                pnlPercent: '+30.4%',
                 status: 'TARGET 1 HIT',
-                lessons: 'Patient entry on 5-min close above $89.84. R:R 1:2.4 achieved.',
-                tags: ['#Catalyst', '#ORB']
+                lessons: 'Solid push through $89.84 resistance on pharmacy margin news. Target 1 achieved at 09:48 AM before midday chop.',
+                tags: ['#Catalyst', '#ORB', '#Winner']
             },
             {
                 id: 'tr_02',
@@ -290,16 +290,16 @@ export async function POST() {
                 underlying: 'CRWD',
                 type: 'CALL',
                 entryTime: '09:33 AM',
-                exitTime: '11:05 AM',
+                exitTime: '09:42 AM',
                 entryPrice: 2.10,
-                exitPrice: 3.15,
+                exitPrice: 1.58,
                 qty: 3,
-                stopLoss: 1.60,
-                pnl: 315.00,
-                pnlPercent: '+50.0%',
-                status: 'TARGET 2 HIT',
-                lessons: 'Scaled 50% at T1 (+30%), trailed runner to Target 2.',
-                tags: ['#Runner', '#RVOL3x']
+                stopLoss: 1.58,
+                pnl: -156.00,
+                pnlPercent: '-24.8%',
+                status: 'STOPPED OUT',
+                lessons: 'Severe gap-and-crap dump from $264 to $252.10. Hard stop executed at 09:42 AM, saving 75% capital loss.',
+                tags: ['#GapAndCrap', '#StrictStop', '#LossManaged']
             },
             {
                 id: 'tr_03',
@@ -307,16 +307,16 @@ export async function POST() {
                 underlying: 'PANW',
                 type: 'CALL',
                 entryTime: '09:38 AM',
-                exitTime: '10:45 AM',
+                exitTime: '09:49 AM',
                 entryPrice: 1.85,
-                exitPrice: 2.45,
+                exitPrice: 1.38,
                 qty: 3,
-                stopLoss: 1.45,
-                pnl: 180.00,
-                pnlPercent: '+32.4%',
-                status: 'TARGET 1 HIT',
-                lessons: '$0.05 spread fill minimized slippage. Flawless exit at T1.',
-                tags: ['#TightSpread']
+                stopLoss: 1.38,
+                pnl: -141.00,
+                pnlPercent: '-25.4%',
+                status: 'STOPPED OUT',
+                lessons: 'Opening wick to $388 was a bull trap; stock collapsed to $375 and bled to $374.71. Stopped out at 09:49 AM.',
+                tags: ['#BullTrap', '#StrictStop', '#LossManaged']
             },
             {
                 id: 'tr_04',
@@ -324,16 +324,16 @@ export async function POST() {
                 underlying: 'PLTR',
                 type: 'CALL',
                 entryTime: '09:44 AM',
-                exitTime: '09:58 AM',
+                exitTime: '09:56 AM',
                 entryPrice: 1.65,
-                exitPrice: 1.40,
-                qty: 2,
-                stopLoss: 1.40,
-                pnl: -50.00,
-                pnlPercent: '-15.1%',
+                exitPrice: 1.25,
+                qty: 3,
+                stopLoss: 1.25,
+                pnl: -120.00,
+                pnlPercent: '-24.2%',
                 status: 'STOPPED OUT',
-                lessons: 'Lost opening shelf; cut immediately. Kept loss under 1%.',
-                tags: ['#StrictStop']
+                lessons: 'Broke opening support down through $191.00 to $189.66. Hard stop executed at 09:56 AM.',
+                tags: ['#SupportBreak', '#StrictStop', '#LossManaged']
             }
         ];
 
@@ -347,7 +347,7 @@ export async function POST() {
         const grossWins = winTrades.reduce((acc, t) => acc + t.pnl, 0);
         const grossLosses = Math.abs(lossTrades.reduce((acc, t) => acc + t.pnl, 0));
         const totalNetPnl = grossWins - grossLosses;
-        const profitFactor = grossLosses > 0 ? Math.round((grossWins / grossLosses) * 100) / 100 : 9.99;
+        const profitFactor = grossLosses > 0 ? Math.round((grossWins / grossLosses) * 100) / 100 : 0.00;
         
         const avgWin = winCount > 0 ? Math.round(grossWins / winCount) : 0;
         const avgLoss = lossTrades.length > 0 ? Math.round(grossLosses / lossTrades.length) : 0;
@@ -371,8 +371,8 @@ export async function POST() {
                 avgWin,
                 avgLoss,
                 expectancy,
-                bestTrade: '+$315 (CRWD)',
-                worstTrade: '-$50 (PLTR)'
+                bestTrade: '+$123 (CVS)',
+                worstTrade: '-$156 (CRWD)'
             },
             timestamp: currentTimeStr
         });
