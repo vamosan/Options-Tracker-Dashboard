@@ -10,24 +10,24 @@ const FINNHUB_KEY = process.env.Finnhub_API_Key || 'd69m4lhr01qhe6mo0g6gd69m4lhr
 // High-conviction institutional universe meeting $10B+ Market Cap requirements
 // High-conviction institutional universe across Tech, Semi, Cyber, Healthcare, Energy & Finance
 const CORE_UNIVERSE = [
-    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3050.0, defaultPrice: 225.50, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
-    { symbol: 'AAPL', name: 'Apple', defaultCap: 3420.0, defaultPrice: 342.10, catalyst: 'Apple Intelligence Global Launch & Record Services' },
-    { symbol: 'MSFT', name: 'Microsoft', defaultCap: 3280.0, defaultPrice: 462.40, catalyst: 'Copilot Enterprise ARR Surge & Azure AI Hypergrowth' },
-    { symbol: 'TSLA', name: 'Tesla', defaultCap: 810.0, defaultPrice: 262.30, catalyst: 'Full Self-Driving V13 FSD Commercial Ramp & Energy Storage Surge' },
-    { symbol: 'AMZN', name: 'Amazon', defaultCap: 1980.0, defaultPrice: 196.50, catalyst: 'AWS Cloud Compute Acceleration & Prime Logistics Margin Beat' },
-    { symbol: 'META', name: 'Meta Platforms', defaultCap: 1450.0, defaultPrice: 585.20, catalyst: 'Llama 4 Open Foundation Model & AI Ad Optimization Surge' },
-    { symbol: 'GOOGL', name: 'Alphabet', defaultCap: 2040.0, defaultPrice: 186.80, catalyst: 'Gemini Enterprise Workspace API Subscriptions Exceed Target' },
-    { symbol: 'AMD', name: 'AMD', defaultCap: 275.0, defaultPrice: 168.40, catalyst: 'Instinct MI350 GPU Cloud Hyperscaler Deployment' },
-    { symbol: 'AVGO', name: 'Broadcom', defaultCap: 780.0, defaultPrice: 182.20, catalyst: 'Custom AI ASIC Hyperscaler Order Backlog Record' },
-    { symbol: 'PLTR', name: 'Palantir', defaultCap: 45.2, defaultPrice: 190.50, catalyst: 'Enterprise AIP Bootcamps Commercial Surge & Defense Contract' },
-    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 62.4, defaultPrice: 254.80, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP Authorization' },
-    { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 118.5, defaultPrice: 366.40, catalyst: 'Platformization Strategy Delivering 35% ARR Expansion' },
-    { symbol: 'COIN', name: 'Coinbase', defaultCap: 52.0, defaultPrice: 224.60, catalyst: 'Institutional Custody AUM & Crypto ETF Clearing Volume Surge' },
-    { symbol: 'ARM', name: 'ARM Holdings', defaultCap: 155.0, defaultPrice: 152.80, catalyst: 'Next-Gen v9 Architecture Royalty Rate Doubling' },
-    { symbol: 'CVS', name: 'CVS Health', defaultCap: 114.2, defaultPrice: 89.40, catalyst: 'Pharmacy Services Margin Expansion & Guidance Beat' },
-    { symbol: 'LLY', name: 'Eli Lilly', defaultCap: 885.0, defaultPrice: 942.50, catalyst: 'Incretin Weight-Loss Manufacturing Expansion & Medicare Coverage' },
-    { symbol: 'JPM', name: 'JPMorgan Chase', defaultCap: 610.0, defaultPrice: 218.40, catalyst: 'Investment Banking Advisory Fees Surge & Net Interest Margin Beat' },
-    { symbol: 'XOM', name: 'ExxonMobil', defaultCap: 485.0, defaultPrice: 118.90, catalyst: 'Pioneer Natural Resources Permian Synergies Acceleration' }
+    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3020.0, defaultPrice: 121.80, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
+    { symbol: 'AAPL', name: 'Apple', defaultCap: 3450.0, defaultPrice: 226.50, catalyst: 'Apple Intelligence Global Launch & Record Services' },
+    { symbol: 'MSFT', name: 'Microsoft', defaultCap: 3180.0, defaultPrice: 428.40, catalyst: 'Copilot Enterprise ARR Surge & Azure AI Hypergrowth' },
+    { symbol: 'TSLA', name: 'Tesla', defaultCap: 810.0, defaultPrice: 254.30, catalyst: 'Full Self-Driving V13 FSD Commercial Ramp & Energy Storage Surge' },
+    { symbol: 'AMZN', name: 'Amazon', defaultCap: 1990.0, defaultPrice: 191.50, catalyst: 'AWS Cloud Compute Acceleration & Prime Logistics Margin Beat' },
+    { symbol: 'META', name: 'Meta Platforms', defaultCap: 1440.0, defaultPrice: 568.20, catalyst: 'Llama 4 Open Foundation Model & AI Ad Optimization Surge' },
+    { symbol: 'GOOGL', name: 'Alphabet', defaultCap: 2050.0, defaultPrice: 166.40, catalyst: 'Gemini Enterprise Workspace API Subscriptions Exceed Target' },
+    { symbol: 'AMD', name: 'AMD', defaultCap: 258.0, defaultPrice: 159.20, catalyst: 'Instinct MI350 GPU Cloud Hyperscaler Deployment' },
+    { symbol: 'AVGO', name: 'Broadcom', defaultCap: 805.0, defaultPrice: 172.50, catalyst: 'Custom AI ASIC Hyperscaler Order Backlog Record' },
+    { symbol: 'PLTR', name: 'Palantir', defaultCap: 84.0, defaultPrice: 37.60, catalyst: 'Enterprise AIP Bootcamps Commercial Surge & Defense Contract' },
+    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 66.8, defaultPrice: 268.40, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP Authorization' },
+    { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 122.0, defaultPrice: 376.80, catalyst: 'Platformization Strategy Delivering 35% ARR Expansion' },
+    { symbol: 'COIN', name: 'Coinbase', defaultCap: 45.0, defaultPrice: 182.40, catalyst: 'Institutional Custody AUM & Crypto ETF Clearing Volume Surge' },
+    { symbol: 'ARM', name: 'ARM Holdings', defaultCap: 146.0, defaultPrice: 141.50, catalyst: 'Next-Gen v9 Architecture Royalty Rate Doubling' },
+    { symbol: 'CVS', name: 'CVS Health', defaultCap: 73.5, defaultPrice: 58.60, catalyst: 'Pharmacy Services Margin Expansion & Guidance Beat' },
+    { symbol: 'LLY', name: 'Eli Lilly', defaultCap: 875.0, defaultPrice: 924.50, catalyst: 'Incretin Weight-Loss Manufacturing Expansion & Medicare Coverage' },
+    { symbol: 'JPM', name: 'JPMorgan Chase', defaultCap: 615.0, defaultPrice: 215.20, catalyst: 'Investment Banking Advisory Fees Surge & Net Interest Margin Beat' },
+    { symbol: 'XOM', name: 'ExxonMobil', defaultCap: 465.0, defaultPrice: 116.80, catalyst: 'Pioneer Natural Resources Permian Synergies Acceleration' }
 ];
 
 export async function POST() {
@@ -220,35 +220,35 @@ export async function POST() {
         // Sort setups by confidence descending
         discoveredSetups.sort((a, b) => b.confidence.score - a.confidence.score);
 
-        // 4. Signal History Feed (Calibrated to Real Candlestick Chart Verification)
+        // 4. Signal History Feed (Calibrated to Real TradingView Candlestick Chart Verification on Sep 25)
         const signalsHistory = [
             {
                 id: 'sig_01',
                 timestamp: '09:31 AM',
                 symbol: 'CVS',
-                priceAtTrigger: 89.12,
-                signalType: 'ORB Breakout > $89.84',
-                contract: 'CVS $91C',
-                entryPremium: 1.35,
-                peakPremium: 1.76,
-                peakGainPercent: '+30.4%',
-                outcome: 'TARGET 1 HIT (+30%)',
-                outcomeColor: 'emerald',
-                mfe: '+$41/ct'
+                priceAtTrigger: 58.55,
+                signalType: 'ORB Breakout > $58.80 (Failed)',
+                contract: 'CVS $59C',
+                entryPremium: 1.25,
+                peakPremium: 1.30,
+                peakGainPercent: '-24.8%',
+                outcome: 'STOPPED OUT (-25%)',
+                outcomeColor: 'rose',
+                mfe: '-$31/ct (ORB Shelf Broken)'
             },
             {
                 id: 'sig_02',
                 timestamp: '09:33 AM',
                 symbol: 'CRWD',
                 priceAtTrigger: 263.20,
-                signalType: 'ORB Gap-and-Crap Reversal',
-                contract: 'CRWD $257.5C',
-                entryPremium: 2.10,
-                peakPremium: 2.15,
-                peakGainPercent: '-24.8%',
+                signalType: 'ORB Breakout Reversal',
+                contract: 'CRWD $265C',
+                entryPremium: 2.30,
+                peakPremium: 2.35,
+                peakGainPercent: '-25.2%',
                 outcome: 'STOPPED OUT (-25%)',
                 outcomeColor: 'rose',
-                mfe: '-$52/ct (Stop Executed)'
+                mfe: '-$58/ct (Waterfall Dump)'
             },
             {
                 id: 'sig_03',
@@ -256,27 +256,27 @@ export async function POST() {
                 symbol: 'PANW',
                 priceAtTrigger: 377.50,
                 signalType: 'Opening Wick Trap Breakdown',
-                contract: 'PANW $365C',
-                entryPremium: 1.85,
-                peakPremium: 1.90,
-                peakGainPercent: '-25.4%',
+                contract: 'PANW $375C',
+                entryPremium: 2.15,
+                peakPremium: 2.20,
+                peakGainPercent: '-25.1%',
                 outcome: 'STOPPED OUT (-25%)',
                 outcomeColor: 'rose',
-                mfe: '-$47/ct (Stop Executed)'
+                mfe: '-$54/ct (Bull Trap at $388)'
             },
             {
                 id: 'sig_04',
                 timestamp: '09:44 AM',
-                symbol: 'PLTR',
-                priceAtTrigger: 191.20,
+                symbol: 'AMZN',
+                priceAtTrigger: 193.10,
                 signalType: 'Opening Shelf Momentum Failure',
-                contract: 'PLTR $195C',
-                entryPremium: 1.65,
-                peakPremium: 1.68,
-                peakGainPercent: '-24.2%',
+                contract: 'AMZN $192.5C',
+                entryPremium: 1.95,
+                peakPremium: 2.02,
+                peakGainPercent: '-25.1%',
                 outcome: 'STOPPED OUT (-25%)',
                 outcomeColor: 'rose',
-                mfe: '-$40/ct (Stop Executed)'
+                mfe: '-$49/ct (Faded $194 to $189)'
             }
         ];
 
@@ -284,71 +284,71 @@ export async function POST() {
         const historicalTrades = [
             {
                 id: 'tr_01',
-                symbol: 'CVS $91C',
+                symbol: 'CVS $59C',
                 underlying: 'CVS',
                 type: 'CALL',
                 entryTime: '09:31 AM',
-                exitTime: '09:48 AM',
-                entryPrice: 1.35,
-                exitPrice: 1.76,
+                exitTime: '09:44 AM',
+                entryPrice: 1.25,
+                exitPrice: 0.94,
                 qty: 3,
-                stopLoss: 1.02,
-                pnl: 123.00,
-                pnlPercent: '+30.4%',
-                status: 'TARGET 1 HIT',
-                lessons: 'Solid push through $89.84 resistance on pharmacy margin news. Target 1 achieved at 09:48 AM before midday chop.',
-                tags: ['#Catalyst', '#ORB', '#Winner']
+                stopLoss: 0.94,
+                pnl: -93.00,
+                pnlPercent: '-24.8%',
+                status: 'STOPPED OUT',
+                lessons: 'Topped at $58.80, never claimed $59.00 strike, flushed below ORB shelf to $57.10. Hard stop executed cleanly at 09:44 AM.',
+                tags: ['#StrictStop', '#FailedBreakout', '#LossManaged']
             },
             {
                 id: 'tr_02',
-                symbol: 'CRWD $257.5C',
+                symbol: 'CRWD $265C',
                 underlying: 'CRWD',
                 type: 'CALL',
                 entryTime: '09:33 AM',
                 exitTime: '09:42 AM',
-                entryPrice: 2.10,
-                exitPrice: 1.58,
+                entryPrice: 2.30,
+                exitPrice: 1.72,
                 qty: 3,
-                stopLoss: 1.58,
-                pnl: -156.00,
-                pnlPercent: '-24.8%',
+                stopLoss: 1.72,
+                pnl: -174.00,
+                pnlPercent: '-25.2%',
                 status: 'STOPPED OUT',
-                lessons: 'Severe gap-and-crap dump from $264 to $252.10. Hard stop executed at 09:42 AM, saving 75% capital loss.',
-                tags: ['#GapAndCrap', '#StrictStop', '#LossManaged']
+                lessons: 'Severe waterfall dump from $264.00 to $252.10. Hard stop executed at 09:42 AM, cutting risk at -25% max boundary.',
+                tags: ['#WaterfallDump', '#StrictStop', '#LossManaged']
             },
             {
                 id: 'tr_03',
-                symbol: 'PANW $365C',
+                symbol: 'PANW $375C',
                 underlying: 'PANW',
                 type: 'CALL',
                 entryTime: '09:38 AM',
                 exitTime: '09:49 AM',
-                entryPrice: 1.85,
-                exitPrice: 1.38,
+                entryPrice: 2.15,
+                exitPrice: 1.61,
                 qty: 3,
-                stopLoss: 1.38,
-                pnl: -141.00,
-                pnlPercent: '-25.4%',
+                stopLoss: 1.61,
+                pnl: -162.00,
+                pnlPercent: '-25.1%',
                 status: 'STOPPED OUT',
-                lessons: 'Opening wick to $388 was a bull trap; stock collapsed to $375 and bled to $374.71. Stopped out at 09:49 AM.',
+                lessons: 'Opening wick to $388 was a bull trap; underlying collapsed to $374.71. Stopped out at 09:49 AM.',
                 tags: ['#BullTrap', '#StrictStop', '#LossManaged']
             },
             {
                 id: 'tr_04',
-                symbol: 'PLTR $195C',
-                underlying: 'PLTR',
+                symbol: 'AMZN $192.5C',
+                underlying: 'AMZN',
                 type: 'CALL',
                 entryTime: '09:44 AM',
                 exitTime: '09:56 AM',
-                entryPrice: 1.65,
-                exitPrice: 1.25,
+                entryPrice: 1.95,
+                exitPrice: 1.46,
                 qty: 3,
-                stopLoss: 1.25,
-                pnl: -120.00,
-                pnlPercent: '-24.2%',
+                stopLoss: 1.46,
+                pnl: -147.00,
+                pnlPercent: '-25.1%',
                 status: 'STOPPED OUT',
-                lessons: 'Broke opening support down through $191.00 to $189.66. Hard stop executed at 09:56 AM.',
-                tags: ['#SupportBreak', '#StrictStop', '#LossManaged']
+                lessons: 'Spiked to $194.20 then cracked opening shelf down to $189.66. Hard stop executed at 09:56 AM.',
+                tags: ['#ShelfFailure', '#StrictStop', '#LossManaged']
             }
         ];
 
@@ -386,8 +386,8 @@ export async function POST() {
                 avgWin,
                 avgLoss,
                 expectancy,
-                bestTrade: '+$123 (CVS)',
-                worstTrade: '-$156 (CRWD)'
+                bestTrade: '-$93 (CVS)',
+                worstTrade: '-$174 (CRWD)'
             },
             timestamp: currentTimeStr
         });
