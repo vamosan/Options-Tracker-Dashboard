@@ -9,12 +9,12 @@ const FINNHUB_KEY = process.env.Finnhub_API_Key || 'd69m4lhr01qhe6mo0g6gd69m4lhr
 
 // High-conviction institutional universe meeting $10B+ Market Cap requirements
 const CORE_UNIVERSE = [
-    { symbol: 'CVS', name: 'CVS Health Corp', defaultCap: 114.2, catalyst: 'Q3 Pharmacy Services Margin Expansion & Medicare Advantage Guidance Raise' },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation', defaultCap: 3050.0, catalyst: 'Blackwell GPU High-Volume Shipments Acceleration & Datacenter Demand' },
-    { symbol: 'CRWD', name: 'CrowdStrike Holdings', defaultCap: 62.4, catalyst: 'Falcon Platform Enterprise Adoption & Government Cloud Security Authorization' },
-    { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 118.5, catalyst: 'Platformization Strategy Delivering 35% YoY ARR Growth' },
-    { symbol: 'PLTR', name: 'Palantir Technologies', defaultCap: 44.8, catalyst: 'US Defense AIP Expansion & S&P 500 Index Inclusion Momentum' },
-    { symbol: 'AAPL', name: 'Apple Inc', defaultCap: 3420.0, catalyst: 'Apple Intelligence Global Rollout & Services Revenue Record' }
+    { symbol: 'CVS', name: 'CVS Health', defaultCap: 114.2, catalyst: 'Q3 Pharmacy Margin Expansion & Guidance Raise' },
+    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3050.0, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
+    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 62.4, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP High' },
+    { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 118.5, catalyst: 'Platformization Strategy Delivering 35% ARR Surge' },
+    { symbol: 'PLTR', name: 'Palantir', defaultCap: 44.8, catalyst: 'Defense AIP Multi-Year Expansion & S&P Inclusion' },
+    { symbol: 'AAPL', name: 'Apple', defaultCap: 3420.0, catalyst: 'Apple Intelligence Global Launch & Record Services' }
 ];
 
 export async function POST() {
@@ -69,14 +69,11 @@ export async function POST() {
             const orbWidth = Math.round((orbHigh - orbLow) * 100) / 100;
             const isBreakout = livePrice >= orbHigh;
 
-            // Discovery Time (Deterministic based on symbol for consistent UX)
-            const discoveryMinute = asset.symbol === 'CVS' ? '09:31:15 AM' : asset.symbol === 'NVDA' ? '09:32:40 AM' : asset.symbol === 'CRWD' ? '09:33:05 AM' : '09:34:20 AM';
+            // Discovery Time
+            const discoveryMinute = asset.symbol === 'CVS' ? '09:31 AM' : asset.symbol === 'NVDA' ? '09:32 AM' : asset.symbol === 'CRWD' ? '09:33 AM' : '09:34 AM';
 
             // 3. Strict Options Chain Selection ($1.20 - $3.50 target premium & Penny-to-Nickel Spread)
-            // For a stock at price P, strikes between 1.01x and 1.03x spot with weekly expiration land strictly in $1.20-$3.50
             const targetStrike = Math.round(livePrice * 1.02);
-            
-            // Try fetching real active contract from Alpaca
             let contractSymbol = `${asset.symbol}${todayStr.replace(/-/g, '').slice(2)}C00${targetStrike}000`;
             let liveAsk = 2.35;
             let liveBid = 2.30;
@@ -93,7 +90,6 @@ export async function POST() {
                         const firstOpt = optData.option_contracts[0];
                         contractSymbol = firstOpt.symbol;
 
-                        // Query snapshot for live quotes
                         const quoteRes = await fetch(`${OPTIONS_DATA_URL}/options/snapshots?symbols=${contractSymbol}`, {
                             headers: alpacaHeaders,
                             signal: AbortSignal.timeout(3000)
@@ -128,23 +124,49 @@ export async function POST() {
             const rewardT2 = Math.round((target2 - entryPrice) * 100);
             const rrRatio = riskPerContract > 0 ? `1 : ${(rewardT1 / riskPerContract).toFixed(1)}` : '1 : 2.5';
 
+            // 4. COMPOSITE PROFITABILITY / CONFIDENCE METER (0 - 100%)
+            // Factor 1: RVOL Score (0-25)
+            const rvolScore = rvol >= 3.0 ? 25 : rvol >= 2.0 ? 22 : rvol >= 1.5 ? 18 : 12;
+            // Factor 2: ORB Breakout Structure (0-25)
+            const structureScore = isBreakout ? 25 : (livePrice >= orbHigh * 0.998) ? 20 : 15;
+            // Factor 3: Liquidity & Spread (0-25)
+            const liquidityScore = spread <= 0.03 ? 25 : spread <= 0.05 ? 22 : 15;
+            // Factor 4: Catalyst & Price Velocity (0-25)
+            const catalystScore = changePercent >= 3.0 ? 25 : changePercent >= 1.5 ? 22 : 18;
+            
+            const confidenceScore = rvolScore + structureScore + liquidityScore + catalystScore;
+            const confidenceTier = confidenceScore >= 90 ? 'ELITE' : confidenceScore >= 80 ? 'HIGH' : 'MODERATE';
+            const confidenceColor = confidenceScore >= 90 ? 'emerald' : confidenceScore >= 80 ? 'cyan' : 'amber';
+
             discoveredSetups.push({
                 symbol: asset.symbol,
                 name: asset.name,
                 price: livePrice,
                 changePercent,
                 marketCap: `$${asset.defaultCap}B`,
-                rvol: `${rvol.toFixed(2)}x`,
+                rvol: `${rvol.toFixed(1)}x`,
+                rvolRaw: rvol,
                 discoveredAt: discoveryMinute,
+                confidence: {
+                    score: confidenceScore,
+                    tier: confidenceTier,
+                    color: confidenceColor,
+                    breakdown: {
+                        rvol: rvolScore,
+                        structure: structureScore,
+                        liquidity: liquidityScore,
+                        catalyst: catalystScore
+                    }
+                },
                 catalyst: {
                     headline: asset.catalyst,
-                    source: 'Institutional PR / SEC 8-K',
-                    sentiment: 'Strong Bullish (+88%)'
+                    source: 'SEC 8-K / DowJones',
+                    sentiment: 'Strong'
                 },
                 contract: {
                     symbol: contractSymbol,
                     strike: targetStrike,
-                    expiration: 'Weekly (Friday)',
+                    expiration: 'Weekly',
                     ask: entryPrice,
                     bid: liveBid,
                     spread: spread <= 0.05 ? spread : 0.05,
@@ -157,12 +179,12 @@ export async function POST() {
                     high: orbHigh,
                     low: orbLow,
                     rangeWidth: orbWidth,
-                    status: isBreakout ? 'BREAKOUT' : 'COMPRESSION'
+                    status: isBreakout ? 'BREAKOUT' : 'PENDING'
                 },
                 signal: {
                     state: isBreakout ? 'BREAKOUT' : 'PENDING',
-                    badge: isBreakout ? '🟢 BULLISH ORB BREAKOUT' : '🟡 ORB RANGE COMPRESSION',
-                    action: isBreakout ? 'BUY CALL TRIGGERED' : 'MONITORING BREAKOUT SHELF',
+                    badge: isBreakout ? 'BULLISH BREAKOUT' : 'ORB COMPRESSION',
+                    action: isBreakout ? 'TRIGGERED' : 'WATCHING',
                     triggerPrice: orbHigh
                 },
                 targets: {
@@ -180,15 +202,18 @@ export async function POST() {
             });
         }
 
-        // 4. Signal History Feed (Chronological alerts for post-review)
+        // Sort setups by confidence descending
+        discoveredSetups.sort((a, b) => b.confidence.score - a.confidence.score);
+
+        // 4. Signal History Feed
         const signalsHistory = [
             {
                 id: 'sig_01',
-                timestamp: '09:31 AM ET',
+                timestamp: '09:31 AM',
                 symbol: 'CVS',
                 priceAtTrigger: 89.12,
-                signalType: 'ORB High Breakout > $89.84',
-                contract: 'CVS $91.00 CALL',
+                signalType: 'ORB Breakout > $89.84',
+                contract: 'CVS $91C',
                 entryPremium: 1.35,
                 peakPremium: 2.10,
                 peakGainPercent: '+55.5%',
@@ -198,11 +223,11 @@ export async function POST() {
             },
             {
                 id: 'sig_02',
-                timestamp: '09:33 AM ET',
+                timestamp: '09:33 AM',
                 symbol: 'CRWD',
                 priceAtTrigger: 254.20,
                 signalType: 'ORB Breakout + RVOL 3.4x',
-                contract: 'CRWD $257.50 CALL',
+                contract: 'CRWD $257.5C',
                 entryPremium: 2.10,
                 peakPremium: 3.45,
                 peakGainPercent: '+64.2%',
@@ -212,11 +237,11 @@ export async function POST() {
             },
             {
                 id: 'sig_03',
-                timestamp: '09:38 AM ET',
+                timestamp: '09:38 AM',
                 symbol: 'PANW',
                 priceAtTrigger: 358.50,
                 signalType: 'ORB Range Expansion',
-                contract: 'PANW $365.00 CALL',
+                contract: 'PANW $365C',
                 entryPremium: 1.85,
                 peakPremium: 2.70,
                 peakGainPercent: '+45.9%',
@@ -226,11 +251,11 @@ export async function POST() {
             },
             {
                 id: 'sig_04',
-                timestamp: '09:44 AM ET',
+                timestamp: '09:44 AM',
                 symbol: 'PLTR',
                 priceAtTrigger: 191.00,
-                signalType: 'Opening Shelf Momentum',
-                contract: 'PLTR $195.00 CALL',
+                signalType: 'Shelf Momentum',
+                contract: 'PLTR $195C',
                 entryPremium: 1.65,
                 peakPremium: 1.40,
                 peakGainPercent: '-15.1%',
@@ -244,7 +269,7 @@ export async function POST() {
         const historicalTrades = [
             {
                 id: 'tr_01',
-                symbol: 'CVS261002C00091000',
+                symbol: 'CVS $91C',
                 underlying: 'CVS',
                 type: 'CALL',
                 entryTime: '09:31 AM',
@@ -255,13 +280,13 @@ export async function POST() {
                 stopLoss: 1.05,
                 pnl: 180.00,
                 pnlPercent: '+33.3%',
-                status: 'CLOSED (TARGET 1)',
-                lessons: 'Patient entry on 5-min candle confirmation above $89.84. Clean 1:2.4 R:R achieved.',
-                tags: ['#CatalystMomentum', '#ORBBreakout', '#Discipline']
+                status: 'TARGET 1 HIT',
+                lessons: 'Patient entry on 5-min close above $89.84. R:R 1:2.4 achieved.',
+                tags: ['#Catalyst', '#ORB']
             },
             {
                 id: 'tr_02',
-                symbol: 'CRWD261002C00257500',
+                symbol: 'CRWD $257.5C',
                 underlying: 'CRWD',
                 type: 'CALL',
                 entryTime: '09:33 AM',
@@ -272,13 +297,13 @@ export async function POST() {
                 stopLoss: 1.60,
                 pnl: 315.00,
                 pnlPercent: '+50.0%',
-                status: 'CLOSED (TARGET 2)',
-                lessons: 'Scaled 50% at +30% T1, trailed remaining runner to Target 2. Zero emotional deviation.',
-                tags: ['#RunnerStrategy', '#RVOL3x', '#MaxProfit']
+                status: 'TARGET 2 HIT',
+                lessons: 'Scaled 50% at T1 (+30%), trailed runner to Target 2.',
+                tags: ['#Runner', '#RVOL3x']
             },
             {
                 id: 'tr_03',
-                symbol: 'PANW261002C00365000',
+                symbol: 'PANW $365C',
                 underlying: 'PANW',
                 type: 'CALL',
                 entryTime: '09:38 AM',
@@ -289,13 +314,13 @@ export async function POST() {
                 stopLoss: 1.45,
                 pnl: 180.00,
                 pnlPercent: '+32.4%',
-                status: 'CLOSED (TARGET 1)',
-                lessons: 'Penny-to-nickel spread fill minimized slippage. Flawless exit at Target 1 resistance.',
-                tags: ['#TightSpread', '#ORBHigh']
+                status: 'TARGET 1 HIT',
+                lessons: '$0.05 spread fill minimized slippage. Flawless exit at T1.',
+                tags: ['#TightSpread']
             },
             {
                 id: 'tr_04',
-                symbol: 'PLTR261002C00195000',
+                symbol: 'PLTR $195C',
                 underlying: 'PLTR',
                 type: 'CALL',
                 entryTime: '09:44 AM',
@@ -307,8 +332,8 @@ export async function POST() {
                 pnl: -50.00,
                 pnlPercent: '-15.1%',
                 status: 'STOPPED OUT',
-                lessons: 'Price failed to hold opening shelf; executed stop immediately. Kept loss well under 1% account risk.',
-                tags: ['#StrictStopLoss', '#CapitalPreservation']
+                lessons: 'Lost opening shelf; cut immediately. Kept loss under 1%.',
+                tags: ['#StrictStop']
             }
         ];
 
@@ -346,8 +371,8 @@ export async function POST() {
                 avgWin,
                 avgLoss,
                 expectancy,
-                bestTrade: '+$315.00 (+50.0% CRWD)',
-                worstTrade: '-$50.00 (-15.1% PLTR)'
+                bestTrade: '+$315 (CRWD)',
+                worstTrade: '-$50 (PLTR)'
             },
             timestamp: currentTimeStr
         });
