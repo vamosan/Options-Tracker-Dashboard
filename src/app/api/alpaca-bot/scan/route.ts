@@ -8,13 +8,26 @@ const TRADING_URL = 'https://paper-api.alpaca.markets/v2';
 const FINNHUB_KEY = process.env.Finnhub_API_Key || 'd69m4lhr01qhe6mo0g6gd69m4lhr01qhe6mo0g70';
 
 // High-conviction institutional universe meeting $10B+ Market Cap requirements
+// High-conviction institutional universe across Tech, Semi, Cyber, Healthcare, Energy & Finance
 const CORE_UNIVERSE = [
-    { symbol: 'CVS', name: 'CVS Health', defaultCap: 114.2, catalyst: 'Q3 Pharmacy Margin Expansion & Guidance Raise' },
-    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3050.0, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
-    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 62.4, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP High' },
-    { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 118.5, catalyst: 'Platformization Strategy Delivering 35% ARR Surge' },
-    { symbol: 'PLTR', name: 'Palantir', defaultCap: 44.8, catalyst: 'Defense AIP Multi-Year Expansion & S&P Inclusion' },
-    { symbol: 'AAPL', name: 'Apple', defaultCap: 3420.0, catalyst: 'Apple Intelligence Global Launch & Record Services' }
+    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3050.0, defaultPrice: 225.50, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
+    { symbol: 'AAPL', name: 'Apple', defaultCap: 3420.0, defaultPrice: 342.10, catalyst: 'Apple Intelligence Global Launch & Record Services' },
+    { symbol: 'MSFT', name: 'Microsoft', defaultCap: 3280.0, defaultPrice: 462.40, catalyst: 'Copilot Enterprise ARR Surge & Azure AI Hypergrowth' },
+    { symbol: 'TSLA', name: 'Tesla', defaultCap: 810.0, defaultPrice: 262.30, catalyst: 'Full Self-Driving V13 FSD Commercial Ramp & Energy Storage Surge' },
+    { symbol: 'AMZN', name: 'Amazon', defaultCap: 1980.0, defaultPrice: 196.50, catalyst: 'AWS Cloud Compute Acceleration & Prime Logistics Margin Beat' },
+    { symbol: 'META', name: 'Meta Platforms', defaultCap: 1450.0, defaultPrice: 585.20, catalyst: 'Llama 4 Open Foundation Model & AI Ad Optimization Surge' },
+    { symbol: 'GOOGL', name: 'Alphabet', defaultCap: 2040.0, defaultPrice: 186.80, catalyst: 'Gemini Enterprise Workspace API Subscriptions Exceed Target' },
+    { symbol: 'AMD', name: 'AMD', defaultCap: 275.0, defaultPrice: 168.40, catalyst: 'Instinct MI350 GPU Cloud Hyperscaler Deployment' },
+    { symbol: 'AVGO', name: 'Broadcom', defaultCap: 780.0, defaultPrice: 182.20, catalyst: 'Custom AI ASIC Hyperscaler Order Backlog Record' },
+    { symbol: 'PLTR', name: 'Palantir', defaultCap: 45.2, defaultPrice: 190.50, catalyst: 'Enterprise AIP Bootcamps Commercial Surge & Defense Contract' },
+    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 62.4, defaultPrice: 254.80, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP Authorization' },
+    { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 118.5, defaultPrice: 366.40, catalyst: 'Platformization Strategy Delivering 35% ARR Expansion' },
+    { symbol: 'COIN', name: 'Coinbase', defaultCap: 52.0, defaultPrice: 224.60, catalyst: 'Institutional Custody AUM & Crypto ETF Clearing Volume Surge' },
+    { symbol: 'ARM', name: 'ARM Holdings', defaultCap: 155.0, defaultPrice: 152.80, catalyst: 'Next-Gen v9 Architecture Royalty Rate Doubling' },
+    { symbol: 'CVS', name: 'CVS Health', defaultCap: 114.2, defaultPrice: 89.40, catalyst: 'Pharmacy Services Margin Expansion & Guidance Beat' },
+    { symbol: 'LLY', name: 'Eli Lilly', defaultCap: 885.0, defaultPrice: 942.50, catalyst: 'Incretin Weight-Loss Manufacturing Expansion & Medicare Coverage' },
+    { symbol: 'JPM', name: 'JPMorgan Chase', defaultCap: 610.0, defaultPrice: 218.40, catalyst: 'Investment Banking Advisory Fees Surge & Net Interest Margin Beat' },
+    { symbol: 'XOM', name: 'ExxonMobil', defaultCap: 485.0, defaultPrice: 118.90, catalyst: 'Pioneer Natural Resources Permian Synergies Acceleration' }
 ];
 
 export async function POST() {
@@ -25,7 +38,7 @@ export async function POST() {
         const todayStr = estTime.toISOString().split('T')[0];
         const currentTimeStr = estTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        logs.push(`[${currentTimeStr}] Scanning Pre-Market & In-Play Equities ($10B+ Cap • RVOL > 2.0x)...`);
+        logs.push(`[${currentTimeStr}] Scanning Pre-Market & In-Play Equities ($10B+ Cap across Tech, Cyber, Health, Energy, Finance)...`);
 
         const alpacaHeaders = {
             'APCA-API-KEY-ID': ALPACA_API_KEY,
@@ -54,7 +67,7 @@ export async function POST() {
         // 2. Process Qualified Assets
         for (const asset of CORE_UNIVERSE) {
             const snap = stockSnapshots[asset.symbol];
-            const livePrice = snap?.latestTrade?.p || snap?.dailyBar?.c || (asset.symbol === 'CVS' ? 89.12 : asset.symbol === 'NVDA' ? 225.05 : asset.symbol === 'CRWD' ? 252.10 : 189.63);
+            const livePrice = snap?.latestTrade?.p || snap?.dailyBar?.c || (asset.defaultPrice || 150.0);
             const prevClose = snap?.prevDailyBar?.c || (livePrice * 0.965);
             const changePercent = Math.round(((livePrice - prevClose) / prevClose) * 10000) / 100;
             const volume = snap?.dailyBar?.v || 4850000;
@@ -70,7 +83,9 @@ export async function POST() {
             const isBreakout = livePrice >= orbHigh;
 
             // Discovery Time
-            const discoveryMinute = asset.symbol === 'CVS' ? '09:31 AM' : asset.symbol === 'NVDA' ? '09:32 AM' : asset.symbol === 'CRWD' ? '09:33 AM' : '09:34 AM';
+            const discoveryMinute = snap?.latestTrade?.t 
+                ? new Date(snap.latestTrade.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : `09:3${(asset.symbol.charCodeAt(0) % 9) + 1} AM`;
 
             // 3. Strict Options Chain Selection ($1.20 - $3.50 target premium & Penny-to-Nickel Spread)
             const targetStrike = Math.round(livePrice * 1.02);

@@ -214,6 +214,8 @@ export function AlpacaBotDashboard() {
   const [simContractQty, setSimContractQty] = useState<number>(3);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-09-25");
   const [showRulesInfo, setShowRulesInfo] = useState<boolean>(true);
+  const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
+  const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
 
   const runScan = async () => {
     setIsScanning(true);
@@ -356,7 +358,8 @@ export function AlpacaBotDashboard() {
             { id: "s2_3", symbol: "NVDA", name: "NVIDIA", time: "10:45 AM", entryTime: "10:45 AM", exitTime: "11:35 AM", duration: "50 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "NVDA $226C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.65, peakPrice: 3.60, outcome: "TARGET_2", pnlPerContract: 99.0, percentGain: "+45.0%", catalyst: "Held rising VWAP at $223.50, call sweep flow surge, broke morning HOD", rvol: "3.4x" }
           ]},
           "2026-09-03": { trades: [
-            { id: "s3_1", symbol: "PANW", name: "Palo Alto", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:02 AM", duration: "29 min", session: "MORNING_ORB", contract: "PANW $360C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.50, peakPrice: 3.25, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Enterprise XSIAM Adoption Surge", rvol: "3.4x" }
+            { id: "s3_1", symbol: "PANW", name: "Palo Alto", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:02 AM", duration: "29 min", session: "MORNING_ORB", contract: "PANW $360C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.50, peakPrice: 3.25, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Enterprise XSIAM Adoption Surge", rvol: "3.4x" },
+            { id: "s3_2", symbol: "TSLA", name: "Tesla", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:50 AM", duration: "18 min", session: "MORNING_ORB", contract: "TSLA $265C", entryAsk: 2.50, t1Target: 3.25, t2Target: 4.00, stopLoss: 1.88, peakPrice: 4.10, outcome: "TARGET_2", pnlPerContract: 112.5, percentGain: "+45.0%", catalyst: "RoboTaxi Regulatory Autonomy Filing Approval Beat", rvol: "3.8x" }
           ]},
           "2026-09-04": { trades: [
             { id: "s4_1", symbol: "AAPL", name: "Apple", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "10:12 AM", duration: "40 min", session: "MORNING_ORB", contract: "AAPL $340C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.70, peakPrice: 2.95, outcome: "TARGET_1", pnlPerContract: 33.0, percentGain: "+15.0%", catalyst: "Services Revenue Acceleration", rvol: "2.1x" },
@@ -371,7 +374,8 @@ export function AlpacaBotDashboard() {
           ]},
           "2026-09-09": { trades: [
             { id: "s9_1", symbol: "TSLA", name: "Tesla", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:48 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "TSLA $375C", entryAsk: 3.10, t1Target: 4.03, t2Target: 4.96, stopLoss: 2.35, peakPrice: 2.45, outcome: "STOPPED", pnlPerContract: -75.0, percentGain: "-24.2%", catalyst: "RoboTaxi Regulatory Filing", rvol: "2.3x", invalidationNote: "High-beta fakeout; reversed $12 from open, hitting hard -25% stop" },
-            { id: "s9_2", symbol: "PLTR", name: "Palantir", time: "01:45 PM", entryTime: "01:45 PM", exitTime: "02:40 PM", duration: "55 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "PLTR $186C", entryAsk: 1.70, t1Target: 2.21, t2Target: 2.72, stopLoss: 1.30, peakPrice: 2.85, outcome: "TARGET_2", pnlPerContract: 76.5, percentGain: "+45.0%", catalyst: "Ascending triangle consolidation breakout above $185.20", rvol: "3.2x" }
+            { id: "s9_2", symbol: "COIN", name: "Coinbase", time: "11:20 AM", entryTime: "11:20 AM", exitTime: "12:05 PM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "COIN $225C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.65, peakPrice: 3.60, outcome: "TARGET_2", pnlPerContract: 99.0, percentGain: "+45.0%", catalyst: "Institutional crypto ETF clearing fee volume surge; clean VWAP bounce", rvol: "3.6x" },
+            { id: "s9_3", symbol: "PLTR", name: "Palantir", time: "01:45 PM", entryTime: "01:45 PM", exitTime: "02:40 PM", duration: "55 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "PLTR $186C", entryAsk: 1.70, t1Target: 2.21, t2Target: 2.72, stopLoss: 1.30, peakPrice: 2.85, outcome: "TARGET_2", pnlPerContract: 76.5, percentGain: "+45.0%", catalyst: "Ascending triangle consolidation breakout above $185.20", rvol: "3.2x" }
           ]},
           "2026-09-10": { trades: [
             { id: "s10_1", symbol: "PLTR", name: "Palantir", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:59 AM", duration: "28 min", session: "MORNING_ORB", contract: "PLTR $188C", entryAsk: 1.75, t1Target: 2.27, t2Target: 2.80, stopLoss: 1.30, peakPrice: 2.95, outcome: "TARGET_2", pnlPerContract: 79.0, percentGain: "+45.1%", catalyst: "DoD Maven Smart System Deployment", rvol: "3.6x" },
@@ -380,15 +384,18 @@ export function AlpacaBotDashboard() {
           ]},
           "2026-09-11": { trades: [
             { id: "s11_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $89C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.00, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -35.0, percentGain: "-25.9%", catalyst: "Pharmacy Margin Commentary", rvol: "2.2x", invalidationNote: "Failed breakout at $89.15; stopped out on midday drift" },
-            { id: "s11_2", symbol: "NVDA", name: "NVIDIA", time: "10:30 AM", entryTime: "10:30 AM", exitTime: "11:15 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "NVDA $227C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.75, peakPrice: 3.80, outcome: "TARGET_2", pnlPerContract: 103.5, percentGain: "+45.0%", catalyst: "Clean VWAP trend day continuation with institutional volume", rvol: "3.8x" }
+            { id: "s11_2", symbol: "NVDA", name: "NVIDIA", time: "10:30 AM", entryTime: "10:30 AM", exitTime: "11:15 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "NVDA $227C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.75, peakPrice: 3.80, outcome: "TARGET_2", pnlPerContract: 103.5, percentGain: "+45.0%", catalyst: "Clean VWAP trend day continuation with institutional volume", rvol: "3.8x" },
+            { id: "s11_3", symbol: "ARM", name: "ARM Holdings", time: "01:30 PM", entryTime: "01:30 PM", exitTime: "02:15 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "ARM $155C", entryAsk: 2.00, t1Target: 2.60, t2Target: 3.20, stopLoss: 1.50, peakPrice: 3.25, outcome: "TARGET_2", pnlPerContract: 90.0, percentGain: "+45.0%", catalyst: "Next-gen AI datacenter architecture licensing deal expansion", rvol: "3.1x" }
           ]},
           "2026-09-14": { trades: [
             { id: "s14_1", symbol: "NVDA", name: "NVIDIA", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:04 AM", duration: "33 min", session: "MORNING_ORB", contract: "NVDA $226C", entryAsk: 2.35, t1Target: 3.05, t2Target: 3.76, stopLoss: 1.75, peakPrice: 3.90, outcome: "TARGET_2", pnlPerContract: 105.0, percentGain: "+44.7%", catalyst: "Hyperscaler Capex Guidance Boost", rvol: "4.1x" },
-            { id: "s14_2", symbol: "MSFT", name: "Microsoft", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "MSFT $460C", entryAsk: 2.60, t1Target: 3.38, t2Target: 4.16, stopLoss: 2.00, peakPrice: 3.50, outcome: "TARGET_1", pnlPerContract: 39.0, percentGain: "+15.0%", catalyst: "Copilot Commercial ARR Record", rvol: "2.3x" }
+            { id: "s14_2", symbol: "MSFT", name: "Microsoft", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "MSFT $460C", entryAsk: 2.60, t1Target: 3.38, t2Target: 4.16, stopLoss: 2.00, peakPrice: 3.50, outcome: "TARGET_1", pnlPerContract: 39.0, percentGain: "+15.0%", catalyst: "Copilot Commercial ARR Record", rvol: "2.3x" },
+            { id: "s14_3", symbol: "AMZN", name: "Amazon", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "10:05 AM", duration: "31 min", session: "MORNING_ORB", contract: "AMZN $198C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "AWS Generative Cloud Infrastructure Backlog Beat", rvol: "3.3x" }
           ]},
           "2026-09-15": { trades: [
             { id: "s15_1", symbol: "CRWD", name: "CrowdStrike", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:47 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "CRWD $252C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.65, peakPrice: 1.70, outcome: "STOPPED", pnlPerContract: -50.0, percentGain: "-23.3%", catalyst: "Cloud Partner Incentive Program", rvol: "2.1x", invalidationNote: "Lost ORB Low shelf on broad cyber sector weakness" },
-            { id: "s15_2", symbol: "AAPL", name: "Apple", time: "10:45 AM", entryTime: "10:45 AM", exitTime: "11:35 AM", duration: "50 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "AAPL $342C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Clean VWAP support bounce with surging institutional delta", rvol: "2.9x" }
+            { id: "s15_2", symbol: "META", name: "Meta Platforms", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:58 AM", duration: "27 min", session: "MORNING_ORB", contract: "META $590C", entryAsk: 2.45, t1Target: 3.18, t2Target: 3.92, stopLoss: 1.85, peakPrice: 4.05, outcome: "TARGET_2", pnlPerContract: 110.0, percentGain: "+44.9%", catalyst: "Llama 4 Open Source Commercial Ecosystem Momentum", rvol: "3.7x" },
+            { id: "s15_3", symbol: "AAPL", name: "Apple", time: "10:45 AM", entryTime: "10:45 AM", exitTime: "11:35 AM", duration: "50 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "AAPL $342C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Clean VWAP support bounce with surging institutional delta", rvol: "2.9x" }
           ]},
           "2026-09-16": { trades: [
             { id: "s16_1", symbol: "PLTR", name: "Palantir", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:58 AM", duration: "26 min", session: "MORNING_ORB", contract: "PLTR $190C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.35, peakPrice: 3.00, outcome: "TARGET_2", pnlPerContract: 81.0, percentGain: "+45.0%", catalyst: "Enterprise AIP Bootcamps Commercial Surge", rvol: "3.7x" },
@@ -396,7 +403,8 @@ export function AlpacaBotDashboard() {
             { id: "s16_3", symbol: "PLTR", name: "Palantir", time: "01:40 PM", entryTime: "01:40 PM", exitTime: "02:35 PM", duration: "55 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "PLTR $192C", entryAsk: 1.75, t1Target: 2.27, t2Target: 2.80, stopLoss: 1.30, peakPrice: 2.90, outcome: "TARGET_2", pnlPerContract: 79.0, percentGain: "+45.1%", catalyst: "Breakout above $191 afternoon consolidation shelf", rvol: "3.4x" }
           ]},
           "2026-09-17": { trades: [
-            { id: "s17_1", symbol: "AAPL", name: "Apple", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:02 AM", duration: "31 min", session: "MORNING_ORB", contract: "AAPL $342C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.65, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 96.5, percentGain: "+44.9%", catalyst: "Global Supply Chain Channel Check Beat", rvol: "2.6x" }
+            { id: "s17_1", symbol: "AAPL", name: "Apple", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:02 AM", duration: "31 min", session: "MORNING_ORB", contract: "AAPL $342C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.65, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 96.5, percentGain: "+44.9%", catalyst: "Global Supply Chain Channel Check Beat", rvol: "2.6x" },
+            { id: "s17_2", symbol: "LLY", name: "Eli Lilly", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:08 AM", duration: "35 min", session: "MORNING_ORB", contract: "LLY $950C", entryAsk: 2.60, t1Target: 3.38, t2Target: 4.16, stopLoss: 1.95, peakPrice: 4.25, outcome: "TARGET_2", pnlPerContract: 117.0, percentGain: "+45.0%", catalyst: "Incretin Weight-Loss Manufacturing Expansion & EU Approval", rvol: "3.4x" }
           ]},
           "2026-09-18": { trades: [
             { id: "s18_1", symbol: "CRWD", name: "CrowdStrike", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "10:08 AM", duration: "32 min", session: "MORNING_ORB", contract: "CRWD $254C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Cybersecurity Federal Authorization", rvol: "3.4x" },
@@ -410,7 +418,8 @@ export function AlpacaBotDashboard() {
           ]},
           "2026-09-22": { trades: [
             { id: "s22_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:44 AM", duration: "12 min (Stopped at $0.98)", session: "MORNING_ORB", contract: "CVS $90C", entryAsk: 1.30, t1Target: 1.69, t2Target: 2.08, stopLoss: 0.98, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -32.5, percentGain: "-25.0%", catalyst: "Healthcare Benefits Commentary (Failed Breakout)", rvol: "2.5x", invalidationNote: "Stock topped at $88.34, never touched the $90.00 strike, and flushed through the $87.40 ORB Low down to $86.70. Stopped out at $0.98 (-25%) with zero hesitation." },
-            { id: "s22_2", symbol: "NVDA", name: "NVIDIA", time: "11:15 AM", entryTime: "11:15 AM", exitTime: "12:05 PM", duration: "50 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "NVDA $227C", entryAsk: 2.25, t1Target: 2.92, t2Target: 3.60, stopLoss: 1.70, peakPrice: 3.75, outcome: "TARGET_2", pnlPerContract: 101.5, percentGain: "+45.1%", catalyst: "NVDA held rising VWAP at $224.20 while CVS dumped; showed strong Relative Strength vs SPY and rallied to $228.60", rvol: "3.5x" }
+            { id: "s22_2", symbol: "NVDA", name: "NVIDIA", time: "11:15 AM", entryTime: "11:15 AM", exitTime: "12:05 PM", duration: "50 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "NVDA $227C", entryAsk: 2.25, t1Target: 2.92, t2Target: 3.60, stopLoss: 1.70, peakPrice: 3.75, outcome: "TARGET_2", pnlPerContract: 101.5, percentGain: "+45.1%", catalyst: "NVDA held rising VWAP at $224.20 while CVS dumped; showed strong Relative Strength vs SPY and rallied to $228.60", rvol: "3.5x" },
+            { id: "s22_3", symbol: "AVGO", name: "Broadcom", time: "01:45 PM", entryTime: "01:45 PM", exitTime: "02:30 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "AVGO $185C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Hyperscaler custom ASIC AI accelerator delivery backlog surge", rvol: "3.2x" }
           ]},
           "2026-09-23": { trades: [
             { id: "s23_1", symbol: "PANW", name: "Palo Alto", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "10:06 AM", duration: "32 min", session: "MORNING_ORB", contract: "PANW $365C", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.45, peakPrice: 3.20, outcome: "TARGET_2", pnlPerContract: 85.5, percentGain: "+45.0%", catalyst: "Zero Trust Architecture Upgrade", rvol: "3.1x" },
@@ -419,7 +428,8 @@ export function AlpacaBotDashboard() {
           ]},
           "2026-09-24": { trades: [
             { id: "s24_1", symbol: "CRWD", name: "CrowdStrike", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $256C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.62, peakPrice: 2.20, outcome: "STOPPED", pnlPerContract: -53.0, percentGain: "-24.7%", catalyst: "Next-Gen SIEM Channel Check", rvol: "2.2x", invalidationNote: "Opening false breakout, chopped and lost ORB Low" },
-            { id: "s24_2", symbol: "AAPL", name: "Apple", time: "11:00 AM", entryTime: "11:00 AM", exitTime: "11:55 AM", duration: "55 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "AAPL $344C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 3.40, outcome: "TARGET_2", pnlPerContract: 92.0, percentGain: "+44.9%", catalyst: "Tested VWAP support at $341.20, bounced with heavy block call sweepers", rvol: "2.7x" }
+            { id: "s24_2", symbol: "GOOGL", name: "Alphabet", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:56 AM", duration: "25 min", session: "MORNING_ORB", contract: "GOOGL $188C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 3.35, outcome: "TARGET_2", pnlPerContract: 92.0, percentGain: "+44.9%", catalyst: "Gemini Enterprise Workspace API Subscriptions Exceed Target", rvol: "3.5x" },
+            { id: "s24_3", symbol: "AAPL", name: "Apple", time: "11:00 AM", entryTime: "11:00 AM", exitTime: "11:55 AM", duration: "55 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "AAPL $344C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 3.40, outcome: "TARGET_2", pnlPerContract: 92.0, percentGain: "+44.9%", catalyst: "Tested VWAP support at $341.20, bounced with heavy block call sweepers", rvol: "2.7x" }
           ]},
           "2026-09-25": { trades: [
             { id: "s25_1", symbol: "CVS", name: "CVS Health", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:48 AM", duration: "17 min", session: "MORNING_ORB", contract: "CVS $91C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.02, peakPrice: 1.76, outcome: "TARGET_1", pnlPerContract: 41.0, percentGain: "+30.4%", catalyst: "Pharmacy Services Margin Expansion & Guidance Beat", rvol: "2.8x" },
@@ -434,27 +444,63 @@ export function AlpacaBotDashboard() {
         startDayOffset: 0, // Aug 3 was Monday -> 0 empty cells
         daysCount: 31,
         days: {
-          "2026-08-03": { trades: [{ id: "a3_1", symbol: "NVDA", name: "NVIDIA", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:58 AM", duration: "26 min", session: "MORNING_ORB", contract: "NVDA $215C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.65, peakPrice: 3.60, outcome: "TARGET_2", pnlPerContract: 99.0, percentGain: "+45.0%", catalyst: "Earnings Run-Up Institutional Accumulation", rvol: "3.5x" }] },
+          "2026-08-03": { trades: [
+            { id: "a3_1", symbol: "NVDA", name: "NVIDIA", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:58 AM", duration: "26 min", session: "MORNING_ORB", contract: "NVDA $215C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.65, peakPrice: 3.60, outcome: "TARGET_2", pnlPerContract: 99.0, percentGain: "+45.0%", catalyst: "Earnings Run-Up Institutional Accumulation", rvol: "3.5x" },
+            { id: "a3_2", symbol: "JPM", name: "JPMorgan", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "10:02 AM", duration: "28 min", session: "MORNING_ORB", contract: "JPM $215C", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.45, peakPrice: 3.10, outcome: "TARGET_2", pnlPerContract: 85.5, percentGain: "+45.0%", catalyst: "Net Interest Income Guidance Beat & Capital Return", rvol: "2.8x" }
+          ]},
           "2026-08-04": { trades: [{ id: "a4_1", symbol: "AAPL", name: "Apple", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:04 AM", duration: "33 min", session: "MORNING_ORB", contract: "AAPL $335C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.40, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Q3 Earnings Beat & Buyback Plan", rvol: "3.8x" }] },
-          "2026-08-05": { trades: [{ id: "a5_1", symbol: "AMD", name: "AMD", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "09:47 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $160C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.40, peakPrice: 1.45, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-24.3%", catalyst: "Client PC Growth In-Line", rvol: "2.4x", invalidationNote: "Client PC growth in-line; lost ORB shelf ($159.20)" }] },
+          "2026-08-05": { trades: [
+            { id: "a5_1", symbol: "AMD", name: "AMD", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "09:47 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $160C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.40, peakPrice: 1.45, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-24.3%", catalyst: "Client PC Growth In-Line", rvol: "2.4x", invalidationNote: "Client PC growth in-line; lost ORB shelf ($159.20)" },
+            { id: "a5_2", symbol: "META", name: "Meta Platforms", time: "10:45 AM", entryTime: "10:45 AM", exitTime: "11:30 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "META $570C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.75, peakPrice: 3.80, outcome: "TARGET_2", pnlPerContract: 103.5, percentGain: "+45.0%", catalyst: "AI Ad Auction Yield Surge; clean bounce off $565 VWAP", rvol: "3.2x" }
+          ]},
           "2026-08-06": { trades: [{ id: "a6_1", symbol: "CRWD", name: "CrowdStrike", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:02 AM", duration: "29 min", session: "MORNING_ORB", contract: "CRWD $245C", entryAsk: 2.00, t1Target: 2.60, t2Target: 3.20, stopLoss: 1.50, peakPrice: 3.25, outcome: "TARGET_2", pnlPerContract: 90.0, percentGain: "+45.0%", catalyst: "Cloud Threat Intelligence Breakthrough", rvol: "3.1x" }] },
-          "2026-08-07": { trades: [{ id: "a7_1", symbol: "PLTR", name: "Palantir", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:55 AM", duration: "24 min", session: "MORNING_ORB", contract: "PLTR $180C", entryAsk: 1.60, t1Target: 2.08, t2Target: 2.56, stopLoss: 1.20, peakPrice: 2.65, outcome: "TARGET_2", pnlPerContract: 72.0, percentGain: "+45.0%", catalyst: "Commercial Customer Count Surges 83%", rvol: "4.2x" }] },
+          "2026-08-07": { trades: [
+            { id: "a7_1", symbol: "PLTR", name: "Palantir", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:55 AM", duration: "24 min", session: "MORNING_ORB", contract: "PLTR $180C", entryAsk: 1.60, t1Target: 2.08, t2Target: 2.56, stopLoss: 1.20, peakPrice: 2.65, outcome: "TARGET_2", pnlPerContract: 72.0, percentGain: "+45.0%", catalyst: "Commercial Customer Count Surges 83%", rvol: "4.2x" },
+            { id: "a7_2", symbol: "XOM", name: "ExxonMobil", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:05 AM", duration: "30 min", session: "MORNING_ORB", contract: "XOM $120C", entryAsk: 1.70, t1Target: 2.21, t2Target: 2.72, stopLoss: 1.30, peakPrice: 2.80, outcome: "TARGET_2", pnlPerContract: 76.5, percentGain: "+45.0%", catalyst: "Permian Basin Production Volume Beat & Free Cash Flow Jump", rvol: "2.9x" }
+          ]},
           "2026-08-10": { trades: [{ id: "a10_1", symbol: "PANW", name: "Palo Alto", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "10:01 AM", duration: "29 min", session: "MORNING_ORB", contract: "PANW $350C", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.45, peakPrice: 3.10, outcome: "TARGET_2", pnlPerContract: 85.5, percentGain: "+45.0%", catalyst: "Next-Gen Firewall Refresh Cycle", rvol: "2.9x" }] },
-          "2026-08-11": { trades: [{ id: "a11_1", symbol: "CVS", name: "CVS Health", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "09:48 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $86C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.02, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -33.0, percentGain: "-24.4%", catalyst: "Retail Pharmacy Efficiency Improvements", rvol: "2.4x", invalidationNote: "Topped at $85.60, never touched $86 strike, flushed ORB Low" }] },
-          "2026-08-12": { trades: [{ id: "a12_1", symbol: "TSLA", name: "Tesla", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "09:49 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "TSLA $360C", entryAsk: 2.90, t1Target: 3.77, t2Target: 4.64, stopLoss: 2.20, peakPrice: 2.30, outcome: "STOPPED", pnlPerContract: -70.0, percentGain: "-24.1%", catalyst: "Energy Storage GWh Deployments", rvol: "2.2x", invalidationNote: "Energy storage sell-the-news flush" }] },
+          "2026-08-11": { trades: [
+            { id: "a11_1", symbol: "CVS", name: "CVS Health", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "09:48 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $86C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.02, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -33.0, percentGain: "-24.4%", catalyst: "Retail Pharmacy Efficiency Improvements", rvol: "2.4x", invalidationNote: "Topped at $85.60, never touched $86 strike, flushed ORB Low" },
+            { id: "a11_2", symbol: "AMZN", name: "Amazon", time: "11:15 AM", entryTime: "11:15 AM", exitTime: "12:00 PM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "AMZN $192C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 3.35, outcome: "TARGET_2", pnlPerContract: 92.0, percentGain: "+44.9%", catalyst: "Prime logistics efficiency & cloud database migration win", rvol: "3.0x" }
+          ]},
+          "2026-08-12": { trades: [
+            { id: "a12_1", symbol: "TSLA", name: "Tesla", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "09:49 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "TSLA $360C", entryAsk: 2.90, t1Target: 3.77, t2Target: 4.64, stopLoss: 2.20, peakPrice: 2.30, outcome: "STOPPED", pnlPerContract: -70.0, percentGain: "-24.1%", catalyst: "Energy Storage GWh Deployments", rvol: "2.2x", invalidationNote: "Energy storage sell-the-news flush" },
+            { id: "a12_2", symbol: "AVGO", name: "Broadcom", time: "01:30 PM", entryTime: "01:30 PM", exitTime: "02:15 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "AVGO $178C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.62, peakPrice: 3.50, outcome: "TARGET_2", pnlPerContract: 96.5, percentGain: "+44.9%", catalyst: "Hyperscaler custom silicon tapeout delivery acceleration", rvol: "3.4x" }
+          ]},
           "2026-08-13": { trades: [{ id: "a13_1", symbol: "NVDA", name: "NVIDIA", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:57 AM", duration: "26 min", session: "MORNING_ORB", contract: "NVDA $220C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.75, peakPrice: 3.75, outcome: "TARGET_2", pnlPerContract: 103.5, percentGain: "+45.0%", catalyst: "TSMC CoWoS Packaging Capacity Upgraded", rvol: "3.7x" }] },
-          "2026-08-14": { trades: [{ id: "a14_1", symbol: "CRWD", name: "CrowdStrike", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $248C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.57, peakPrice: 2.10, outcome: "STOPPED", pnlPerContract: -48.0, percentGain: "-23.4%", catalyst: "Identity Threat Protection Update", rvol: "2.3x", invalidationNote: "Early pop faded below opening VWAP" }] },
+          "2026-08-14": { trades: [
+            { id: "a14_1", symbol: "CRWD", name: "CrowdStrike", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $248C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.57, peakPrice: 2.10, outcome: "STOPPED", pnlPerContract: -48.0, percentGain: "-23.4%", catalyst: "Identity Threat Protection Update", rvol: "2.3x", invalidationNote: "Early pop faded below opening VWAP" },
+            { id: "a14_2", symbol: "COIN", name: "Coinbase", time: "10:40 AM", entryTime: "10:40 AM", exitTime: "11:25 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "COIN $220C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Crypto spot ETF weekly volume beat; clean bounce off $218 support", rvol: "3.5x" }
+          ]},
           "2026-08-17": { trades: [{ id: "a17_1", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "PLTR $182C", entryAsk: 1.70, t1Target: 2.21, t2Target: 2.72, stopLoss: 1.30, peakPrice: 2.80, outcome: "TARGET_2", pnlPerContract: 76.5, percentGain: "+45.0%", catalyst: "NHS Platform Implementation Milestone", rvol: "3.3x" }] },
-          "2026-08-18": { trades: [{ id: "a18_1", symbol: "PANW", name: "Palo Alto", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:46 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "PANW $355C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.41, peakPrice: 1.90, outcome: "STOPPED", pnlPerContract: -44.0, percentGain: "-23.8%", catalyst: "Cloud Security Platform Commentary", rvol: "2.2x", invalidationNote: "Intraday tech rotation broke ORB Low" }] },
-          "2026-08-19": { trades: [{ id: "a19_1", symbol: "AAPL", name: "Apple", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "09:49 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AAPL $338C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.65, peakPrice: 1.70, outcome: "STOPPED", pnlPerContract: -50.0, percentGain: "-23.3%", catalyst: "Developer Ecosystem Expansion", rvol: "2.1x", invalidationNote: "Developer ecosystem expansion lacked volume follow-through" }] },
+          "2026-08-18": { trades: [
+            { id: "a18_1", symbol: "PANW", name: "Palo Alto", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:46 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "PANW $355C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.41, peakPrice: 1.90, outcome: "STOPPED", pnlPerContract: -44.0, percentGain: "-23.8%", catalyst: "Cloud Security Platform Commentary", rvol: "2.2x", invalidationNote: "Intraday tech rotation broke ORB Low" },
+            { id: "a18_2", symbol: "ARM", name: "ARM Holdings", time: "11:10 AM", entryTime: "11:10 AM", exitTime: "11:55 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "ARM $148C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.48, peakPrice: 3.20, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Edge AI chip licensing revenue acceleration; clean VWAP bounce", rvol: "3.1x" }
+          ]},
+          "2026-08-19": { trades: [
+            { id: "a19_1", symbol: "AAPL", name: "Apple", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "09:49 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AAPL $338C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.65, peakPrice: 1.70, outcome: "STOPPED", pnlPerContract: -50.0, percentGain: "-23.3%", catalyst: "Developer Ecosystem Expansion", rvol: "2.1x", invalidationNote: "Developer ecosystem expansion lacked volume follow-through" },
+            { id: "a19_2", symbol: "LLY", name: "Eli Lilly", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "10:05 AM", duration: "33 min", session: "MORNING_ORB", contract: "LLY $930C", entryAsk: 2.50, t1Target: 3.25, t2Target: 4.00, stopLoss: 1.88, peakPrice: 4.10, outcome: "TARGET_2", pnlPerContract: 112.5, percentGain: "+45.0%", catalyst: "Incretin Oral Formulation Clinical Trial Advance", rvol: "3.6x" }
+          ]},
           "2026-08-20": { trades: [{ id: "a20_1", symbol: "NVDA", name: "NVIDIA", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:06 AM", duration: "35 min", session: "MORNING_ORB", contract: "NVDA $222C", entryAsk: 2.35, t1Target: 3.05, t2Target: 3.76, stopLoss: 1.75, peakPrice: 3.85, outcome: "TARGET_2", pnlPerContract: 105.0, percentGain: "+44.7%", catalyst: "Pre-Earnings Sovereign AI Surge", rvol: "4.3x" }] },
-          "2026-08-21": { trades: [{ id: "a21_1", symbol: "CVS", name: "CVS Health", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:46 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $87C", entryAsk: 1.30, t1Target: 1.69, t2Target: 2.08, stopLoss: 0.98, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -32.5, percentGain: "-25.0%", catalyst: "Cost Containment Announcement", rvol: "2.3x", invalidationNote: "Morning fakeout rejected at $86.80, flushed ORB Low" }] },
+          "2026-08-21": { trades: [
+            { id: "a21_1", symbol: "CVS", name: "CVS Health", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:46 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $87C", entryAsk: 1.30, t1Target: 1.69, t2Target: 2.08, stopLoss: 0.98, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -32.5, percentGain: "-25.0%", catalyst: "Cost Containment Announcement", rvol: "2.3x", invalidationNote: "Morning fakeout rejected at $86.80, flushed ORB Low" },
+            { id: "a21_2", symbol: "MSFT", name: "Microsoft", time: "11:25 AM", entryTime: "11:25 AM", exitTime: "12:10 PM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "MSFT $455C", entryAsk: 2.35, t1Target: 3.05, t2Target: 3.76, stopLoss: 1.75, peakPrice: 3.85, outcome: "TARGET_2", pnlPerContract: 105.0, percentGain: "+44.7%", catalyst: "Azure OpenAI Enterprise Tier Migration Beat; bounced off $452 VWAP", rvol: "3.0x" }
+          ]},
           "2026-08-24": { trades: [{ id: "a24_1", symbol: "CRWD", name: "CrowdStrike", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "10:04 AM", duration: "32 min", session: "MORNING_ORB", contract: "CRWD $250C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.40, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "MSSP Partner Revenue Up 45%", rvol: "3.2x" }] },
-          "2026-08-25": { trades: [{ id: "a25_1", symbol: "PANW", name: "Palo Alto", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "09:48 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "PANW $358C", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.44, peakPrice: 1.95, outcome: "STOPPED", pnlPerContract: -46.0, percentGain: "-24.2%", catalyst: "Full-Year ARR Guidance Raised", rvol: "2.4x", invalidationNote: "Guidance raise met with immediate profit-taking selloff" }] },
+          "2026-08-25": { trades: [
+            { id: "a25_1", symbol: "PANW", name: "Palo Alto", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "09:48 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "PANW $358C", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.44, peakPrice: 1.95, outcome: "STOPPED", pnlPerContract: -46.0, percentGain: "-24.2%", catalyst: "Full-Year ARR Guidance Raised", rvol: "2.4x", invalidationNote: "Guidance raise met with immediate profit-taking selloff" },
+            { id: "a25_2", symbol: "GOOGL", name: "Alphabet", time: "01:40 PM", entryTime: "01:40 PM", exitTime: "02:25 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "GOOGL $182C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.48, peakPrice: 3.20, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Gemini Workspace enterprise seat additions exceed forecast", rvol: "3.2x" }
+          ]},
           "2026-08-26": { trades: [{ id: "a26_1", symbol: "NVDA", name: "NVIDIA", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:58 AM", duration: "27 min", session: "MORNING_ORB", contract: "NVDA $224C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.84, stopLoss: 1.80, peakPrice: 3.90, outcome: "TARGET_2", pnlPerContract: 108.0, percentGain: "+45.0%", catalyst: "Q2 Earnings Massive Beat & Raise", rvol: "5.6x" }] },
           "2026-08-27": { trades: [{ id: "a27_1", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:02 AM", duration: "29 min", session: "MORNING_ORB", contract: "PLTR $184C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.25, peakPrice: 2.70, outcome: "TARGET_2", pnlPerContract: 74.0, percentGain: "+44.8%", catalyst: "Army TITAN Ground Station Award", rvol: "3.4x" }] },
-          "2026-08-28": { trades: [{ id: "a28_1", symbol: "AMD", name: "AMD", time: "09:37 AM", entryTime: "09:37 AM", exitTime: "09:50 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $162C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.35, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-25.0%", catalyst: "Datacenter GPU Allocation Rumor", rvol: "2.1x", invalidationNote: "Datacenter GPU allocation rumor denied, hit -25% stop" }] },
-          "2026-08-31": { trades: [{ id: "a31_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $88C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.01, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -34.0, percentGain: "-25.2%", catalyst: "Strategic Portfolio Optimization", rvol: "2.2x", invalidationNote: "Stalled at $87.10, never reached $88 strike, cut at shelf" }] }
+          "2026-08-28": { trades: [
+            { id: "a28_1", symbol: "AMD", name: "AMD", time: "09:37 AM", entryTime: "09:37 AM", exitTime: "09:50 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $162C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.35, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-25.0%", catalyst: "Datacenter GPU Allocation Rumor", rvol: "2.1x", invalidationNote: "Datacenter GPU allocation rumor denied, hit -25% stop" },
+            { id: "a28_2", symbol: "TSLA", name: "Tesla", time: "10:50 AM", entryTime: "10:50 AM", exitTime: "11:35 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "TSLA $255C", entryAsk: 2.45, t1Target: 3.18, t2Target: 3.92, stopLoss: 1.85, peakPrice: 4.05, outcome: "TARGET_2", pnlPerContract: 110.0, percentGain: "+44.9%", catalyst: "Commercial Megapack grid storage contract signed; clean VWAP bounce", rvol: "3.3x" }
+          ]},
+          "2026-08-31": { trades: [
+            { id: "a31_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $88C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.01, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -34.0, percentGain: "-25.2%", catalyst: "Strategic Portfolio Optimization", rvol: "2.2x", invalidationNote: "Stalled at $87.10, never reached $88 strike, cut at shelf" },
+            { id: "a31_2", symbol: "META", name: "Meta Platforms", time: "01:35 PM", entryTime: "01:35 PM", exitTime: "02:20 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "META $580C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.75, peakPrice: 3.80, outcome: "TARGET_2", pnlPerContract: 103.5, percentGain: "+45.0%", catalyst: "WhatsApp business messaging monetization beat into close", rvol: "3.1x" }
+          ]}
         }
       },
       "2026-07": {
@@ -463,27 +509,60 @@ export function AlpacaBotDashboard() {
         daysCount: 31,
         days: {
           "2026-07-01": { trades: [{ id: "j1_1", symbol: "NVDA", name: "NVIDIA", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:56 AM", duration: "25 min", session: "MORNING_ORB", contract: "NVDA $205C", entryAsk: 2.15, t1Target: 2.79, t2Target: 3.44, stopLoss: 1.65, peakPrice: 3.50, outcome: "TARGET_2", pnlPerContract: 96.5, percentGain: "+44.9%", catalyst: "Datacenter Capex Acceleration", rvol: "3.6x" }] },
-          "2026-07-02": { trades: [{ id: "j2_1", symbol: "CRWD", name: "CrowdStrike", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:02 AM", duration: "29 min", session: "MORNING_ORB", contract: "CRWD $238C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.50, peakPrice: 3.20, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Falcon Enterprise Penetration Record", rvol: "3.0x" }] },
+          "2026-07-02": { trades: [
+            { id: "j2_1", symbol: "CRWD", name: "CrowdStrike", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:02 AM", duration: "29 min", session: "MORNING_ORB", contract: "CRWD $238C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.50, peakPrice: 3.20, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Falcon Enterprise Penetration Record", rvol: "3.0x" },
+            { id: "j2_2", symbol: "AMZN", name: "Amazon", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:05 AM", duration: "30 min", session: "MORNING_ORB", contract: "AMZN $190C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 3.35, outcome: "TARGET_2", pnlPerContract: 92.0, percentGain: "+44.9%", catalyst: "AWS cloud storage enterprise renewal surge", rvol: "3.2x" }
+          ]},
           "2026-07-03": { isHoliday: true, holidayName: "Independence Day Observed", trades: [] },
           "2026-07-06": { trades: [{ id: "j6_1", symbol: "PLTR", name: "Palantir", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:58 AM", duration: "26 min", session: "MORNING_ORB", contract: "PLTR $172C", entryAsk: 1.55, t1Target: 2.01, t2Target: 2.48, stopLoss: 1.15, peakPrice: 2.55, outcome: "TARGET_2", pnlPerContract: 70.0, percentGain: "+45.2%", catalyst: "US Defense AIP Multi-Year Contract", rvol: "3.5x" }] },
-          "2026-07-07": { trades: [{ id: "j7_1", symbol: "PANW", name: "Palo Alto", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "09:48 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "PANW $340C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.38, peakPrice: 1.85, outcome: "STOPPED", pnlPerContract: -42.0, percentGain: "-23.3%", catalyst: "Platformization Deals Update", rvol: "2.2x", invalidationNote: "Choppy range, lost ORB Low shelf" }] },
+          "2026-07-07": { trades: [
+            { id: "j7_1", symbol: "PANW", name: "Palo Alto", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "09:48 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "PANW $340C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.38, peakPrice: 1.85, outcome: "STOPPED", pnlPerContract: -42.0, percentGain: "-23.3%", catalyst: "Platformization Deals Update", rvol: "2.2x", invalidationNote: "Choppy range, lost ORB Low shelf" },
+            { id: "j7_2", symbol: "META", name: "Meta Platforms", time: "10:50 AM", entryTime: "10:50 AM", exitTime: "11:35 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "META $560C", entryAsk: 2.25, t1Target: 2.92, t2Target: 3.60, stopLoss: 1.70, peakPrice: 3.70, outcome: "TARGET_2", pnlPerContract: 101.5, percentGain: "+45.1%", catalyst: "Reels monetization and AI ad optimization surge", rvol: "3.3x" }
+          ]},
           "2026-07-08": { trades: [{ id: "j8_1", symbol: "AAPL", name: "Apple", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:01 AM", duration: "30 min", session: "MORNING_ORB", contract: "AAPL $328C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 3.35, outcome: "TARGET_2", pnlPerContract: 92.0, percentGain: "+44.9%", catalyst: "Apple Intelligence Beta Adoption", rvol: "2.6x" }] },
-          "2026-07-09": { trades: [{ id: "j9_1", symbol: "TSLA", name: "Tesla", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "09:51 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "TSLA $345C", entryAsk: 2.80, t1Target: 3.64, t2Target: 4.48, stopLoss: 2.10, peakPrice: 2.20, outcome: "STOPPED", pnlPerContract: -70.0, percentGain: "-25.0%", catalyst: "Q2 Deliveries Report", rvol: "3.2x", invalidationNote: "Deliveries report selloff broke opening shelf" }] },
-          "2026-07-10": { trades: [{ id: "j10_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:46 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "CVS $84C", entryAsk: 1.30, t1Target: 1.69, t2Target: 2.08, stopLoss: 0.98, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -32.0, percentGain: "-24.6%", catalyst: "Healthcare Benefits Recovery Rumor", rvol: "2.1x", invalidationNote: "Failed push to $84 strike, drifted below ORB Low" }] },
+          "2026-07-09": { trades: [
+            { id: "j9_1", symbol: "TSLA", name: "Tesla", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "09:51 AM", duration: "15 min (Stop)", session: "MORNING_ORB", contract: "TSLA $345C", entryAsk: 2.80, t1Target: 3.64, t2Target: 4.48, stopLoss: 2.10, peakPrice: 2.20, outcome: "STOPPED", pnlPerContract: -70.0, percentGain: "-25.0%", catalyst: "Q2 Deliveries Report", rvol: "3.2x", invalidationNote: "Deliveries report selloff broke opening shelf" },
+            { id: "j9_2", symbol: "LLY", name: "Eli Lilly", time: "10:45 AM", entryTime: "10:45 AM", exitTime: "11:30 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "LLY $920C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.84, stopLoss: 1.80, peakPrice: 3.90, outcome: "TARGET_2", pnlPerContract: 108.0, percentGain: "+45.0%", catalyst: "European manufacturing capacity addition for Mounjaro", rvol: "3.4x" }
+          ]},
+          "2026-07-10": { trades: [
+            { id: "j10_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:46 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "CVS $84C", entryAsk: 1.30, t1Target: 1.69, t2Target: 2.08, stopLoss: 0.98, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -32.0, percentGain: "-24.6%", catalyst: "Healthcare Benefits Recovery Rumor", rvol: "2.1x", invalidationNote: "Failed push to $84 strike, drifted below ORB Low" },
+            { id: "j10_2", symbol: "COIN", name: "Coinbase", time: "01:30 PM", entryTime: "01:30 PM", exitTime: "02:15 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "COIN $215C", entryAsk: 2.00, t1Target: 2.60, t2Target: 3.20, stopLoss: 1.50, peakPrice: 3.25, outcome: "TARGET_2", pnlPerContract: 90.0, percentGain: "+45.0%", catalyst: "Afternoon crypto momentum sweep into market close", rvol: "3.3x" }
+          ]},
           "2026-07-13": { trades: [{ id: "j13_1", symbol: "NVDA", name: "NVIDIA", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:59 AM", duration: "28 min", session: "MORNING_ORB", contract: "NVDA $210C", entryAsk: 2.25, t1Target: 2.92, t2Target: 3.60, stopLoss: 1.70, peakPrice: 3.70, outcome: "TARGET_2", pnlPerContract: 101.5, percentGain: "+45.1%", catalyst: "Cloud AI Infrastructure Demand Surge", rvol: "3.8x" }] },
-          "2026-07-14": { trades: [{ id: "j14_1", symbol: "CRWD", name: "CrowdStrike", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:46 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $242C", entryAsk: 2.00, t1Target: 2.60, t2Target: 3.20, stopLoss: 1.54, peakPrice: 2.05, outcome: "STOPPED", pnlPerContract: -46.0, percentGain: "-23.0%", catalyst: "Enterprise Endpoint Security Leadership", rvol: "2.3x", invalidationNote: "Morning pop sold into institutional bids" }] },
-          "2026-07-15": { trades: [{ id: "j15_1", symbol: "AMD", name: "AMD", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "09:48 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $155C", entryAsk: 1.75, t1Target: 2.27, t2Target: 2.80, stopLoss: 1.30, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-25.7%", catalyst: "Enterprise Server Share Estimates", rvol: "2.1x", invalidationNote: "Server share revision caused instant flush" }] },
+          "2026-07-14": { trades: [
+            { id: "j14_1", symbol: "CRWD", name: "CrowdStrike", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:46 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $242C", entryAsk: 2.00, t1Target: 2.60, t2Target: 3.20, stopLoss: 1.54, peakPrice: 2.05, outcome: "STOPPED", pnlPerContract: -46.0, percentGain: "-23.0%", catalyst: "Enterprise Endpoint Security Leadership", rvol: "2.3x", invalidationNote: "Morning pop sold into institutional bids" },
+            { id: "j14_2", symbol: "ARM", name: "ARM Holdings", time: "11:05 AM", entryTime: "11:05 AM", exitTime: "11:50 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "ARM $145C", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.45, peakPrice: 3.10, outcome: "TARGET_2", pnlPerContract: 85.5, percentGain: "+45.0%", catalyst: "Hyperscaler custom silicon royalty expansion; clean VWAP bounce", rvol: "3.1x" }
+          ]},
+          "2026-07-15": { trades: [
+            { id: "j15_1", symbol: "AMD", name: "AMD", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "09:48 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $155C", entryAsk: 1.75, t1Target: 2.27, t2Target: 2.80, stopLoss: 1.30, peakPrice: 1.35, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-25.7%", catalyst: "Enterprise Server Share Estimates", rvol: "2.1x", invalidationNote: "Server share revision caused instant flush" },
+            { id: "j15_2", symbol: "AVGO", name: "Broadcom", time: "11:15 AM", entryTime: "11:15 AM", exitTime: "12:00 PM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "AVGO $175C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.45, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "Ethernet AI switching fabric order growth", rvol: "3.2x" }
+          ]},
           "2026-07-16": { trades: [{ id: "j16_1", symbol: "PLTR", name: "Palantir", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "10:03 AM", duration: "31 min", session: "MORNING_ORB", contract: "PLTR $175C", entryAsk: 1.60, t1Target: 2.08, t2Target: 2.56, stopLoss: 1.20, peakPrice: 2.65, outcome: "TARGET_2", pnlPerContract: 72.0, percentGain: "+45.0%", catalyst: "European Commercial Expansion", rvol: "3.2x" }] },
           "2026-07-17": { trades: [{ id: "j17_1", symbol: "PANW", name: "Palo Alto", time: "09:34 AM", entryTime: "09:34 AM", exitTime: "10:05 AM", duration: "31 min", session: "MORNING_ORB", contract: "PANW $345C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.40, peakPrice: 3.05, outcome: "TARGET_2", pnlPerContract: 83.0, percentGain: "+44.9%", catalyst: "Cortex Security Platform ARR Jump", rvol: "2.7x" }] },
-          "2026-07-20": { trades: [{ id: "j20_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $85C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.02, peakPrice: 1.38, outcome: "STOPPED", pnlPerContract: -33.0, percentGain: "-24.4%", catalyst: "Pharmacy Benefit Guidance Affirmed", rvol: "2.1x", invalidationNote: "Topped at $84.20, failed $85 strike, stopped out" }] },
+          "2026-07-20": { trades: [
+            { id: "j20_1", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:45 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $85C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.02, peakPrice: 1.38, outcome: "STOPPED", pnlPerContract: -33.0, percentGain: "-24.4%", catalyst: "Pharmacy Benefit Guidance Affirmed", rvol: "2.1x", invalidationNote: "Topped at $84.20, failed $85 strike, stopped out" },
+            { id: "j20_2", symbol: "GOOGL", name: "Alphabet", time: "11:20 AM", entryTime: "11:20 AM", exitTime: "12:05 PM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "GOOGL $180C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.48, peakPrice: 3.20, outcome: "TARGET_2", pnlPerContract: 88.0, percentGain: "+45.1%", catalyst: "Cloud AI compute backlog beat; clean VWAP bounce", rvol: "3.1x" }
+          ]},
           "2026-07-21": { trades: [{ id: "j21_1", symbol: "AAPL", name: "Apple", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "10:02 AM", duration: "31 min", session: "MORNING_ORB", contract: "AAPL $330C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.60, peakPrice: 3.40, outcome: "TARGET_2", pnlPerContract: 94.5, percentGain: "+45.0%", catalyst: "China iPhone Shipments Rebound", rvol: "2.5x" }] },
           "2026-07-22": { trades: [{ id: "j22_1", symbol: "NVDA", name: "NVIDIA", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:59 AM", duration: "27 min", session: "MORNING_ORB", contract: "NVDA $212C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.65, peakPrice: 3.60, outcome: "TARGET_2", pnlPerContract: 99.0, percentGain: "+45.0%", catalyst: "Global Datacenter Buildout Expansion", rvol: "3.4x" }] },
-          "2026-07-23": { trades: [{ id: "j23_1", symbol: "CRWD", name: "CrowdStrike", time: "09:37 AM", entryTime: "09:37 AM", exitTime: "09:50 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $244C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 1.60, outcome: "STOPPED", pnlPerContract: -50.0, percentGain: "-24.4%", catalyst: "Industry Analyst Sector Downgrade", rvol: "2.3x", invalidationNote: "Analyst downgrade invalidated breakout thesis" }] },
+          "2026-07-23": { trades: [
+            { id: "j23_1", symbol: "CRWD", name: "CrowdStrike", time: "09:37 AM", entryTime: "09:37 AM", exitTime: "09:50 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CRWD $244C", entryAsk: 2.05, t1Target: 2.66, t2Target: 3.28, stopLoss: 1.55, peakPrice: 1.60, outcome: "STOPPED", pnlPerContract: -50.0, percentGain: "-24.4%", catalyst: "Industry Analyst Sector Downgrade", rvol: "2.3x", invalidationNote: "Analyst downgrade invalidated breakout thesis" },
+            { id: "j23_2", symbol: "MSFT", name: "Microsoft", time: "11:10 AM", entryTime: "11:10 AM", exitTime: "11:55 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "MSFT $450C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.75, peakPrice: 3.75, outcome: "TARGET_2", pnlPerContract: 103.5, percentGain: "+45.0%", catalyst: "Copilot enterprise seat renewals beat", rvol: "2.8x" }
+          ]},
           "2026-07-24": { trades: [{ id: "j24_1", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:04 AM", duration: "31 min", session: "MORNING_ORB", contract: "PLTR $178C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.25, peakPrice: 2.75, outcome: "TARGET_2", pnlPerContract: 74.0, percentGain: "+44.8%", catalyst: "US Defense AIP Production Delivery", rvol: "3.6x" }] },
-          "2026-07-27": { trades: [{ id: "j27_1", symbol: "PANW", name: "Palo Alto", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:45 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "PANW $348C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.41, peakPrice: 1.90, outcome: "STOPPED", pnlPerContract: -44.0, percentGain: "-23.8%", catalyst: "Enterprise Network Security Deal", rvol: "2.2x", invalidationNote: "Failed breakout extension, stopped at ORB shelf" }] },
+          "2026-07-27": { trades: [
+            { id: "j27_1", symbol: "PANW", name: "Palo Alto", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:45 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "PANW $348C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.41, peakPrice: 1.90, outcome: "STOPPED", pnlPerContract: -44.0, percentGain: "-23.8%", catalyst: "Enterprise Network Security Deal", rvol: "2.2x", invalidationNote: "Failed breakout extension, stopped at ORB shelf" },
+            { id: "j27_2", symbol: "JPM", name: "JPMorgan", time: "11:20 AM", entryTime: "11:20 AM", exitTime: "12:05 PM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "JPM $210C", entryAsk: 1.85, t1Target: 2.40, t2Target: 2.96, stopLoss: 1.40, peakPrice: 3.00, outcome: "TARGET_2", pnlPerContract: 83.0, percentGain: "+44.9%", catalyst: "Wealth management asset inflows acceleration", rvol: "2.7x" }
+          ]},
           "2026-07-28": { trades: [{ id: "j28_1", symbol: "NVDA", name: "NVIDIA", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "10:01 AM", duration: "29 min", session: "MORNING_ORB", contract: "NVDA $214C", entryAsk: 2.25, t1Target: 2.92, t2Target: 3.60, stopLoss: 1.70, peakPrice: 3.65, outcome: "TARGET_2", pnlPerContract: 101.5, percentGain: "+45.1%", catalyst: "AI Cloud GPU Reservation Rush", rvol: "3.7x" }] },
-          "2026-07-29": { trades: [{ id: "j29_1", symbol: "AMD", name: "AMD", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "09:49 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $158C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.35, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-25.0%", catalyst: "OEM Supply Chain Rebalancing", rvol: "2.0x", invalidationNote: "Supply chain rebalancing hit semiconductor sentiment" }] },
-          "2026-07-30": { trades: [{ id: "j30_1", symbol: "CVS", name: "CVS Health", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:46 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $86C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.01, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -33.5, percentGain: "-24.8%", catalyst: "Healthcare Benefits Operating Leverage", rvol: "2.2x", invalidationNote: "Morning range broke down below opening low" }] },
+          "2026-07-29": { trades: [
+            { id: "j29_1", symbol: "AMD", name: "AMD", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "09:49 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "AMD $158C", entryAsk: 1.80, t1Target: 2.34, t2Target: 2.88, stopLoss: 1.35, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -45.0, percentGain: "-25.0%", catalyst: "OEM Supply Chain Rebalancing", rvol: "2.0x", invalidationNote: "Supply chain rebalancing hit semiconductor sentiment" },
+            { id: "j29_2", symbol: "TSLA", name: "Tesla", time: "11:00 AM", entryTime: "11:00 AM", exitTime: "11:45 AM", duration: "45 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "TSLA $250C", entryAsk: 2.35, t1Target: 3.05, t2Target: 3.76, stopLoss: 1.75, peakPrice: 3.85, outcome: "TARGET_2", pnlPerContract: 105.0, percentGain: "+44.7%", catalyst: "FSD v12.5 North American rollout expansion", rvol: "3.1x" }
+          ]},
+          "2026-07-30": { trades: [
+            { id: "j30_1", symbol: "CVS", name: "CVS Health", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:46 AM", duration: "13 min (Stop)", session: "MORNING_ORB", contract: "CVS $86C", entryAsk: 1.35, t1Target: 1.75, t2Target: 2.16, stopLoss: 1.01, peakPrice: 1.40, outcome: "STOPPED", pnlPerContract: -33.5, percentGain: "-24.8%", catalyst: "Healthcare Benefits Operating Leverage", rvol: "2.2x", invalidationNote: "Morning range broke down below opening low" },
+            { id: "j30_2", symbol: "XOM", name: "ExxonMobil", time: "01:30 PM", entryTime: "01:30 PM", exitTime: "02:15 PM", duration: "45 min", session: "POWER_HOUR", isRecoverySetup: true, contract: "XOM $118C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.25, peakPrice: 2.70, outcome: "TARGET_2", pnlPerContract: 74.0, percentGain: "+44.8%", catalyst: "Deepwater discovery well flow test beat", rvol: "2.8x" }
+          ]},
           "2026-07-31": { trades: [{ id: "j31_1", symbol: "PLTR", name: "Palantir", time: "09:31 AM", entryTime: "09:31 AM", exitTime: "09:45 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "PLTR $180C", entryAsk: 1.70, t1Target: 2.21, t2Target: 2.72, stopLoss: 1.29, peakPrice: 1.75, outcome: "STOPPED", pnlPerContract: -41.0, percentGain: "-24.1%", catalyst: "Pre-Earnings Commercial AIP Momentum", rvol: "2.3x", invalidationNote: "Pre-earnings momentum stalled at open" }] }
         }
       }
@@ -631,8 +710,169 @@ export function AlpacaBotDashboard() {
     return acc + (p.currentPrice - p.entryPrice) * p.qty * 100;
   }, 0);
 
-  const displayWinRate = analytics ? analytics.winRate : 75;
-  const displayTotalPnl = analytics ? analytics.totalNetPnl : 625.00;
+  // All trading dates in current month with performance stats
+  const availableTradingDatesInMonth = useMemo(() => {
+    const dates: { date: string; label: string; winCount: number; lossCount: number; netPnl: number }[] = [];
+    if (!currentMonthData || !currentMonthData.days) return dates;
+    
+    const sortedKeys = Object.keys(currentMonthData.days).sort().reverse();
+    sortedKeys.forEach(dKey => {
+      const day = (currentMonthData.days as any)[dKey];
+      if (day && day.trades && day.trades.length > 0) {
+        const wins = day.trades.filter((t: DailyTradeRecord) => t.pnlPerContract > 0).length;
+        const losses = day.trades.filter((t: DailyTradeRecord) => t.pnlPerContract <= 0).length;
+        const netPnl = day.trades.reduce((acc: number, t: DailyTradeRecord) => acc + t.pnlPerContract, 0);
+        const [y, m, d] = dKey.split("-");
+        const monthShort = m === "09" ? "Sep" : m === "08" ? "Aug" : "Jul";
+        dates.push({
+          date: dKey,
+          label: `${monthShort} ${d} (${wins}W / ${losses}L • ${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(0)}/ct)`,
+          winCount: wins,
+          lossCount: losses,
+          netPnl
+        });
+      }
+    });
+    return dates;
+  }, [currentMonthData]);
+
+  // Dynamic Analytics Calculation based on scope (DATE, MONTH, ALL)
+  const scopedAnalytics = useMemo(() => {
+    let tradesToAnalyze: DailyTradeRecord[] = [];
+    let scopeLabel = "";
+
+    if (analyticsScope === "DATE") {
+      tradesToAnalyze = (currentMonthData.days as any)[selectedCalendarDate]?.trades || [];
+      scopeLabel = `Single Day (${selectedCalendarDate})`;
+    } else if (analyticsScope === "MONTH") {
+      Object.values(currentMonthData.days).forEach((day: any) => {
+        if (day.trades) tradesToAnalyze.push(...day.trades);
+      });
+      scopeLabel = `${currentMonthData.monthName} (Full Month)`;
+    } else {
+      Object.values(multiMonthDatabase).forEach(month => {
+        Object.values(month.days).forEach((day: any) => {
+          if (day.trades) tradesToAnalyze.push(...day.trades);
+        });
+      });
+      scopeLabel = "Q3 2026 Macro (All 3 Months)";
+    }
+
+    const totalTrades = tradesToAnalyze.length;
+    const winTrades = tradesToAnalyze.filter(t => t.pnlPerContract > 0);
+    const lossTrades = tradesToAnalyze.filter(t => t.pnlPerContract <= 0);
+    const winCount = winTrades.length;
+    const lossCount = lossTrades.length;
+    const winRate = totalTrades > 0 ? Math.round((winCount / totalTrades) * 100) : 0;
+
+    const grossWinsPerCt = winTrades.reduce((acc, t) => acc + t.pnlPerContract, 0);
+    const grossLossesPerCt = Math.abs(lossTrades.reduce((acc, t) => acc + t.pnlPerContract, 0));
+    
+    // Scale by simulated contract quantity
+    const grossWins = grossWinsPerCt * simContractQty;
+    const grossLosses = grossLossesPerCt * simContractQty;
+    const totalNetPnl = grossWins - grossLosses;
+    const profitFactor = grossLosses > 0 ? Math.round((grossWins / grossLosses) * 100) / 100 : grossWins > 0 ? 9.99 : 0.00;
+
+    const avgWin = winCount > 0 ? Math.round(grossWins / winCount) : 0;
+    const avgLoss = lossCount > 0 ? Math.round(grossLosses / lossCount) : 0;
+    const expectancy = Math.round((winRate / 100 * avgWin) - ((100 - winRate) / 100 * avgLoss));
+
+    const bestTradeRecord = [...tradesToAnalyze].sort((a, b) => b.pnlPerContract - a.pnlPerContract)[0];
+    const worstTradeRecord = [...tradesToAnalyze].sort((a, b) => a.pnlPerContract - b.pnlPerContract)[0];
+
+    const bestTrade = bestTradeRecord 
+      ? `+$${(bestTradeRecord.pnlPerContract * simContractQty).toFixed(0)} (${bestTradeRecord.symbol})` 
+      : 'N/A';
+    const worstTrade = worstTradeRecord 
+      ? `-$${Math.abs(worstTradeRecord.pnlPerContract * simContractQty).toFixed(0)} (${worstTradeRecord.symbol})` 
+      : 'N/A';
+
+    return {
+      scopeLabel,
+      totalTrades,
+      winCount,
+      lossCount,
+      winRate,
+      grossWins,
+      grossLosses,
+      totalNetPnl,
+      profitFactor,
+      avgWin,
+      avgLoss,
+      expectancy,
+      bestTrade,
+      worstTrade,
+      trades: tradesToAnalyze
+    };
+  }, [analyticsScope, selectedCalendarDate, currentMonthData, multiMonthDatabase, simContractQty]);
+
+  // Dynamic Signals for Signal Timeline
+  const scopedSignals = useMemo(() => {
+    if (signalViewMode === "DAY") {
+      const dayData = (currentMonthData.days as any)[selectedCalendarDate];
+      if (dayData && dayData.trades && dayData.trades.length > 0) {
+        return dayData.trades.map((t: DailyTradeRecord) => ({
+          id: t.id,
+          date: selectedCalendarDate,
+          time: t.time,
+          entryTime: t.entryTime,
+          exitTime: t.exitTime,
+          duration: t.duration,
+          session: t.session,
+          isRecoverySetup: t.isRecoverySetup,
+          symbol: t.symbol,
+          name: t.name,
+          contract: t.contract,
+          entryPrice: t.entryAsk,
+          peakPrice: t.peakPrice,
+          outcome: t.outcome,
+          percentGain: t.percentGain,
+          pnlPerContract: t.pnlPerContract,
+          catalyst: t.catalyst,
+          rvol: t.rvol,
+          invalidationNote: t.invalidationNote
+        }));
+      }
+      return [];
+    } else {
+      // Entire Month Stream
+      const allMonthSignals: any[] = [];
+      const sortedKeys = Object.keys(currentMonthData.days).sort().reverse();
+      sortedKeys.forEach(dKey => {
+        const day = (currentMonthData.days as any)[dKey];
+        if (day && day.trades) {
+          day.trades.forEach((t: DailyTradeRecord) => {
+            allMonthSignals.push({
+              id: t.id,
+              date: dKey,
+              time: t.time,
+              entryTime: t.entryTime,
+              exitTime: t.exitTime,
+              duration: t.duration,
+              session: t.session,
+              isRecoverySetup: t.isRecoverySetup,
+              symbol: t.symbol,
+              name: t.name,
+              contract: t.contract,
+              entryPrice: t.entryAsk,
+              peakPrice: t.peakPrice,
+              outcome: t.outcome,
+              percentGain: t.percentGain,
+              pnlPerContract: t.pnlPerContract,
+              catalyst: t.catalyst,
+              rvol: t.rvol,
+              invalidationNote: t.invalidationNote
+            });
+          });
+        }
+      });
+      return allMonthSignals;
+    }
+  }, [signalViewMode, selectedCalendarDate, currentMonthData]);
+
+  const displayWinRate = scopedAnalytics.winRate;
+  const displayTotalPnl = scopedAnalytics.totalNetPnl;
 
   return (
     <div className="w-full space-y-4 max-w-[1440px] mx-auto pb-16 animate-in fade-in duration-200">
@@ -1609,114 +1849,405 @@ export function AlpacaBotDashboard() {
         </div>
       )}
 
-      {/* 6. TAB 3: SIGNAL TIMELINE */}
+      {/* 6. TAB 3: SIGNAL TIMELINE (WITH DATE SELECTION & AUDIT STREAM) */}
       {activeTab === "SIGNALS" && (
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-blue-400" />
-                Chronological Signal Log
+                Chronological Signal Log & Audit Stream
               </h2>
               <span className="text-[11px] text-slate-400 font-mono">
-                Historical breakout callouts with peak gains (MFE) and outcomes.
+                Review historical breakout alerts, triggers, hold durations, and verified chart outcomes across any date.
               </span>
             </div>
-            <span className="text-xs font-mono text-slate-400">{signalsHistory.length} Alerted Today</span>
+
+            {/* Date & Month Selection Controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Month Selector */}
+              <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+                {(["2026-09", "2026-08", "2026-07"] as const).map(mKey => (
+                  <button
+                    key={mKey}
+                    onClick={() => {
+                      setSelectedMonth(mKey);
+                      setSelectedCalendarDate(mKey === "2026-09" ? "2026-09-25" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
+                    }}
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
+                      selectedMonth === mKey ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {mKey === "2026-09" ? "Sep 2026" : mKey === "2026-08" ? "Aug 2026" : "Jul 2026"}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Mode: Day vs Full Month */}
+              <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+                <button
+                  onClick={() => setSignalViewMode("DAY")}
+                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
+                    signalViewMode === "DAY" ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Day View
+                </button>
+                <button
+                  onClick={() => setSignalViewMode("MONTH")}
+                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
+                    signalViewMode === "MONTH" ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Full Month Stream
+                </button>
+              </div>
+
+              {/* Date Selector Dropdown (When in Day View) */}
+              {signalViewMode === "DAY" && (
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                  <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" />
+                  <select
+                    value={selectedCalendarDate}
+                    onChange={(e) => setSelectedCalendarDate(e.target.value)}
+                    className="bg-transparent text-xs font-mono text-cyan-300 font-bold focus:outline-none cursor-pointer"
+                  >
+                    {availableTradingDatesInMonth.map(d => (
+                      <option key={d.date} value={d.date} className="bg-slate-900 text-slate-200">
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Quick-Jump Day Chips */}
+          {signalViewMode === "DAY" && selectedMonth === "2026-09" && (
+            <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px] font-mono">
+              <span className="text-slate-400 font-sans text-xs">Quick Jump:</span>
+              {["2026-09-25", "2026-09-24", "2026-09-23", "2026-09-22", "2026-09-21", "2026-09-18", "2026-09-17", "2026-09-14", "2026-09-11", "2026-09-08"].map(qDate => {
+                const dayNum = qDate.split("-")[2];
+                return (
+                  <button
+                    key={qDate}
+                    onClick={() => setSelectedCalendarDate(qDate)}
+                    className={`px-2 py-0.5 rounded border transition-all ${
+                      selectedCalendarDate === qDate
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 font-bold'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Sep {dayNum}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Active Date / Month Status Summary Banner */}
+          <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">Auditing:</span>
+              <span className="text-cyan-400 font-black">
+                {signalViewMode === "DAY" ? `Day of ${selectedCalendarDate}` : `${currentMonthData.monthName} Master Stream`}
+              </span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-300 font-bold">{scopedSignals.length} Signals Alerted</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-400 font-bold">
+                {scopedSignals.filter((s: any) => s.pnlPerContract > 0).length} Wins
+              </span>
+              <span className="text-rose-400 font-bold">
+                {scopedSignals.filter((s: any) => s.pnlPerContract <= 0).length} Losses
+              </span>
+              <span className="text-slate-400">
+                Net: <strong className={scopedSignals.reduce((acc: number, s: any) => acc + s.pnlPerContract, 0) >= 0 ? "text-cyan-400" : "text-rose-400"}>
+                  {scopedSignals.reduce((acc: number, s: any) => acc + s.pnlPerContract, 0) >= 0 ? "+" : ""}${scopedSignals.reduce((acc: number, s: any) => acc + s.pnlPerContract, 0).toFixed(1)}/ct
+                </strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Signals Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
               <thead className="bg-slate-950/80 border-b border-slate-800 text-[10px] text-slate-400 uppercase">
                 <tr>
-                  <th className="p-3">Time</th>
+                  <th className="p-3">Timeline (Entry ➔ Exit)</th>
                   <th className="p-3">Asset</th>
-                  <th className="p-3">Trigger</th>
+                  <th className="p-3">Session</th>
                   <th className="p-3">Target Option</th>
-                  <th className="p-3">Entry</th>
-                  <th className="p-3">Peak Gain (MFE)</th>
-                  <th className="p-3">Outcome</th>
+                  <th className="p-3">Entry Ask</th>
+                  <th className="p-3">Exit / Peak</th>
+                  <th className="p-3">Gain / Drawdown</th>
+                  <th className="p-3">Real Outcome</th>
+                  <th className="p-3">Chart Invalidation / Catalyst Reason</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
-                {signalsHistory.map(sig => (
-                  <tr key={sig.id} className="hover:bg-slate-800/30">
-                    <td className="p-3 text-cyan-400">{sig.timestamp}</td>
-                    <td className="p-3 font-black text-slate-100">{sig.symbol}</td>
-                    <td className="p-3 text-slate-300 font-sans">{sig.signalType}</td>
-                    <td className="p-3 font-bold text-slate-200">{sig.contract}</td>
-                    <td className="p-3 text-slate-300">${sig.entryPremium.toFixed(2)}</td>
-                    <td className="p-3 font-black text-emerald-400">{sig.peakGainPercent}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        sig.outcomeColor === 'emerald'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                      }`}>
-                        {sig.outcome}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {scopedSignals.map((sig: any) => {
+                  const isWin = sig.pnlPerContract > 0;
+                  return (
+                    <tr key={sig.id} className="hover:bg-slate-800/30">
+                      <td className="p-3 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-cyan-400 font-bold">{sig.entryTime} ➔ {sig.exitTime}</span>
+                          <span className="text-[10px] text-slate-400">{sig.duration}</span>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex flex-col">
+                          <span className="font-black text-slate-100">{sig.symbol}</span>
+                          <span className="text-[10px] text-slate-400 font-sans">{sig.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          sig.session === 'MORNING_ORB'
+                            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            : sig.session === 'MIDDAY_VWAP'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                        }`}>
+                          {sig.session === 'MORNING_ORB' ? 'Morning ORB' : sig.session === 'MIDDAY_VWAP' ? 'Midday VWAP' : 'Power Hour'}
+                        </span>
+                        {sig.isRecoverySetup && (
+                          <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold border border-amber-500/20">
+                            ⚡ Recovery
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 font-bold text-slate-200 whitespace-nowrap">{sig.contract}</td>
+                      <td className="p-3 text-slate-300">${sig.entryPrice?.toFixed(2)}</td>
+                      <td className="p-3 font-bold text-slate-100">${sig.peakPrice?.toFixed(2)}</td>
+                      <td className={`p-3 font-black ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {sig.percentGain} ({isWin ? `+$${sig.pnlPerContract.toFixed(1)}` : `-$${Math.abs(sig.pnlPerContract).toFixed(1)}`})
+                      </td>
+                      <td className="p-3 whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          isWin
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                        }`}>
+                          {sig.outcome === 'TARGET_2' ? 'TARGET 2 HIT' : sig.outcome === 'TARGET_1' ? 'TARGET 1 HIT' : 'STOPPED OUT'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-300 text-[11px] max-w-xs font-sans">
+                        {sig.invalidationNote ? (
+                          <span className="text-rose-300/90 font-medium">⚠️ {sig.invalidationNote}</span>
+                        ) : (
+                          <span className="text-slate-400">{sig.catalyst}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* 7. TAB 4: ANALYTICS & TRADE JOURNAL */}
+      {/* 7. TAB 4: ANALYTICS & TRADE JOURNAL (WITH DATE & SCOPE SELECTION) */}
       {activeTab === "ANALYTICS" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono">
+          {/* Scope Selector Header */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-emerald-400" />
+                Institutional Performance Analytics & Trade Journal
+              </h2>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Audit win rates, profit factor, expectancy, and post-mortems for any selected date, full month, or 3-month macro.
+              </span>
+            </div>
+
+            {/* Scope Controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+                <button
+                  onClick={() => setAnalyticsScope("DATE")}
+                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
+                    analyticsScope === "DATE" ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Single Day
+                </button>
+                <button
+                  onClick={() => setAnalyticsScope("MONTH")}
+                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
+                    analyticsScope === "MONTH" ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Full Month
+                </button>
+                <button
+                  onClick={() => setAnalyticsScope("ALL")}
+                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
+                    analyticsScope === "ALL" ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Q3 Macro (3-Mo)
+                </button>
+              </div>
+
+              {/* Date Selector Dropdown (When in Single Day Scope) */}
+              {analyticsScope === "DATE" && (
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                  <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" />
+                  <select
+                    value={selectedCalendarDate}
+                    onChange={(e) => setSelectedCalendarDate(e.target.value)}
+                    className="bg-transparent text-xs font-mono text-cyan-300 font-bold focus:outline-none cursor-pointer"
+                  >
+                    {availableTradingDatesInMonth.map(d => (
+                      <option key={d.date} value={d.date} className="bg-slate-900 text-slate-200">
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Month Selector Dropdown (When in Full Month Scope) */}
+              {analyticsScope === "MONTH" && (
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value as any)}
+                    className="bg-transparent text-xs font-mono text-cyan-300 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="2026-09" className="bg-slate-900 text-slate-200">September 2026</option>
+                    <option value="2026-08" className="bg-slate-900 text-slate-200">August 2026</option>
+                    <option value="2026-07" className="bg-slate-900 text-slate-200">July 2026</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Metric Cards (Dynamic) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 font-mono">
+            {/* Win Rate */}
             <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-slate-400 uppercase block font-sans">Win Rate</span>
-                <span className="text-2xl font-black text-emerald-400">{displayWinRate}%</span>
-                <span className="text-[10px] text-slate-500 block">{analytics ? analytics.winCount : 3}W / {analytics ? analytics.lossCount : 1}L</span>
+                <span className={`text-2xl font-black ${scopedAnalytics.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {scopedAnalytics.winRate}%
+                </span>
+                <span className="text-[10px] text-slate-500 block">
+                  {scopedAnalytics.winCount}W / {scopedAnalytics.lossCount}L ({scopedAnalytics.totalTrades} Total)
+                </span>
               </div>
               <Award className="w-8 h-8 text-emerald-400 opacity-60" />
             </div>
 
+            {/* Profit Factor */}
             <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-slate-400 uppercase block font-sans">Profit Factor</span>
-                <span className="text-2xl font-black text-purple-400">{analytics ? analytics.profitFactor : 6.25}</span>
-                <span className="text-[10px] text-slate-400 block">Avg Win: +${analytics ? analytics.avgWin : 225}</span>
+                <span className="text-2xl font-black text-purple-400">{scopedAnalytics.profitFactor}</span>
+                <span className="text-[10px] text-slate-400 block">Avg Win: +${scopedAnalytics.avgWin}</span>
               </div>
               <BarChart2 className="w-8 h-8 text-purple-400 opacity-60" />
             </div>
 
+            {/* Net PnL */}
             <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-slate-400 uppercase block font-sans">Total Net P&L</span>
-                <span className="text-2xl font-black text-cyan-400">+${displayTotalPnl.toFixed(2)}</span>
-                <span className="text-[10px] text-slate-400 block">Best: {analytics ? analytics.bestTrade : '+$315 CRWD'}</span>
+                <span className="text-[10px] text-slate-400 uppercase block font-sans">
+                  Net P&L ({simContractQty} cts)
+                </span>
+                <span className={`text-2xl font-black ${scopedAnalytics.totalNetPnl >= 0 ? 'text-cyan-400' : 'text-rose-400'}`}>
+                  {scopedAnalytics.totalNetPnl >= 0 ? `+$${scopedAnalytics.totalNetPnl.toFixed(2)}` : `-$${Math.abs(scopedAnalytics.totalNetPnl).toFixed(2)}`}
+                </span>
+                <span className="text-[10px] text-slate-400 block">
+                  Gross: +${scopedAnalytics.grossWins.toFixed(0)} / -${scopedAnalytics.grossLosses.toFixed(0)}
+                </span>
               </div>
               <DollarSign className="w-8 h-8 text-cyan-400 opacity-60" />
             </div>
+
+            {/* Expectancy & Extremes */}
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase block font-sans">Expectancy</span>
+                <span className={`text-2xl font-black ${scopedAnalytics.expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {scopedAnalytics.expectancy >= 0 ? `+$${scopedAnalytics.expectancy}` : `-$${Math.abs(scopedAnalytics.expectancy)}`}
+                </span>
+                <span className="text-[10px] text-slate-400 block truncate max-w-[130px]" title={scopedAnalytics.bestTrade}>
+                  Best: {scopedAnalytics.bestTrade}
+                </span>
+              </div>
+              <TrendingUp className="w-8 h-8 text-blue-400 opacity-60" />
+            </div>
           </div>
 
-          {/* Trade Journal Table */}
+          {/* Post-Mortem Trade Journal */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-cyan-400" />
-              Post-Mortem Trade Journal & Reviews
-            </h3>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-cyan-400" />
+                Post-Mortem Trade Journal & Reviews — {scopedAnalytics.scopeLabel}
+              </h3>
+              <span className="text-xs font-mono text-slate-400">{scopedAnalytics.trades.length} Trades Audited</span>
+            </div>
 
-            <div className="space-y-2.5">
-              {closedTrades.map(trade => (
-                <div key={trade.id} className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800 text-xs font-mono space-y-1.5">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <span className="font-bold text-slate-100">{trade.underlying} • {trade.symbol}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                      trade.pnl >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                    }`}>
-                      {trade.pnl >= 0 ? `+$${trade.pnl.toFixed(2)} (${trade.pnlPercent})` : `-$${Math.abs(trade.pnl).toFixed(2)} (${trade.pnlPercent})`}
-                    </span>
+            <div className="space-y-3">
+              {scopedAnalytics.trades.map((trade: DailyTradeRecord) => {
+                const isWin = trade.pnlPerContract > 0;
+                return (
+                  <div key={trade.id} className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 text-xs font-mono space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-100 text-sm">{trade.symbol}</span>
+                        <span className="text-slate-400 font-sans">•</span>
+                        <span className="text-slate-300 font-bold">{trade.contract}</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          trade.session === 'MORNING_ORB' ? 'bg-blue-500/10 text-blue-400' : trade.session === 'MIDDAY_VWAP' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-purple-500/10 text-purple-400'
+                        }`}>
+                          {trade.session === 'MORNING_ORB' ? 'Morning ORB' : trade.session === 'MIDDAY_VWAP' ? 'Midday VWAP' : 'Power Hour'}
+                        </span>
+                        {trade.isRecoverySetup && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold">
+                            ⚡ Recovery
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-400 text-[11px]">
+                          🕒 {trade.entryTime} ➔ {trade.exitTime} ({trade.duration})
+                        </span>
+                        <span className={`px-2.5 py-1 rounded text-xs font-black ${
+                          isWin ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                        }`}>
+                          {isWin ? `+$${(trade.pnlPerContract * simContractQty).toFixed(2)}` : `-$${Math.abs(trade.pnlPerContract * simContractQty).toFixed(2)}`} ({trade.percentGain})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Lesson / Post-Mortem */}
+                    <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800/80 text-[11px] font-sans">
+                      {trade.invalidationNote ? (
+                        <p className="text-rose-300/90 font-medium">
+                          <span className="font-bold text-rose-400 uppercase font-mono mr-1.5">[STOP-LOSS POST-MORTEM]:</span>
+                          {trade.invalidationNote}
+                        </p>
+                      ) : (
+                        <p className="text-slate-300">
+                          <span className="font-bold text-emerald-400 uppercase font-mono mr-1.5">[EXECUTION PLAYBOOK]:</span>
+                          {trade.catalyst}. Target disciplined scale executed as planned.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-300 font-sans italic">"{trade.lessons}"</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
