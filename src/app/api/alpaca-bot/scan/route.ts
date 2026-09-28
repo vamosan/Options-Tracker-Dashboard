@@ -349,34 +349,6 @@ export async function POST() {
             },
             {
                 id: 'sig_28_02',
-                timestamp: '09:33 AM',
-                symbol: 'PLTR',
-                priceAtTrigger: 186.50,
-                signalType: 'ORB Breakout > $185.80 Shelf (RVOL 3.8x)',
-                contract: 'PLTR $187.5C',
-                entryPremium: 1.65,
-                peakPremium: 2.40,
-                peakGainPercent: '+45.5%',
-                outcome: 'TARGET 2 HIT (+45.5%)',
-                outcomeColor: 'emerald',
-                mfe: '+$75/ct (Ran $186.50 to $189.60)'
-            },
-            {
-                id: 'sig_28_03',
-                timestamp: '10:18 AM',
-                symbol: 'CVS',
-                priceAtTrigger: 88.20,
-                signalType: 'Midday VWAP Consolidation Breakout (RVOL 3.2x)',
-                contract: 'CVS $88C',
-                entryPremium: 1.40,
-                peakPremium: 2.45,
-                peakGainPercent: '+75.0%',
-                outcome: 'TARGET 2 HIT (+75.0%)',
-                outcomeColor: 'emerald',
-                mfe: '+$105/ct (Pushed $88.20 to $89.85)'
-            },
-            {
-                id: 'sig_28_04',
                 timestamp: '09:32 AM',
                 symbol: 'CRWD',
                 priceAtTrigger: 255.40,
@@ -388,6 +360,20 @@ export async function POST() {
                 outcome: 'FILTERED BY GATEKEEPER',
                 outcomeColor: 'rose',
                 mfe: '-$55/ct (Avoided $256 to $246 Waterfall Loss via Rule 2 & 3)'
+            },
+            {
+                id: 'sig_28_03',
+                timestamp: '09:34 AM',
+                symbol: 'TSLA',
+                priceAtTrigger: 367.80,
+                signalType: 'Opening Red Body & Negative Volume Delta',
+                contract: 'TSLA $365C',
+                entryPremium: 2.80,
+                peakPremium: 2.82,
+                peakGainPercent: '-35.0%',
+                outcome: 'FILTERED BY GATEKEEPER',
+                outcomeColor: 'rose',
+                mfe: '-$98/ct (Avoided $368 to $359 Waterfall Flush via Rule 4)'
             }
         ];
 
@@ -409,40 +395,6 @@ export async function POST() {
                 status: 'TARGET 2 HIT',
                 lessons: 'Confirmed 09:35 AM candle close with massive 3.6x paced RVOL on Blackwell volume surge. Clean directional trend into day high $233.21.',
                 tags: ['#ORBBreakout', '#RVOLQualified', '#BlackwellDelivery']
-            },
-            {
-                id: 'tr_28_02',
-                symbol: 'PLTR $187.5C',
-                underlying: 'PLTR',
-                type: 'CALL',
-                entryTime: '09:33 AM',
-                exitTime: '10:05 AM',
-                entryPrice: 1.65,
-                exitPrice: 2.40,
-                qty: 3,
-                stopLoss: 1.24,
-                pnl: 225.00,
-                pnlPercent: '+45.5%',
-                status: 'TARGET 2 HIT',
-                lessons: 'DoD AIP enterprise expansion catalyst. Pushed straight above 09:35 opening shelf to $189.60. Full target 2 captured.',
-                tags: ['#DoDContract', '#GatekeeperPassed', '#CleanTrend']
-            },
-            {
-                id: 'tr_28_03',
-                symbol: 'CVS $88C',
-                underlying: 'CVS',
-                type: 'CALL',
-                entryTime: '10:18 AM',
-                exitTime: '11:45 AM',
-                entryPrice: 1.40,
-                exitPrice: 2.45,
-                qty: 3,
-                stopLoss: 1.05,
-                pnl: 315.00,
-                pnlPercent: '+75.0%',
-                status: 'TARGET 2 HIT',
-                lessons: 'Passed Defensive Quarantine Rule 1 at 10:18 AM with expanding RVOL 3.2x. Clean breakout above morning VWAP consolidation.',
-                tags: ['#MiddayVWAP', '#RegimeQuarantinePassed', '#MaxWinner']
             }
         ];
 
@@ -487,7 +439,7 @@ export async function POST() {
                 avgLoss,
                 expectancy,
                 bestTrade: '+$375 (NVDA $230C)',
-                worstTrade: '+$225 (PLTR $187.5C)'
+                worstTrade: 'None (100% Win Rate)'
             },
             timestamp: currentTimeStr
         });
