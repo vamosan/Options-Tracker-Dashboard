@@ -411,7 +411,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   // Multi-Month Calendar State
   const [selectedMonth, setSelectedMonth] = useState<"2026-09" | "2026-08" | "2026-07">("2026-09");
   const [simContractQty, setSimContractQty] = useState<number>(3);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-09-25");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-09-28");
   const [showRulesInfo, setShowRulesInfo] = useState<boolean>(true);
   const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
   const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
@@ -950,6 +950,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             { id: "s25_2", symbol: "CRWD", name: "CrowdStrike", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:42 AM", duration: "10 min (Stop)", session: "MORNING_ORB", contract: "CRWD $260C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.72, peakPrice: 2.35, outcome: "STOPPED", pnlPerContract: -58.0, percentGain: "-25.2%", catalyst: "Opening Breakout Attempt", rvol: "3.4x", invalidationNote: "Severe waterfall selloff from $259.80 down to $251.54; broke ORB Low ($255.26) in 8 minutes. Stopped out at $1.72." },
             { id: "s25_3", symbol: "PANW", name: "Palo Alto", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:48 AM", duration: "16 min (Stop)", session: "MORNING_ORB", contract: "PANW $385C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.84, stopLoss: 1.80, peakPrice: 2.45, outcome: "STOPPED", pnlPerContract: -60.0, percentGain: "-25.0%", catalyst: "Opening Range Expansion", rvol: "2.5x", invalidationNote: "Opening spike to $388.25 was a severe bull trap; faded to $378.52 and dumped to $373.78. Stopped out at $1.80." },
             { id: "s25_4", symbol: "AMZN", name: "Amazon", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "10:05 AM", duration: "29 min (Stop)", session: "MORNING_ORB", contract: "AMZN $250C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.46, peakPrice: 2.02, outcome: "STOPPED", pnlPerContract: -49.0, percentGain: "-25.1%", catalyst: "Opening Shelf Momentum", rvol: "2.3x", invalidationNote: "Spiked to $250.13 then cracked opening shelf down to $247.18; stopped out at $1.46." }
+          ]},
+          "2026-09-28": { trades: [
+            { id: "s28_1", symbol: "NVDA", name: "NVIDIA", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "NVDA $230C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.72, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+54.3%", catalyst: "Blackwell GPU High-Volume Delivery Acceleration", rvol: "3.6x" },
+            { id: "s28_2", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "PLTR $187.5C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.24, peakPrice: 2.40, outcome: "TARGET_2", pnlPerContract: 75.0, percentGain: "+45.5%", catalyst: "Enterprise AIP Bootcamps Commercial Surge & Defense Contract", rvol: "3.8x" },
+            { id: "s28_3", symbol: "CVS", name: "CVS Health", time: "10:18 AM", entryTime: "10:18 AM", exitTime: "11:45 AM", duration: "1 hr 27 min", session: "MIDDAY_VWAP", isRecoverySetup: true, contract: "CVS $88C", entryAsk: 1.40, t1Target: 1.82, t2Target: 2.24, stopLoss: 1.05, peakPrice: 2.45, outcome: "TARGET_2", pnlPerContract: 105.0, percentGain: "+75.0%", catalyst: "Pharmacy Services Margin Expansion & Guidance Beat", rvol: "3.2x" },
+            { id: "s28_4", symbol: "CRWD", name: "CrowdStrike", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:44 AM", duration: "12 min (Stop)", session: "MORNING_ORB", contract: "CRWD $255C", entryAsk: 2.20, t1Target: 2.86, t2Target: 3.52, stopLoss: 1.65, peakPrice: 2.25, outcome: "STOPPED", pnlPerContract: -55.0, percentGain: "-25.0%", catalyst: "Opening Range Expansion Attempt", rvol: "2.4x", invalidationNote: "Pre-market spike to $256 met immediate dealer resistance; cracked opening shelf ($252.10) to $246.51. Hard stop executed at $1.65 (-25%). Filtered by Gatekeeper (RVOL 2.4x < 2.8x)." }
           ]}
         }
       },
@@ -2007,7 +2013,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   onClick={() => {
                     setSelectedMonth(mKey);
                     // Select first available trading day of that month
-                    setSelectedCalendarDate(mKey === "2026-09" ? "2026-09-25" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
+                    setSelectedCalendarDate(mKey === "2026-09" ? "2026-09-28" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
                   }}
                   className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
                     selectedMonth === mKey
@@ -3305,7 +3311,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     key={mKey}
                     onClick={() => {
                       setSelectedMonth(mKey);
-                      setSelectedCalendarDate(mKey === "2026-09" ? "2026-09-25" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
+                      setSelectedCalendarDate(mKey === "2026-09" ? "2026-09-28" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
                     }}
                     className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold transition-all ${
                       selectedMonth === mKey ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
