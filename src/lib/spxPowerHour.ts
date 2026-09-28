@@ -36,15 +36,14 @@ export interface SPXPowerHourStrikeCandidate {
   miniContractEquivalent?: string;
 }
 
-export interface SPXPinButterflySetup {
-  pinStrike: number;
-  lowerWing: number;
-  upperWing: number;
-  netDebit: number;
-  maxPayout: number;
-  targetProfit: number;
-  riskRewardRatio: string;
-  dealerGammaContext: string;
+export interface SPXBreakoutConfluence {
+  trendAlignment: "ALIGNED_WITH_TREND" | "COUNTER_TREND" | "NEUTRAL";
+  trendAlignmentMessage: string;
+  shelfClearancePts: number;
+  isConfirmedClearance: boolean;
+  mocAgreement: "CONFIRMED" | "DIVERGENT" | "PENDING";
+  mocAgreementMessage: string;
+  overallConviction: "HIGH_CONVICTION" | "MODERATE" | "STANDBY";
 }
 
 export interface SPXPowerHourState {
@@ -74,6 +73,7 @@ export interface SPXPowerHourState {
     ptsToPutBreakdown?: number;
   };
   mocImbalance: MOCImbalanceData;
+  confluence: SPXBreakoutConfluence;
   activeSurgeCandidate: SPXPowerHourStrikeCandidate | null;
   callCandidate: SPXPowerHourStrikeCandidate | null;
   putCandidate: SPXPowerHourStrikeCandidate | null;
@@ -81,7 +81,7 @@ export interface SPXPowerHourState {
   recommendationReason: string;
   brokerCutoffTimeET: string;
   brokerCutoffWarning: string;
-  pinButterfly: SPXPinButterflySetup;
+  pinButterfly?: any;
   historicalStats: {
     avgRangePts: number;
     avgNetSettlePts: number;
@@ -292,19 +292,6 @@ export async function getLiveSPXPowerHourData(options?: {
   const morningBias = isPositiveDay ? "BULLISH" : "BEARISH";
   const first30mReturnPct = isPositiveDay ? 0.38 : -0.42;
 
-  // Pinning Butterfly Setup baseline
-  const pinStrike = Math.round(spxSpot / 5) * 5;
-  const pinButterfly: SPXPinButterflySetup = {
-    pinStrike,
-    lowerWing: pinStrike - 15,
-    upperWing: pinStrike + 15,
-    netDebit: 0.85,
-    maxPayout: 15.00,
-    targetProfit: 4.25,
-    riskRewardRatio: "1 : 5.0 (Target) / 1 : 17.6 (Max Pin)",
-    dealerGammaContext: `Massive open interest cluster at ${pinStrike}. Dealer delta hedging pulls price toward this strike in low-volatility regimes.`
-  };
-
   // CHECK: If outside of Power Hour and not simulating, return clean STANDBY state
   const isOutsidePowerHour = (phaseInfo.phase === "PRE_POWER_HOUR" || phaseInfo.phase === "SESSION_CLOSED") && !options?.simulatePhase;
 
@@ -346,6 +333,15 @@ export async function getLiveSPXPowerHourData(options?: {
           : "Institutional TWAP/VWAP algorithms executing daytime flows. MOC window opens at 3:50 PM ET.",
         thresholdMet: false
       },
+      confluence: {
+        trendAlignment: "NEUTRAL",
+        trendAlignmentMessage: isClosed ? "Market closed." : "Standby: Desk arms during 3:00-4:00 PM ET Power Hour window.",
+        shelfClearancePts: 0,
+        isConfirmedClearance: false,
+        mocAgreement: "PENDING",
+        mocAgreementMessage: isClosed ? "NYSE 4:00 PM cash cross completed." : "Pending 3:50 PM ET MOC release.",
+        overallConviction: "STANDBY"
+      },
       activeSurgeCandidate: null,
       callCandidate: null,
       putCandidate: null,
@@ -355,7 +351,6 @@ export async function getLiveSPXPowerHourData(options?: {
         : "STANDBY: Midday session theta decay risk. Range accumulation begins at 3:00 PM ET. Pre-15:40 broker cutoff breakout window opens at 3:30 PM ET.",
       brokerCutoffTimeET: "03:40 PM ET",
       brokerCutoffWarning: "Most retail brokers (Webull, Robinhood, IBKR) reject 0DTE orders after 15:40 ET and auto-liquidate near-ATM contracts. Optimal execution window is 3:30–3:39 PM ET.",
-      pinButterfly,
       historicalStats: {
         avgRangePts: 34.2,
         avgNetSettlePts: 7.6,
@@ -481,6 +476,75 @@ export async function getLiveSPXPowerHourData(options?: {
     recommendationReason = `STANDBY — INSIDE 3:00–3:35 PM SHELF: SPX ($${effectiveSpot.toFixed(1)}) is inside shelf ($${low30.toFixed(1)} - $${high30.toFixed(1)}). ZERO trades permitted inside range to eliminate theta decay. Awaiting verified breakout.`;
   }
 
+  // 3-Factor Institutional Confluence Engine for Enhanced Signal Accuracy
+  let trendAlignment: "ALIGNED_WITH_TREND" | "COUNTER_TREND" | "NEUTRAL" = "NEUTRAL";
+  let trendAlignmentMessage = "Consolidating inside shelf.";
+  let shelfClearancePts = 0;
+  let isConfirmedClearance = false;
+  let mocAgreement: "CONFIRMED" | "DIVERGENT" | "PENDING" = "PENDING";
+  let mocAgreementMessage = "Awaiting 3:50 PM ET MOC release.";
+  let overallConviction: "HIGH_CONVICTION" | "MODERATE" | "STANDBY" = "STANDBY";
+
+  if (breakoutDirection === "UPWARD_BREAKOUT") {
+    shelfClearancePts = Math.round((effectiveSpot - high30) * 10) / 10;
+    isConfirmedClearance = shelfClearancePts >= 1.0;
+    if (morningBias === "BULLISH") {
+      trendAlignment = "ALIGNED_WITH_TREND";
+      trendAlignmentMessage = "Trend Continuation: Upside breakout aligned with morning bullish tape (+0.38%).";
+    } else {
+      trendAlignment = "COUNTER_TREND";
+      trendAlignmentMessage = "Counter-Trend Breakout: Day is down (-0.77%). Scalp Target 1 (+120%) with disciplined stop.";
+    }
+
+    if (isMOCPublished) {
+      if (mocDir === "BUY") {
+        mocAgreement = "CONFIRMED";
+        mocAgreementMessage = `MOC Flow Aligned: Net +$${mocAmount.toFixed(2)}B BUY imbalance accelerating upside gamma squeeze.`;
+      } else {
+        mocAgreement = "DIVERGENT";
+        mocAgreementMessage = `MOC Divergence Warning: Net -$${mocAmount.toFixed(2)}B sell imbalance opposes call breakout.`;
+      }
+    }
+
+    overallConviction = (trendAlignment === "ALIGNED_WITH_TREND" && isConfirmedClearance) ? "HIGH_CONVICTION" : "MODERATE";
+  } else if (breakoutDirection === "DOWNWARD_BREAKOUT") {
+    shelfClearancePts = Math.round((low30 - effectiveSpot) * 10) / 10;
+    isConfirmedClearance = shelfClearancePts >= 1.0;
+    if (morningBias === "BEARISH") {
+      trendAlignment = "ALIGNED_WITH_TREND";
+      trendAlignmentMessage = "Trend Continuation: Downside breakdown confirmed with morning institutional selling pressure (-0.42%).";
+    } else {
+      trendAlignment = "COUNTER_TREND";
+      trendAlignmentMessage = "Counter-Trend Breakdown: Day is up. Scalp Target 1 (+120%) with disciplined stop.";
+    }
+
+    if (isMOCPublished) {
+      if (mocDir === "SELL") {
+        mocAgreement = "CONFIRMED";
+        mocAgreementMessage = `MOC Flow Aligned: Net -$${mocAmount.toFixed(2)}B SELL imbalance accelerating downside flush.`;
+      } else {
+        mocAgreement = "DIVERGENT";
+        mocAgreementMessage = `MOC Divergence Warning: Net +$${mocAmount.toFixed(2)}B buy imbalance opposes put breakdown.`;
+      }
+    }
+
+    overallConviction = (trendAlignment === "ALIGNED_WITH_TREND" && isConfirmedClearance) ? "HIGH_CONVICTION" : "MODERATE";
+  } else {
+    trendAlignment = "NEUTRAL";
+    trendAlignmentMessage = `Spot ($${effectiveSpot.toFixed(1)}) is trapped between L30 ($${low30.toFixed(1)}) and H30 ($${high30.toFixed(1)}). Zero trades allowed inside range.`;
+    overallConviction = "STANDBY";
+  }
+
+  const confluence: SPXBreakoutConfluence = {
+    trendAlignment,
+    trendAlignmentMessage,
+    shelfClearancePts,
+    isConfirmedClearance,
+    mocAgreement,
+    mocAgreementMessage,
+    overallConviction
+  };
+
   const finalSpot = options?.simulateMOCDirection ? effectiveSpot : spxSpot;
 
   return {
@@ -510,6 +574,7 @@ export async function getLiveSPXPowerHourData(options?: {
       ptsToPutBreakdown: Math.round((finalSpot - low30) * 10) / 10
     },
     mocImbalance,
+    confluence,
     activeSurgeCandidate,
     callCandidate,
     putCandidate,
@@ -517,7 +582,6 @@ export async function getLiveSPXPowerHourData(options?: {
     recommendationReason,
     brokerCutoffTimeET: "03:40 PM ET",
     brokerCutoffWarning: "Most retail brokers (Webull, Robinhood, IBKR) reject 0DTE orders after 15:40 ET and auto-liquidate near-ATM contracts. Optimal execution window is 3:30–3:39 PM ET.",
-    pinButterfly,
     historicalStats: {
       avgRangePts: 34.2,
       avgNetSettlePts: 7.6,

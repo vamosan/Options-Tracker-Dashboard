@@ -517,6 +517,8 @@ export interface SPXPowerHourDiscordPayload {
   morningBias: string;
   shelfBreak: string;
   exitCutoff: string;
+  confluenceConviction?: string;
+  confluenceSummary?: string;
   alternateSetup?: string;
   brokerCutoffWarning?: string;
 }
@@ -610,7 +612,7 @@ export async function sendSPXPowerHourAlert(payload: SPXPowerHourDiscordPayload)
 
   const embed: DiscordEmbed = {
     title,
-    description: `**Shelf Status:** \`${payload.shelfBreak}\`\n**Morning Bias (JFE Indicator):** \`${payload.morningBias}\`\n**MOC Flow:** ${payload.mocImbalance}`,
+    description: `**Shelf Status:** \`${payload.shelfBreak}\`\n**Morning Bias (JFE Indicator):** \`${payload.morningBias}\`\n**MOC Flow:** ${payload.mocImbalance}${payload.confluenceConviction ? `\n**Institutional Confluence:** \`${payload.confluenceConviction}\`` : ''}`,
     color,
     fields,
     footer: {

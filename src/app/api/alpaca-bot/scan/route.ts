@@ -134,7 +134,7 @@ export async function POST() {
             // During Midday (10:15 AM - 15:00 PM ET): Trigger is the Session High (dayHigh)
             // A live trade is ONLY a Breakout if the CURRENT price is actively AT or BREAKING the shelf!
             const triggerShelf = isMidday ? Math.round(dayHigh * 100) / 100 : morningOrbHigh;
-            const isBreakout = livePrice >= triggerShelf * 0.998;
+            const isBreakout = livePrice >= triggerShelf;
             const rangeLow = isMidday ? Math.round(dayLow * 100) / 100 : morningOrbLow;
             const rangeWidth = Math.round((triggerShelf - rangeLow) * 100) / 100;
 
@@ -305,12 +305,12 @@ export async function POST() {
                     high: triggerShelf,
                     low: rangeLow,
                     rangeWidth,
-                    status: isBreakout ? 'BREAKOUT' : 'PENDING'
+                    status: (isBreakout && isGatekeeperQualified) ? 'BREAKOUT' : 'PENDING'
                 },
                 signal: {
-                    state: isBreakout ? 'BREAKOUT' : 'PENDING',
-                    badge: isBreakout ? 'BULLISH BREAKOUT' : isMidday ? 'MIDDAY CONSOLIDATION' : 'ORB COMPRESSION',
-                    action: isBreakout ? 'TRIGGERED' : `WATCHING ($${triggerShelf.toFixed(2)})`,
+                    state: (isBreakout && isGatekeeperQualified) ? 'BREAKOUT' : 'PENDING',
+                    badge: (isBreakout && isGatekeeperQualified) ? 'BULLISH BREAKOUT' : isMidday ? 'MIDDAY CONSOLIDATION' : 'ORB COMPRESSION',
+                    action: (isBreakout && isGatekeeperQualified) ? 'TRIGGERED' : `WATCHING ($${triggerShelf.toFixed(2)})`,
                     triggerPrice: triggerShelf
                 },
                 targets: {

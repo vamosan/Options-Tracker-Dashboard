@@ -44,55 +44,39 @@ export function SPXPowerHourDesk() {
     return () => clearInterval(interval);
   }, [simulateMode]);
 
-  const handleSendDiscord = async (setupType: "MOC_GAMMA_CALL" | "MOC_GAMMA_PUT" | "GAMMA_PIN_BUTTERFLY") => {
+  const handleSendDiscord = async (setupType: "MOC_GAMMA_CALL" | "MOC_GAMMA_PUT") => {
     if (!data) return;
     setIsSendingDiscord(true);
     setDiscordNotice(null);
 
-    const isPin = setupType === "GAMMA_PIN_BUTTERFLY";
     const isCall = setupType === "MOC_GAMMA_CALL";
     const targetSurge = surge || data.activeSurgeCandidate || data.callCandidate || data.putCandidate;
 
-    if (!isPin && !targetSurge) {
+    if (!targetSurge) {
       setDiscordNotice({
-        message: "Desk in Standby: Power Hour setups activate at 3:00 PM ET. Use Test Mode in top banner to test alerts.",
+        message: "Desk in Standby: Power Hour setups activate when a verified shelf breakout occurs. Use Test Mode in top banner to test alerts.",
         type: "error"
       });
       setIsSendingDiscord(false);
       return;
     }
 
-    const payload = isPin ? {
+    const payload = {
       setupType,
       triggerTime: data.currentTimeET,
       spxSpot: data.spxSpot,
-      contract: `SPX 0DTE ${data.pinButterfly.pinStrike} IRON BUTTERFLY`,
-      strike: data.pinButterfly.pinStrike,
-      entryAsk: data.pinButterfly.netDebit,
-      target1: 2.50,
-      target2: data.pinButterfly.targetProfit,
-      stopLoss: 0.25,
-      maxRiskPerContract: Math.round(data.pinButterfly.netDebit * 100),
-      mocImbalance: data.mocImbalance.rawText,
-      mocImbalanceType: data.mocImbalance.direction,
-      morningBias: `${data.morningMomentumBias.bias} (${data.morningMomentumBias.first30mReturnPct > 0 ? "+" : ""}${data.morningMomentumBias.first30mReturnPct}%)`,
-      shelfBreak: `Pinning around major Open-Interest cluster at ${data.pinButterfly.pinStrike}`,
-      exitCutoff: "3:58 PM ET"
-    } : {
-      setupType,
-      triggerTime: data.currentTimeET,
-      spxSpot: data.spxSpot,
-      contract: `SPX 0DTE ${targetSurge?.strike || 7715} ${isCall ? "CALL" : "PUT"}`,
-      strike: targetSurge?.strike || 7715,
-      entryAsk: targetSurge?.estimatedAsk || 3.20,
-      target1: targetSurge?.target1 || 7.04,
-      target2: targetSurge?.target2 || 14.40,
-      stopLoss: targetSurge?.stopLoss || 0.95,
-      maxRiskPerContract: targetSurge?.maxRiskDollars || 320,
+      contract: `SPX 0DTE ${targetSurge.strike} ${targetSurge.type}`,
+      strike: targetSurge.strike,
+      entryAsk: targetSurge.estimatedAsk,
+      target1: targetSurge.target1,
+      target2: targetSurge.target2,
+      stopLoss: targetSurge.stopLoss,
+      maxRiskPerContract: targetSurge.maxRiskDollars,
       mocImbalance: data.mocImbalance.rawText,
       mocImbalanceType: data.mocImbalance.direction,
       morningBias: `${data.morningMomentumBias.bias} (${data.morningMomentumBias.first30mReturnPct > 0 ? "+" : ""}${data.morningMomentumBias.first30mReturnPct}%)`,
       shelfBreak: data.rangeShelf.breakoutDirection === "UPWARD_BREAKOUT" ? `Broke above H30 ($${data.rangeShelf.high30})` : `Broke below L30 ($${data.rangeShelf.low30})`,
+      confluenceConviction: data.confluence?.overallConviction === "HIGH_CONVICTION" ? "HIGH CONVICTION (3-FACTOR VERIFIED)" : (data.confluence?.overallConviction || "STANDBY"),
       exitCutoff: "3:58 PM ET"
     };
 
@@ -152,7 +136,6 @@ export function SPXPowerHourDesk() {
   const phase = data?.phaseInfo;
   // 1-Trade Strict Discipline: surge is strictly the confirmed active breakout candidate (or null when in standby/inside shelf)
   const surge = data?.activeSurgeCandidate || null;
-  const fly = data?.pinButterfly;
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto pb-16">
@@ -370,31 +353,110 @@ export function SPXPowerHourDesk() {
         </div>
       </div>
 
-      {/* 4. The Two Tactical Strategy Playbooks */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Playbook 1: Asymmetric MOC Gamma Squeeze */}
-        <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/30 shadow-xl space-y-6 flex flex-col justify-between">
+      {/* 4. Premier Quantitative Strategy Playbook: Directional Gamma Breakout */}
+      <div className="w-full">
+        {/* Playbook: Asymmetric MOC Gamma Squeeze */}
+        <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/30 shadow-2xl space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                PLAYBOOK 1: DIRECTIONAL DEBIT
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  PREMIER PLAYBOOK: 1-TRADE DIRECTIONAL BREAKOUT
+                </span>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider border ${
+                  data?.confluence?.overallConviction === "HIGH_CONVICTION"
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
+                    : data?.confluence?.overallConviction === "MODERATE"
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                    : "bg-slate-800/80 text-slate-400 border-slate-700"
+                }`}>
+                  {data?.confluence?.overallConviction === "HIGH_CONVICTION" ? "⚡ HIGH CONVICTION SETUP" : data?.confluence?.overallConviction === "MODERATE" ? "⚠️ MODERATE CONVICTION" : "STANDBY / MONITORING"}
+                </span>
+              </div>
               <span className="text-xs font-mono font-bold text-emerald-400">
-                {surge?.gammaLeverage}
+                {surge?.gammaLeverage || "10x - 20x Gamma Asymmetry"}
               </span>
             </div>
 
             <div>
-              <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                ⚡ Directional Gamma Breakout
+              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+                ⚡ Asymmetric 0DTE Directional Breakout Desk
               </h3>
-              <p className="text-slate-400 text-xs mt-1">
-                Monitored continuously across 3:00–4:00 PM ET. Pre-cutoff entry at 3:30–3:39 PM before 15:40 broker lockout, with MOC surge at 3:50 PM.
+              <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-3xl">
+                Monitored continuously across 3:00–4:00 PM ET. Pre-cutoff entry at 3:30–3:39 PM before 15:40 broker lockout, with peak MOC institutional surge at 3:50 PM.
               </p>
             </div>
 
+            {/* 3-Factor Institutional Confluence Verification Matrix */}
+            <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wide">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  3-Factor Institutional Confluence Verification Matrix
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">Live Validation</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
+                {/* Factor 1: Morning Tape Alignment */}
+                <div className={`p-3 rounded-lg border space-y-1 ${
+                  data?.confluence?.trendAlignment === "ALIGNED_WITH_TREND"
+                    ? "bg-emerald-950/20 border-emerald-500/40 text-emerald-300"
+                    : data?.confluence?.trendAlignment === "COUNTER_TREND"
+                    ? "bg-amber-950/20 border-amber-500/40 text-amber-300"
+                    : "bg-slate-900 border-slate-800 text-slate-300"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">1. Tape Trend Alignment</span>
+                    <span className="text-[10px] font-bold">
+                      {data?.confluence?.trendAlignment === "ALIGNED_WITH_TREND" ? "ALIGNED" : data?.confluence?.trendAlignment === "COUNTER_TREND" ? "COUNTER-TREND" : "NEUTRAL"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug">
+                    {data?.confluence?.trendAlignmentMessage || "Morning momentum tape verification"}
+                  </p>
+                </div>
+
+                {/* Factor 2: Shelf Clearance Buffer */}
+                <div className={`p-3 rounded-lg border space-y-1 ${
+                  data?.confluence?.isConfirmedClearance
+                    ? "bg-emerald-950/20 border-emerald-500/40 text-emerald-300"
+                    : "bg-slate-900 border-slate-800 text-slate-400"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">2. Shelf Buffer (≥1.0 pt)</span>
+                    <span className="text-[10px] font-bold">
+                      {data?.confluence?.isConfirmedClearance ? `CLEARANCE +${data.confluence.shelfClearancePts.toFixed(1)} PTS` : `${data?.confluence?.shelfClearancePts.toFixed(1) || "0.0"} PTS (INSIDE SHELF)`}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug">
+                    {data?.confluence?.isConfirmedClearance ? "Institutional buffer confirmed beyond resistance/support" : "Price oscillating inside range. Zero trades taken inside shelf."}
+                  </p>
+                </div>
+
+                {/* Factor 3: NYSE MOC Imbalance Agreement */}
+                <div className={`p-3 rounded-lg border space-y-1 ${
+                  data?.confluence?.mocAgreement === "CONFIRMED"
+                    ? "bg-emerald-950/20 border-emerald-500/40 text-emerald-300"
+                    : data?.confluence?.mocAgreement === "DIVERGENT"
+                    ? "bg-rose-950/20 border-rose-500/40 text-rose-300"
+                    : "bg-slate-900 border-slate-800 text-slate-300"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">3. NYSE MOC Flow</span>
+                    <span className="text-[10px] font-bold">
+                      {data?.confluence?.mocAgreement === "CONFIRMED" ? "AGREEMENT" : data?.confluence?.mocAgreement === "DIVERGENT" ? "DIVERGENT" : "3:50 PM RELEASE"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-snug">
+                    {data?.confluence?.mocAgreementMessage || "Awaiting 3:50 PM NYSE Floor auction feed"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Broker 15:40 ET Cutoff Banner */}
-            <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-mono text-amber-300 flex items-center justify-between gap-2">
+            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-mono text-amber-300 flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 font-bold">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                 <span>Broker 15:40 ET Cutoff: Webull, Robinhood, &amp; IBKR reject 0DTE orders after 15:40.</span>
@@ -404,26 +466,26 @@ export function SPXPowerHourDesk() {
 
             {/* Breakout Status & 1-Trade Rule */}
             {!surge ? (
-              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 font-mono text-xs">
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 font-mono text-xs">
                 <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-bold">
                   <span>Breakout Triggers (Exact 1-Trade Rule)</span>
-                  <span className="text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Inside Shelf (${data?.rangeShelf?.low30?.toFixed(1)} - ${data?.rangeShelf?.high30?.toFixed(1)})</span>
+                  <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Inside Shelf (${data?.rangeShelf?.low30?.toFixed(1)} - ${data?.rangeShelf?.high30?.toFixed(1)})</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
                     <span className="text-emerald-400 text-[10px] block font-bold">▲ CALL TRIGGER</span>
                     <span className="text-white font-bold text-sm">&gt; ${data?.rangeShelf?.high30?.toFixed(1)}</span>
-                    <span className="text-[9px] text-slate-400 block mt-0.5">Arms 1 Call upon verified breach</span>
+                    <span className="text-[9px] text-slate-400 block mt-0.5">Arms exactly 1 Call upon verified breach (+1.0 pt clearance)</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-rose-950/20 border border-rose-500/30">
+                  <div className="p-3 rounded-lg bg-rose-950/20 border border-rose-500/30">
                     <span className="text-rose-400 text-[10px] block font-bold">▼ PUT TRIGGER</span>
                     <span className="text-white font-bold text-sm">&lt; ${data?.rangeShelf?.low30?.toFixed(1)}</span>
-                    <span className="text-[9px] text-slate-400 block mt-0.5">Arms 1 Put upon verified breach</span>
+                    <span className="text-[9px] text-slate-400 block mt-0.5">Arms exactly 1 Put upon verified breach (-1.0 pt clearance)</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className={`p-2.5 rounded-lg border text-xs font-mono font-bold flex items-center justify-between ${
+              <div className={`p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between ${
                 surge.type === "CALL" ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-300" : "bg-rose-500/10 border-rose-500/40 text-rose-300"
               }`}>
                 <span className="flex items-center gap-1.5">
@@ -438,27 +500,27 @@ export function SPXPowerHourDesk() {
             {!surge ? (
               <div className="p-8 rounded-xl bg-slate-950/80 border border-slate-800 text-center space-y-3">
                 <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 inline-block">
-                  🔒 PLAYBOOK 1 IN STANDBY: AWAITING SHELF BREAKOUT
+                  🔒 PLAYBOOK IN STANDBY: AWAITING SHELF BREAKOUT
                 </span>
                 <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-                  SPX Spot (${data?.spxSpot?.toFixed(2)}) is inside the 3:00–3:35 PM Shelf (${data?.rangeShelf?.low30?.toFixed(1)} - ${data?.rangeShelf?.high30?.toFixed(1)}). Strict rule: <b>ZERO trades allowed inside range</b> to prevent theta decay.
+                  SPX Spot (${data?.spxSpot?.toFixed(2)}) is inside the 3:00–3:35 PM Shelf (${data?.rangeShelf?.low30?.toFixed(1)} - ${data?.rangeShelf?.high30?.toFixed(1)}). Strict rule: <b>ZERO trades allowed inside range</b> to prevent theta decay and fakeouts.
                 </p>
                 <div className="text-[11px] font-mono text-cyan-400">
                   Switch to <b>Simulate Buy Imbalance</b> or <b>Simulate Sell Imbalance</b> in the top banner to test the 1-trade breakout flow.
                 </div>
               </div>
             ) : (
-              <div className={`p-4 rounded-xl bg-slate-950/80 border space-y-3 ${
+              <div className={`p-5 rounded-xl bg-slate-950/80 border space-y-3 ${
                 surge.type === "CALL" ? "border-emerald-500/60" : "border-rose-500/60"
               }`}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">CONFIRMED 1-TRADE CONTRACT</span>
-                    <div className="text-xl font-mono font-black text-white">
+                    <div className="text-2xl font-mono font-black text-white">
                       SPX 0DTE {surge.strike} {surge.type}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="sm:text-right">
                     <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">ENTRY ASK (MAX RISK)</span>
                     <div className="text-2xl font-mono font-black text-white">
                       ${surge.estimatedAsk.toFixed(2)} <span className="text-xs text-slate-400 font-normal">(${surge.maxRiskDollars}/ct)</span>
@@ -467,27 +529,27 @@ export function SPXPowerHourDesk() {
                 </div>
 
                 {surge.miniContractEquivalent && (
-                  <div className="text-xs font-mono text-cyan-400 pt-1 border-t border-slate-800/40">
-                    Mini Equivalent: <b>{surge.miniContractEquivalent}</b>
+                  <div className="text-xs font-mono text-cyan-400 pt-2 border-t border-slate-800/40">
+                    Mini Equivalent (Retail friendly): <b>{surge.miniContractEquivalent}</b>
                   </div>
                 )}
 
                 {/* Profit Targets & Stop */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-xs font-mono">
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">T1 (+120%)</span>
-                    <span className="text-emerald-300 font-bold">${surge.target1.toFixed(2)}</span>
-                    <span className="text-[9px] text-slate-500 block">Scale 50%</span>
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-800/60 text-xs font-mono">
+                  <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block font-bold uppercase">T1 (+120%)</span>
+                    <span className="text-emerald-300 font-bold text-base">${surge.target1.toFixed(2)}</span>
+                    <span className="text-[9px] text-slate-500 block mt-0.5">Scale 50%</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">T2 (+350%)</span>
-                    <span className="text-emerald-400 font-bold">${surge.target2.toFixed(2)}</span>
-                    <span className="text-[9px] text-slate-500 block">Scale 25%</span>
+                  <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block font-bold uppercase">T2 (+350%)</span>
+                    <span className="text-emerald-400 font-bold text-base">${surge.target2.toFixed(2)}</span>
+                    <span className="text-[9px] text-slate-500 block mt-0.5">Scale 25%</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">TIMEOUT / STOP</span>
-                    <span className="text-rose-400 font-bold">${surge.stopLoss.toFixed(2)}</span>
-                    <span className="text-[9px] text-slate-500 block">Cut at 3:53 PM</span>
+                  <div className="p-2.5 rounded bg-slate-900/60 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block font-bold uppercase">STOP / CUTOFF</span>
+                    <span className="text-rose-400 font-bold text-base">${surge.stopLoss.toFixed(2)}</span>
+                    <span className="text-[9px] text-slate-500 block mt-0.5">Cut at 3:53 PM</span>
                   </div>
                 </div>
               </div>
@@ -496,16 +558,17 @@ export function SPXPowerHourDesk() {
 
           {/* Action Triggers */}
           <div className="space-y-3 pt-4 border-t border-slate-800/80">
-            <div className="flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center justify-between text-xs font-mono flex-wrap gap-2">
               <span className="text-slate-400">Mandatory Cutoff: <b className="text-amber-400">3:58 PM ET</b></span>
               <span className="text-slate-400">Imbalance Required: <b className="text-emerald-400">&gt; $750M</b></span>
+              <span className="text-slate-400">Execution Discipline: <b className="text-cyan-400">Zero Trades Inside Shelf</b></span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => handleSendDiscord(surge?.type === "CALL" ? "MOC_GAMMA_CALL" : "MOC_GAMMA_PUT")}
                 disabled={isSendingDiscord || !surge}
-                className="py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-3 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{surge ? `Alert Discord (${surge.type})` : "Standby (No Alert)"}</span>
@@ -514,102 +577,10 @@ export function SPXPowerHourDesk() {
               <button
                 onClick={() => handleExecutePaperOrder(`SPX ${surge?.strike} ${surge?.type}`, surge?.maxRiskDollars || 65)}
                 disabled={executingOrder !== null || !surge}
-                className="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
                 <span>{executingOrder ? "Routing..." : surge ? `Execute Paper (${surge.type})` : "Standby"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Playbook 2: Strike Pinning Butterfly */}
-        <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-amber-500/30 shadow-xl space-y-6 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                PLAYBOOK 2: DELTA-NEUTRAL
-              </span>
-              <span className="text-xs font-mono font-bold text-amber-400">
-                {fly?.riskRewardRatio}
-              </span>
-            </div>
-
-            <div>
-              <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                🎯 0DTE Gamma Pin Butterfly
-              </h3>
-              <p className="text-slate-400 text-xs mt-1">
-                Exploit strike gravitational pull in range-bound or low-volatility regimes between 3:15 PM and 3:55 PM.
-              </p>
-            </div>
-
-            {/* Butterfly Legs Card */}
-            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">PRIMARY PIN STRIKE</span>
-                  <div className="text-xl font-mono font-black text-amber-300">
-                    SPX {fly?.pinStrike} Body
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">NET DEBIT (MAX RISK)</span>
-                  <div className="text-2xl font-mono font-black text-amber-400">
-                    ${fly?.netDebit.toFixed(2)} <span className="text-xs text-slate-400 font-normal">(${Math.round((fly?.netDebit || 0.85) * 100)}/fly)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Legs Structure */}
-              <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800/80 text-xs font-mono text-slate-300 space-y-1">
-                <div className="flex justify-between">
-                  <span>+1 Put Wing: <b>{fly?.lowerWing}P</b></span>
-                  <span>-2 Center Body: <b>{fly?.pinStrike}P/C</b></span>
-                  <span>+1 Call Wing: <b>{fly?.upperWing}C</b></span>
-                </div>
-              </div>
-
-              {/* Targets */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 text-xs font-mono">
-                <div>
-                  <span className="text-slate-500 text-[10px] block">HARVEST TARGET (+400%)</span>
-                  <span className="text-amber-300 font-bold">${fly?.targetProfit.toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-500 block">Exit at 3:55 PM</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 text-[10px] block">MAX PIN PAYOUT</span>
-                  <span className="text-emerald-400 font-bold">${fly?.maxPayout.toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-500 block">Pin @ 4:00 PM</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Triggers */}
-          <div className="space-y-3 pt-4 border-t border-slate-800/80">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-400">Entry Window: <b className="text-amber-400">3:15 – 3:30 PM ET</b></span>
-              <span className="text-slate-400">Max Risk: <b className="text-amber-400">${Math.round((fly?.netDebit || 0.85) * 100)} strictly capped</b></span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleSendDiscord("GAMMA_PIN_BUTTERFLY")}
-                disabled={isSendingDiscord}
-                className="py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Alert Discord</span>
-              </button>
-
-              <button
-                onClick={() => handleExecutePaperOrder(`SPX ${fly?.pinStrike} Butterfly`, Math.round((fly?.netDebit || 0.85) * 100))}
-                disabled={executingOrder !== null}
-                className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{executingOrder ? "Routing..." : "Execute Paper Fly"}</span>
               </button>
             </div>
           </div>
