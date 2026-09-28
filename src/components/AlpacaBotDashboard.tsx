@@ -2400,96 +2400,181 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             </div>
 
             {/* Broker Cutoff Information Ribbon */}
-            <div className="px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-[11px] font-mono flex-wrap gap-2 text-amber-300">
+            <div className={`px-4 py-1.5 border-b flex items-center justify-between text-[11px] font-mono flex-wrap gap-2 ${
+              (spxPowerHourState?.phaseInfo?.phase === "PRE_POWER_HOUR" || spxPowerHourState?.recommendedSide === "STANDBY") && !spxSubPanelSimulate
+                ? "bg-slate-900/90 border-slate-800 text-slate-300"
+                : spxSubPanelSimulate
+                ? "bg-amber-500/20 border-amber-500/40 text-amber-200"
+                : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+            }`}>
               <span className="flex items-center gap-1.5 font-bold">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                <span>Broker Execution Rule: Retail brokers (Webull, Robinhood, IBKR) lock 0DTE orders at <b>15:40 ET</b>. Enter trades during the 3:30–3:39 PM window!</span>
+                <AlertCircle className={`w-3.5 h-3.5 flex-shrink-0 ${
+                  spxSubPanelSimulate ? "text-amber-400" : "text-cyan-400"
+                }`} />
+                <span>
+                  {(spxPowerHourState?.phaseInfo?.phase === "PRE_POWER_HOUR" || spxPowerHourState?.recommendedSide === "STANDBY") && !spxSubPanelSimulate
+                    ? "Power Hour Strategy Standby: No active trades during morning/midday session to prevent severe theta decay. Range shelf accumulation starts at 3:00 PM ET."
+                    : spxSubPanelSimulate
+                    ? "🧪 SIMULATION PREVIEW: Testing 3:35 PM Pre-Cutoff Breakout Setup & Black-Scholes pricing. Broker order cutoff at 15:40 ET."
+                    : "⚡ LIVE POWER HOUR ACTIVE: Pre-cutoff breakout window open. Retail brokers (Webull, Robinhood, IBKR) lock 0DTE orders at 15:40 ET!"}
+                </span>
               </span>
-              <span className="text-slate-400 text-[10px]">
-                {spxPowerHourState?.recommendationReason || "Continuously monitoring H30/L30 shelf for Call or Put breakout."}
+              <span className="text-[10px] text-slate-400">
+                {spxPowerHourState?.recommendationReason}
               </span>
             </div>
 
-            {/* Sub-Panel Real-Time Metrics (Dual Call & Put Breakout) */}
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/30">
-              {/* Metric 1: Real SPX Spot & Shelf */}
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
-                <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">SPX INDEX SPOT (^GSPC)</span>
-                <div className="text-lg font-mono font-black text-white flex items-center justify-between">
-                  <span>${spxPowerHourState?.spxSpot ? spxPowerHourState.spxSpot.toFixed(2) : "7,712.00"}</span>
-                  <span className={`text-xs font-bold ${
-                    (spxPowerHourState?.dayChangePts || 0) >= 0 ? "text-emerald-400" : "text-rose-400"
+            {/* Sub-Panel Content: Time-Gated */}
+            {(spxPowerHourState?.phaseInfo?.phase === "PRE_POWER_HOUR" || spxPowerHourState?.recommendedSide === "STANDBY") && !spxSubPanelSimulate ? (
+              /* PRE-POWER HOUR STANDBY RADAR (9:30 AM - 3:00 PM ET) */
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/40">
+                {/* Metric 1: SPX Spot & Session Range */}
+                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">SPX CASH INDEX SPOT (^GSPC)</span>
+                  <div className="text-xl font-mono font-black text-white flex items-center justify-between">
+                    <span>${spxPowerHourState?.spxSpot ? spxPowerHourState.spxSpot.toFixed(2) : "7,705.50"}</span>
+                    <span className={`text-xs font-bold ${
+                      (spxPowerHourState?.dayChangePts || 0) >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}>
+                      {(spxPowerHourState?.dayChangePts || 0) >= 0 ? "+" : ""}{spxPowerHourState?.dayChangePts?.toFixed(1) || "-38.5"} ({spxPowerHourState?.dayChangePct?.toFixed(2)}%)
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400 flex justify-between pt-1 border-t border-slate-800/60">
+                    <span>Low: <b className="text-rose-400">${spxPowerHourState?.dayLow?.toFixed(1) || "7697.5"}</b></span>
+                    <span>High: <b className="text-emerald-400">${spxPowerHourState?.dayHigh?.toFixed(1) || "7721.7"}</b></span>
+                  </div>
+                </div>
+
+                {/* Metric 2: Morning Momentum Bias (JFE Indicator) */}
+                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">MORNING TAPE BIAS (JFE 2018)</span>
+                  <div className={`text-base font-mono font-black flex items-center gap-1.5 ${
+                    spxPowerHourState?.morningMomentumBias?.bias === "BULLISH" ? "text-emerald-400" : "text-rose-400"
                   }`}>
-                    {(spxPowerHourState?.dayChangePts || 0) >= 0 ? "+" : ""}{spxPowerHourState?.dayChangePts?.toFixed(1) || "-31.5"}
-                  </span>
+                    <span>{spxPowerHourState?.morningMomentumBias?.bias || "BEARISH"}</span>
+                    <span className="text-xs font-normal text-slate-400">
+                      ({(spxPowerHourState?.morningMomentumBias?.first30mReturnPct || 0) > 0 ? "+" : ""}{spxPowerHourState?.morningMomentumBias?.first30mReturnPct || "-0.42"}%)
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-800/60">
+                    Baseline flow predicts 66.7% afternoon directional continuation.
+                  </div>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 flex justify-between pt-1 border-t border-slate-800/60">
-                  <span>L30: <b className="text-rose-400">${spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7698.9"}</b></span>
-                  <span>H30: <b className="text-emerald-400">${spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7710.4"}</b></span>
-                </div>
-              </div>
 
-              {/* Metric 2: CALL Breakout Setup (> H30) */}
-              <div className={`p-3 rounded-lg bg-slate-900/60 border space-y-1 transition-all ${
-                spxPowerHourState?.recommendedSide === "CALL"
-                  ? "border-emerald-500/80 shadow-[0_0_15px_rgba(16,185,129,0.15)] bg-emerald-950/10"
-                  : "border-slate-800/80"
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-[9.5px] font-mono text-emerald-400 uppercase font-bold flex items-center gap-1">
-                    <span>CALL BREAKOUT SETUP</span>
-                    {spxPowerHourState?.recommendedSide === "CALL" && (
-                      <span className="px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[8px]">FAVORED</span>
-                    )}
-                  </span>
-                  <span className="text-[9px] font-mono text-slate-400">&gt; ${spxPowerHourState?.rangeShelf?.high30?.toFixed(1)}</span>
+                {/* Metric 3: Strategy Roadmap */}
+                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">POWER HOUR TIMELINE (ET)</span>
+                  <div className="text-[11px] font-mono text-slate-300 space-y-0.5">
+                    <div>• <b>3:00 PM</b>: Stage 1A Shelf Range Accumulates</div>
+                    <div>• <b>3:30 PM</b>: Stage 1B Pre-Cutoff Breakout Entry</div>
+                    <div>• <b>3:40 PM</b>: Retail Broker Order Cutoff</div>
+                    <div>• <b>3:50 PM</b>: MOC Imbalance Volatility Surge</div>
+                  </div>
                 </div>
-                <div className="text-base font-mono font-black text-emerald-300">
-                  SPX {spxPowerHourState?.callCandidate?.strike || 7715} CALL
-                </div>
-                <div className="text-[10px] font-mono text-slate-400 flex justify-between">
-                  <span>Ask: <b className="text-emerald-300">${spxPowerHourState?.callCandidate?.estimatedAsk?.toFixed(2) || "0.65"}</b></span>
-                  <span>Max Risk: <b>${spxPowerHourState?.callCandidate?.maxRiskDollars || 65}/ct</b></span>
-                </div>
-              </div>
 
-              {/* Metric 3: PUT Breakdown Setup (< L30) */}
-              <div className={`p-3 rounded-lg bg-slate-900/60 border space-y-1 transition-all ${
-                spxPowerHourState?.recommendedSide === "PUT"
-                  ? "border-rose-500/80 shadow-[0_0_15px_rgba(239,68,68,0.15)] bg-rose-950/10"
-                  : "border-slate-800/80"
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-[9.5px] font-mono text-rose-400 uppercase font-bold flex items-center gap-1">
-                    <span>PUT BREAKDOWN SETUP</span>
-                    {spxPowerHourState?.recommendedSide === "PUT" && (
-                      <span className="px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 text-[8px]">FAVORED</span>
-                    )}
-                  </span>
-                  <span className="text-[9px] font-mono text-slate-400">&lt; ${spxPowerHourState?.rangeShelf?.low30?.toFixed(1)}</span>
-                </div>
-                <div className="text-base font-mono font-black text-rose-300">
-                  SPX {spxPowerHourState?.putCandidate?.strike || 7690} PUT
-                </div>
-                <div className="text-[10px] font-mono text-slate-400 flex justify-between">
-                  <span>Ask: <b className="text-rose-300">${spxPowerHourState?.putCandidate?.estimatedAsk?.toFixed(2) || "0.70"}</b></span>
-                  <span>Max Risk: <b>${spxPowerHourState?.putCandidate?.maxRiskDollars || 70}/ct</b></span>
+                {/* Metric 4: Capital Preservation Mode */}
+                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-amber-500/20 space-y-1">
+                  <span className="text-[9.5px] font-mono text-amber-400 uppercase font-bold block">0DTE EXECUTION STATUS</span>
+                  <div className="text-sm font-mono font-black text-amber-300">
+                    STANDBY — NO TRADES ACTIVE
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-800/60">
+                    Preserving capital until the 3:00–3:30 PM shelf establishes. Click <b>Simulate Trigger</b> above to test.
+                  </div>
                 </div>
               </div>
+            ) : (
+              /* ACTIVE / SIMULATED POWER HOUR METRICS (3:00 PM - 4:00 PM ET) */
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/30">
+                {/* Metric 1: Real SPX Spot & Shelf */}
+                <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">SPX INDEX SPOT (^GSPC)</span>
+                  <div className="text-lg font-mono font-black text-white flex items-center justify-between">
+                    <span>${spxPowerHourState?.spxSpot ? spxPowerHourState.spxSpot.toFixed(2) : "7,712.00"}</span>
+                    <span className={`text-xs font-bold ${
+                      (spxPowerHourState?.dayChangePts || 0) >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}>
+                      {(spxPowerHourState?.dayChangePts || 0) >= 0 ? "+" : ""}{spxPowerHourState?.dayChangePts?.toFixed(1) || "-31.5"}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400 flex justify-between pt-1 border-t border-slate-800/60">
+                    <span>L30: <b className="text-rose-400">${spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7698.9"}</b></span>
+                    <span>H30: <b className="text-emerald-400">${spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7710.4"}</b></span>
+                  </div>
+                </div>
 
-              {/* Metric 4: Profit Targets & Cutoff Rule */}
-              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
-                <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">PROFIT TARGETS &amp; CUTOFF</span>
-                <div className="text-sm font-mono font-bold text-white flex items-center justify-between">
-                  <span className="text-emerald-300">T1 (+120%): ${spxPowerHourState?.activeSurgeCandidate?.target1?.toFixed(2) || "1.43"}</span>
-                  <span className="text-emerald-400">T2 (+350%): ${spxPowerHourState?.activeSurgeCandidate?.target2?.toFixed(2) || "2.93"}</span>
+                {/* Metric 2: CALL Breakout Setup (> H30) */}
+                <div className={`p-3 rounded-lg bg-slate-900/60 border space-y-1 transition-all ${
+                  spxPowerHourState?.recommendedSide === "CALL"
+                    ? "border-emerald-500/80 shadow-[0_0_15px_rgba(16,185,129,0.15)] bg-emerald-950/10"
+                    : "border-slate-800/80"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9.5px] font-mono text-emerald-400 uppercase font-bold flex items-center gap-1">
+                      <span>CALL BREAKOUT SETUP</span>
+                      {spxPowerHourState?.recommendedSide === "CALL" && (
+                        <span className="px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[8px]">FAVORED</span>
+                      )}
+                    </span>
+                    <span className="text-[9px] font-mono text-slate-400">&gt; ${spxPowerHourState?.rangeShelf?.high30?.toFixed(1)}</span>
+                  </div>
+                  <div className="text-base font-mono font-black text-emerald-300">
+                    SPX {spxPowerHourState?.callCandidate?.strike || 7715} CALL
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400 flex justify-between">
+                    <span>Ask: <b className="text-emerald-300">${spxPowerHourState?.callCandidate?.estimatedAsk?.toFixed(2) || "3.20"}</b></span>
+                    <span>Max Risk: <b>${spxPowerHourState?.callCandidate?.maxRiskDollars || 320}/ct</b></span>
+                  </div>
+                  {spxPowerHourState?.callCandidate?.miniContractEquivalent && (
+                    <div className="text-[9px] font-mono text-cyan-400 truncate pt-0.5">
+                      {spxPowerHourState.callCandidate.miniContractEquivalent}
+                    </div>
+                  )}
                 </div>
-                <div className="text-[10px] font-mono text-amber-400 flex justify-between pt-0.5">
-                  <span>Stop: $0.20</span>
-                  <span>Exit by: 3:58 PM ET</span>
+
+                {/* Metric 3: PUT Breakdown Setup (< L30) */}
+                <div className={`p-3 rounded-lg bg-slate-900/60 border space-y-1 transition-all ${
+                  spxPowerHourState?.recommendedSide === "PUT"
+                    ? "border-rose-500/80 shadow-[0_0_15px_rgba(239,68,68,0.15)] bg-rose-950/10"
+                    : "border-slate-800/80"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9.5px] font-mono text-rose-400 uppercase font-bold flex items-center gap-1">
+                      <span>PUT BREAKDOWN SETUP</span>
+                      {spxPowerHourState?.recommendedSide === "PUT" && (
+                        <span className="px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 text-[8px]">FAVORED</span>
+                      )}
+                    </span>
+                    <span className="text-[9px] font-mono text-slate-400">&lt; ${spxPowerHourState?.rangeShelf?.low30?.toFixed(1)}</span>
+                  </div>
+                  <div className="text-base font-mono font-black text-rose-300">
+                    SPX {spxPowerHourState?.putCandidate?.strike || 7690} PUT
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400 flex justify-between">
+                    <span>Ask: <b className="text-rose-300">${spxPowerHourState?.putCandidate?.estimatedAsk?.toFixed(2) || "3.05"}</b></span>
+                    <span>Max Risk: <b>${spxPowerHourState?.putCandidate?.maxRiskDollars || 305}/ct</b></span>
+                  </div>
+                  {spxPowerHourState?.putCandidate?.miniContractEquivalent && (
+                    <div className="text-[9px] font-mono text-cyan-400 truncate pt-0.5">
+                      {spxPowerHourState.putCandidate.miniContractEquivalent}
+                    </div>
+                  )}
+                </div>
+
+                {/* Metric 4: Profit Targets & Cutoff Rule */}
+                <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">PROFIT TARGETS &amp; CUTOFF</span>
+                  <div className="text-sm font-mono font-bold text-white flex items-center justify-between">
+                    <span className="text-emerald-300">T1 (+120%): ${spxPowerHourState?.activeSurgeCandidate?.target1?.toFixed(2) || "7.04"}</span>
+                    <span className="text-emerald-400">T2 (+350%): ${spxPowerHourState?.activeSurgeCandidate?.target2?.toFixed(2) || "14.40"}</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-amber-400 flex justify-between pt-0.5">
+                    <span>Stop: ${spxPowerHourState?.activeSurgeCandidate?.stopLoss?.toFixed(2) || "0.95"}</span>
+                    <span>Exit by: 3:58 PM ET</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* DAILY MACRO OUTLOOK & TAPE HEADS-UP BRIEFING */}

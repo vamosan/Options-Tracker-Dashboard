@@ -52,6 +52,16 @@ export function SPXPowerHourDesk() {
 
     const isPin = setupType === "GAMMA_PIN_BUTTERFLY";
     const isCall = setupType === "MOC_GAMMA_CALL";
+    const targetSurge = surge || data.activeSurgeCandidate || data.callCandidate || data.putCandidate;
+
+    if (!isPin && !targetSurge) {
+      setDiscordNotice({
+        message: "Desk in Standby: Power Hour setups activate at 3:00 PM ET. Use Test Mode in top banner to test alerts.",
+        type: "error"
+      });
+      setIsSendingDiscord(false);
+      return;
+    }
 
     const payload = isPin ? {
       setupType,
@@ -73,13 +83,13 @@ export function SPXPowerHourDesk() {
       setupType,
       triggerTime: data.currentTimeET,
       spxSpot: data.spxSpot,
-      contract: `SPX 0DTE ${data.activeSurgeCandidate?.strike || 5850} ${isCall ? "CALL" : "PUT"}`,
-      strike: data.activeSurgeCandidate?.strike || 5850,
-      entryAsk: data.activeSurgeCandidate?.estimatedAsk || 0.65,
-      target1: data.activeSurgeCandidate?.target1 || 1.45,
-      target2: data.activeSurgeCandidate?.target2 || 2.95,
-      stopLoss: data.activeSurgeCandidate?.stopLoss || 0.20,
-      maxRiskPerContract: data.activeSurgeCandidate?.maxRiskDollars || 65,
+      contract: `SPX 0DTE ${targetSurge?.strike || 7715} ${isCall ? "CALL" : "PUT"}`,
+      strike: targetSurge?.strike || 7715,
+      entryAsk: targetSurge?.estimatedAsk || 3.20,
+      target1: targetSurge?.target1 || 7.04,
+      target2: targetSurge?.target2 || 14.40,
+      stopLoss: targetSurge?.stopLoss || 0.95,
+      maxRiskPerContract: targetSurge?.maxRiskDollars || 320,
       mocImbalance: data.mocImbalance.rawText,
       mocImbalanceType: data.mocImbalance.direction,
       morningBias: `${data.morningMomentumBias.bias} (${data.morningMomentumBias.first30mReturnPct > 0 ? "+" : ""}${data.morningMomentumBias.first30mReturnPct}%)`,
@@ -424,41 +434,61 @@ export function SPXPowerHourDesk() {
             </div>
 
             {/* Target Contract Card */}
-            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">RECOMMENDED CONTRACT</span>
-                  <div className="text-xl font-mono font-black text-white">
-                    SPX 0DTE {surge?.strike} {surge?.type}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">ENTRY ASK (MAX RISK)</span>
-                  <div className="text-2xl font-mono font-black text-emerald-400">
-                    ${surge?.estimatedAsk.toFixed(2)} <span className="text-xs text-slate-400 font-normal">(${surge?.maxRiskDollars}/ct)</span>
-                  </div>
+            {!surge ? (
+              <div className="p-8 rounded-xl bg-slate-950/80 border border-slate-800 text-center space-y-3">
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 inline-block">
+                  🔒 PLAYBOOK 1 IN STANDBY (ARMS AT 3:00 PM ET)
+                </span>
+                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                  Range shelf accumulation begins at 3:00 PM ET. Pre-cutoff breakout entries calculate at 3:30 PM before the 15:40 broker lockout.
+                </p>
+                <div className="text-[11px] font-mono text-cyan-400">
+                  Switch to <b>Simulate Buy Imbalance</b> or <b>Simulate Sell Imbalance</b> in the top banner to test.
                 </div>
               </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">RECOMMENDED CONTRACT</span>
+                    <div className="text-xl font-mono font-black text-white">
+                      SPX 0DTE {surge.strike} {surge.type}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">ENTRY ASK (MAX RISK)</span>
+                    <div className="text-2xl font-mono font-black text-emerald-400">
+                      ${surge.estimatedAsk.toFixed(2)} <span className="text-xs text-slate-400 font-normal">(${surge.maxRiskDollars}/ct)</span>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Profit Targets & Stop */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-xs font-mono">
-                <div>
-                  <span className="text-slate-500 text-[10px] block">T1 (+120%)</span>
-                  <span className="text-emerald-300 font-bold">${surge?.target1.toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-500 block">Scale 50%</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 text-[10px] block">T2 (+350%)</span>
-                  <span className="text-emerald-400 font-bold">${surge?.target2.toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-500 block">Scale 25%</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 text-[10px] block">TIMEOUT / STOP</span>
-                  <span className="text-rose-400 font-bold">${surge?.stopLoss.toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-500 block">Cut at 3:53 PM</span>
+                {surge.miniContractEquivalent && (
+                  <div className="text-xs font-mono text-cyan-400 pt-1 border-t border-slate-800/40">
+                    Mini Equivalent: <b>{surge.miniContractEquivalent}</b>
+                  </div>
+                )}
+
+                {/* Profit Targets & Stop */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-xs font-mono">
+                  <div>
+                    <span className="text-slate-500 text-[10px] block">T1 (+120%)</span>
+                    <span className="text-emerald-300 font-bold">${surge.target1.toFixed(2)}</span>
+                    <span className="text-[9px] text-slate-500 block">Scale 50%</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block">T2 (+350%)</span>
+                    <span className="text-emerald-400 font-bold">${surge.target2.toFixed(2)}</span>
+                    <span className="text-[9px] text-slate-500 block">Scale 25%</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 text-[10px] block">TIMEOUT / STOP</span>
+                    <span className="text-rose-400 font-bold">${surge.stopLoss.toFixed(2)}</span>
+                    <span className="text-[9px] text-slate-500 block">Cut at 3:53 PM</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Action Triggers */}
