@@ -8,8 +8,9 @@ import {
   Briefcase, FileText, Terminal, Filter, Flame, ChevronRight,
   Calendar as CalendarIcon, ChevronLeft, ArrowDownRight,
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
-  TrendingDown, Info, Send, Bell
+  TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp
 } from "lucide-react";
+import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock } from "@/lib/prospectiveStocks";
 
 interface ConfidenceBreakdown {
   rvol: number;
@@ -317,6 +318,11 @@ export function AlpacaBotDashboard() {
   const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
   const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
 
+  // Prospective Stocks & Market Heads-Up State
+  const [prospectiveSector, setProspectiveSector] = useState<string>("ALL");
+  const [prospectiveSearch, setProspectiveSearch] = useState<string>("");
+  const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(true);
+
   const runScan = async () => {
     setIsScanning(true);
     try {
@@ -537,6 +543,108 @@ export function AlpacaBotDashboard() {
       setTimeout(() => setDiscordNotice(null), 4000);
     }
   };
+
+  const triggerDiscordDailyBriefing = async () => {
+    try {
+      setIsSendingDiscord(true);
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "daily-briefing",
+          payload: {
+            date: CURRENT_MARKET_OUTLOOK.date,
+            marketBias: CURRENT_MARKET_OUTLOOK.tapeBias,
+            events: CURRENT_MARKET_OUTLOOK.todayEvents,
+            topStocks: PROSPECTIVE_STOCKS.slice(0, 5).map(s => ({
+              symbol: s.symbol,
+              name: s.name,
+              catalyst: s.catalystHeadline,
+              triggerShelf: s.triggerShelf,
+              probability: s.probabilityRating,
+              contract: `${s.suggestedOption.contract} @ ~$${s.suggestedOption.estimatedAsk}`
+            }))
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: "✓ Daily Market Heads-Up & Prospective Stocks briefing delivered to Discord!",
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({
+          message: `Discord error: ${data.error || "Failed to send briefing"}`,
+          type: "error"
+        });
+      }
+    } catch (err: any) {
+      setDiscordNotice({ message: `Network error: ${err.message}`, type: "error" });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 5000);
+    }
+  };
+
+  const triggerDiscordProspectiveStock = async (stock: ProspectiveStock) => {
+    try {
+      setIsSendingDiscord(true);
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "prospective-alert",
+          payload: {
+            symbol: stock.symbol,
+            name: stock.name,
+            sector: stock.sector,
+            price: stock.price,
+            catalyst: stock.catalystHeadline,
+            eventType: stock.eventType,
+            triggerShelf: stock.triggerShelf,
+            probability: stock.probabilityRating,
+            contract: `${stock.suggestedOption.contract} (Est. Ask: $${stock.suggestedOption.estimatedAsk.toFixed(2)})`,
+            target1: stock.suggestedOption.target1,
+            target2: stock.suggestedOption.target2,
+            stopLoss: stock.suggestedOption.stopLoss,
+            gatekeeperBadge: stock.gatekeeperStatus.badge,
+            gatekeeperRule: stock.gatekeeperStatus.rulesMessage
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: `✓ Prospective setup alert for ${stock.symbol} sent to Discord!`,
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({ message: `Discord error: ${data.error}`, type: "error" });
+      }
+    } catch (err: any) {
+      setDiscordNotice({ message: err.message, type: "error" });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 4000);
+    }
+  };
+
+  // Filtered Prospective Stocks
+  const filteredProspectiveStocks = useMemo(() => {
+    return PROSPECTIVE_STOCKS.filter(stock => {
+      if (prospectiveSector !== "ALL" && stock.sector !== prospectiveSector) return false;
+      if (prospectiveSearch.trim()) {
+        const query = prospectiveSearch.toLowerCase();
+        const matchSymbol = stock.symbol.toLowerCase().includes(query);
+        const matchName = stock.name.toLowerCase().includes(query);
+        const matchCatalyst = stock.catalystHeadline.toLowerCase().includes(query);
+        const matchSector = stock.sector.toLowerCase().includes(query);
+        if (!matchSymbol && !matchName && !matchCatalyst && !matchSector) return false;
+      }
+      return true;
+    });
+  }, [prospectiveSector, prospectiveSearch]);
 
   // Filtered Setups
   const filteredSetups = useMemo(() => {
@@ -2095,6 +2203,142 @@ export function AlpacaBotDashboard() {
       {activeTab === "SETUPS" && (
         <div className="space-y-4">
           
+          {/* DAILY MACRO OUTLOOK & TAPE HEADS-UP BRIEFING */}
+          <div className="rounded-xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-950/40">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-black text-slate-100 tracking-tight">
+                      Daily Market Outlook &amp; Heads-Up Intelligence
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                      {CURRENT_MARKET_OUTLOOK.tapeBias.overall}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Macro Tape Compass • Economic Event Calendar • Institutional Stock Catalysts for {CURRENT_MARKET_OUTLOOK.date}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={triggerDiscordDailyBriefing}
+                  disabled={isSendingDiscord}
+                  className="px-3 py-1.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all disabled:opacity-50 shadow-md active:scale-95"
+                  title="Broadcast this morning's market heads-up and prospective stocks to Discord"
+                >
+                  <DiscordIcon className="w-3.5 h-3.5" />
+                  <span>Send Heads-Up to Discord</span>
+                </button>
+                <button
+                  onClick={() => setShowOutlookDetails(!showOutlookDetails)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs"
+                >
+                  {showOutlookDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {showOutlookDetails && (
+              <div className="p-4 space-y-3.5 bg-slate-900/50">
+                {/* 4-COLUMN MACRO TAPE METRICS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
+                      <span>SPY Trend</span>
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                    <div className="font-bold text-slate-100 text-[11px] truncate">
+                      {CURRENT_MARKET_OUTLOOK.tapeBias.spyTrend}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
+                      <span>QQQ Trend</span>
+                      <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                    </div>
+                    <div className="font-bold text-slate-100 text-[11px] truncate">
+                      {CURRENT_MARKET_OUTLOOK.tapeBias.qqqTrend}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
+                      <span>VIX Tape</span>
+                      <Activity className="w-3.5 h-3.5 text-purple-400" />
+                    </div>
+                    <div className="font-black text-purple-300">
+                      {CURRENT_MARKET_OUTLOOK.tapeBias.vixValue} (Low-Vol Risk-On)
+                    </div>
+                    <div className="text-[9.5px] text-slate-400 truncate">
+                      Favors clean directional call breakouts
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
+                      <span>10-Yr Yield</span>
+                      <DollarSign className="w-3.5 h-3.5 text-amber-400" />
+                    </div>
+                    <div className="font-bold text-slate-100 text-[11px]">
+                      {CURRENT_MARKET_OUTLOOK.tapeBias.tenYearYield}
+                    </div>
+                  </div>
+                </div>
+
+                {/* GAMEPLAN & ECONOMIC EVENT WATCH */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 pt-1">
+                  <div className="lg:col-span-2 p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-2 text-xs">
+                    <span className="text-[10px] font-bold text-cyan-400 uppercase font-mono flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5" /> Today&apos;s Institutional Directive &amp; Edge
+                    </span>
+                    <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                      {CURRENT_MARKET_OUTLOOK.executiveSummary}
+                    </p>
+                    <div className="space-y-1 pt-1">
+                      {CURRENT_MARKET_OUTLOOK.gameplanDirectives.map((d, i) => (
+                        <div key={i} className="flex items-start gap-1.5 text-[10.5px] text-slate-300 font-sans">
+                          <Check className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
+                          <span>{d}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-2 text-xs">
+                    <span className="text-[10px] font-bold text-amber-400 uppercase font-mono flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" /> Economic Events Scheduled
+                    </span>
+                    <div className="space-y-2">
+                      {CURRENT_MARKET_OUTLOOK.todayEvents.map((ev, i) => (
+                        <div key={i} className="text-[10.5px] font-mono border-b border-slate-800/60 pb-1.5 last:border-0 last:pb-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-cyan-400 font-bold">{ev.time}</span>
+                            <span className={`text-[9px] px-1 py-0.2 rounded font-sans font-bold ${
+                              ev.impact === "HIGH" ? "bg-rose-500/20 text-rose-300" :
+                              ev.impact === "FED" ? "bg-purple-500/20 text-purple-300" :
+                              "bg-blue-500/20 text-blue-300"
+                            }`}>
+                              {ev.impact}
+                            </span>
+                          </div>
+                          <div className="text-slate-200 font-sans font-medium truncate">{ev.event}</div>
+                          <div className="text-[9.5px] text-slate-400 truncate">Est: {ev.consensus}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* SEARCH CRITERIA & PROFIT FILTERS TOOLBAR */}
           <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 flex-wrap">
@@ -2359,6 +2603,201 @@ export function AlpacaBotDashboard() {
                 </div>
               );
             })}
+          </div>
+
+          {/* NOTICE WHEN FILTERED LIVE BREAKOUTS ARE ZERO */}
+          {filteredSetups.length === 0 && (
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span className="text-slate-300">
+                  {gatekeeperFilterEnabled
+                    ? "Gatekeeper Filter Active: Opening traps and unconfirmed spikes safely blocked. Zero false breakouts taken."
+                    : "No live breakout triggers active right now."}
+                </span>
+              </div>
+              <span className="text-[11px] text-cyan-400 font-bold bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/30">
+                Evaluating Today&apos;s High-Probability Setups Below &darr;
+              </span>
+            </div>
+          )}
+
+          {/* PROBABLE & PROSPECTIVE STOCKS MATRIX (HEADS-UP FOR THE DAY) */}
+          <div className="space-y-4 pt-4 border-t border-slate-800/80">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  Probable &amp; Prospective Stocks — Today&apos;s Market Heads-Up
+                </h3>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  Curated institutional setups evaluated against current news, SEC 8-K filings, earnings momentum, macro catalysts, and key breakout trigger shelves.
+                </p>
+              </div>
+
+              {/* Sector Filters & Search */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Search Input */}
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-xs font-mono">
+                  <Search className="w-3.5 h-3.5 text-slate-500" />
+                  <input
+                    type="text"
+                    value={prospectiveSearch}
+                    onChange={(e) => setProspectiveSearch(e.target.value)}
+                    placeholder="Search ticker or catalyst..."
+                    className="bg-transparent text-slate-200 placeholder-slate-500 focus:outline-none w-36 text-xs"
+                  />
+                  {prospectiveSearch && (
+                    <button onClick={() => setProspectiveSearch("")} className="text-slate-500 hover:text-white">×</button>
+                  )}
+                </div>
+
+                {/* Sector Selector */}
+                <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 overflow-x-auto custom-scrollbar">
+                  {(["ALL", "AI & Semi", "Cybersecurity", "Cloud & Big Tech", "Healthcare", "High-Beta & Crypto"] as const).map(sec => (
+                    <button
+                      key={sec}
+                      onClick={() => setProspectiveSector(sec)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition-all whitespace-nowrap ${
+                        prospectiveSector === sec
+                          ? "bg-cyan-500 text-slate-950 font-black shadow-sm"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      {sec === "ALL" ? `All (${PROSPECTIVE_STOCKS.length})` : sec}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* PROSPECTIVE STOCKS GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredProspectiveStocks.map(stock => {
+                const isElite = stock.probabilityScore >= 92;
+                return (
+                  <div
+                    key={stock.symbol}
+                    className="rounded-xl border border-slate-800/80 bg-slate-900/80 hover:border-slate-700 transition-all duration-200 overflow-hidden shadow-xl flex flex-col justify-between"
+                  >
+                    {/* CARD HEADER */}
+                    <div className="p-3.5 border-b border-slate-800/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-black text-slate-100 font-mono">{stock.symbol}</span>
+                          <span className="text-xs text-slate-400 truncate max-w-[120px]">{stock.name}</span>
+                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-slate-800 text-slate-300">
+                            {stock.sector}
+                          </span>
+                        </div>
+
+                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold flex items-center gap-1 border ${
+                          isElite 
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/40" 
+                            : "bg-cyan-500/10 text-cyan-300 border-cyan-500/40"
+                        }`}>
+                          <Flame className="w-3 h-3 fill-current" />
+                          <span>{stock.probabilityRating}</span>
+                        </div>
+                      </div>
+
+                      {/* PRICE & METRICS */}
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-200">${stock.price.toFixed(2)}</span>
+                          <span className={`text-[11px] font-bold ${stock.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400">Cap: <b className="text-slate-200">{stock.marketCap}</b></span>
+                      </div>
+
+                      {/* CATALYST HEADLINE & EVENT TYPE */}
+                      <div className="space-y-1 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80">
+                        <div className="flex items-center justify-between text-[9.5px]">
+                          <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono font-bold border border-cyan-500/30">
+                            {stock.eventType}
+                          </span>
+                          <span className="text-slate-400 font-mono font-bold text-[9px]">{stock.gatekeeperStatus.rvolExpectation}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-200 font-medium leading-snug">
+                          {stock.catalystHeadline}
+                        </p>
+                        <p className="text-[10px] text-slate-400 leading-relaxed font-sans line-clamp-2">
+                          {stock.newsDetails}
+                        </p>
+                      </div>
+
+                      {/* TRIGGER SHELF TO WATCH */}
+                      <div className="p-2 rounded-lg bg-slate-950/90 border border-cyan-500/20 text-xs font-mono space-y-1">
+                        <div className="flex items-center gap-1.5 text-cyan-400 font-bold text-[10.5px]">
+                          <Target className="w-3 h-3" />
+                          <span>Key Watch Trigger Shelf:</span>
+                        </div>
+                        <div className="text-slate-200 text-[11px] pl-4 font-semibold">
+                          {stock.triggerShelf}
+                        </div>
+                        <div className="text-[10px] text-slate-400 pl-4">
+                          Support Floor: <b className="text-rose-300 font-mono">{stock.invalidationLevel}</b>
+                        </div>
+                      </div>
+
+                      {/* GATEKEEPER DEFENSE EVALUATION */}
+                      <div className={`p-2 rounded-lg border text-[10.5px] font-sans flex items-start gap-1.5 ${
+                        stock.gatekeeperStatus.status === "READY"
+                          ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-300"
+                          : stock.gatekeeperStatus.status === "DEFENSIVE_MIDDAY"
+                          ? "bg-purple-950/30 border-purple-500/30 text-purple-300"
+                          : "bg-amber-950/30 border-amber-500/30 text-amber-300"
+                      }`}>
+                        <ShieldCheck className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <span className="font-bold font-mono mr-1.5">{stock.gatekeeperStatus.badge}:</span>
+                          <span>{stock.gatekeeperStatus.rulesMessage}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SUGGESTED OPTION CONTRACT & ACTION BUTTONS */}
+                    <div className="p-3 bg-slate-950/60 border-t border-slate-800/80 space-y-2.5">
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800 text-left px-2">
+                          <span className="text-[8.5px] text-slate-400 block uppercase font-sans">Option Play</span>
+                          <span className="font-black text-cyan-300">{stock.suggestedOption.contract}</span>
+                        </div>
+                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
+                          <span className="text-[8.5px] text-slate-400 block uppercase font-sans">Est. Ask</span>
+                          <span className="font-bold text-slate-100">${stock.suggestedOption.estimatedAsk.toFixed(2)}</span>
+                        </div>
+                        <div className="p-1 rounded bg-emerald-500/10 border border-emerald-500/20">
+                          <span className="text-[8.5px] text-emerald-400 block uppercase font-sans">T2 (+65%)</span>
+                          <span className="font-bold text-emerald-300">${stock.suggestedOption.target2.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-0.5">
+                        <span className="text-[10px] font-mono text-slate-400">
+                          Stop: <b className="text-rose-400">${stock.suggestedOption.stopLoss.toFixed(2)}</b>
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => triggerDiscordProspectiveStock(stock)}
+                            disabled={isSendingDiscord}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-300 font-bold text-xs uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                            title="Send this prospective stock heads-up to Discord"
+                          >
+                            <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
+                            <span>Alert Discord</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
         </div>

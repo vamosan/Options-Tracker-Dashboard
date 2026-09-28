@@ -383,3 +383,121 @@ export async function sendTestSignal() {
     embeds: [testEmbed],
   });
 }
+
+/**
+ * Morning Market Heads-Up & Prospective Stocks Briefing
+ */
+export async function sendDailyBriefingCallout(briefing: {
+  date: string;
+  marketBias: {
+    overall: string;
+    spyTrend: string;
+    qqqTrend: string;
+    vixInterpretation: string;
+  };
+  events: Array<{ time: string; event: string; consensus: string }>;
+  topStocks: Array<{
+    symbol: string;
+    name: string;
+    catalyst: string;
+    triggerShelf: string;
+    probability: string;
+    contract: string;
+  }>;
+}) {
+  const stockFields: DiscordField[] = briefing.topStocks.map((s, idx) => ({
+    name: `⭐ #${idx + 1}: ${s.symbol} — ${s.name} (${s.probability})`,
+    value: [
+      `• **News / Catalyst:** ${s.catalyst}`,
+      `• **Key Trigger Shelf:** \`${s.triggerShelf}\``,
+      `• **Target Option Play:** **${s.contract}**`,
+    ].join("\n"),
+    inline: false,
+  }));
+
+  const eventFields = briefing.events.map(e => `• \`${e.time}\`: **${e.event}** (${e.consensus})`).join("\n");
+
+  const embed: DiscordEmbed = {
+    title: `🌅 DAILY MARKET HEADS-UP & PROSPECTIVE STOCKS (${briefing.date})`,
+    description: `**Institutional Tape Bias:** \`${briefing.marketBias.overall}\`\n• **SPY:** ${briefing.marketBias.spyTrend}\n• **QQQ:** ${briefing.marketBias.qqqTrend}\n• **VIX:** ${briefing.marketBias.vixInterpretation}`,
+    color: 0x06B6D4, // Cyan Accent
+    fields: [
+      {
+        name: "📅 Today's Macro & Economic Watch",
+        value: eventFields || "No major macro risk events scheduled.",
+        inline: false,
+      },
+      ...stockFields,
+    ],
+    footer: {
+      text: "Options Tracker AI • Institutional Morning Briefing Desk",
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  return sendDiscordWebhook({
+    embeds: [embed],
+  });
+}
+
+/**
+ * Single Prospective Stock Intelligence Alert
+ */
+export async function sendProspectiveStockAlert(stock: {
+  symbol: string;
+  name: string;
+  sector: string;
+  price: number;
+  catalyst: string;
+  eventType: string;
+  triggerShelf: string;
+  probability: string;
+  contract: string;
+  target1: number;
+  target2: number;
+  stopLoss: number;
+  gatekeeperBadge: string;
+  gatekeeperRule: string;
+}) {
+  const embed: DiscordEmbed = {
+    title: `💡 PROSPECTIVE STOCK HEADS-UP: ${stock.symbol} (${stock.name})`,
+    description: `**Setup Rating: ${stock.probability}** • Sector: \`${stock.sector}\` • Event: \`${stock.eventType}\`\n\n**Catalyst / News:**\n${stock.catalyst}`,
+    color: 0x3B82F6, // Blue
+    fields: [
+      {
+        name: "🎯 Key Trigger Shelf to Watch",
+        value: `\`${stock.triggerShelf}\``,
+        inline: false,
+      },
+      {
+        name: "💵 Target Option Contract",
+        value: `**${stock.contract}**`,
+        inline: true,
+      },
+      {
+        name: "🛑 Stop Loss",
+        value: `$${stock.stopLoss.toFixed(2)} (-25%)`,
+        inline: true,
+      },
+      {
+        name: "🚀 Targets",
+        value: `T1: $${stock.target1.toFixed(2)} | T2: $${stock.target2.toFixed(2)}`,
+        inline: true,
+      },
+      {
+        name: `🛡️ ${stock.gatekeeperBadge}`,
+        value: stock.gatekeeperRule,
+        inline: false,
+      },
+    ],
+    footer: {
+      text: "Options Tracker AI • Real-Time Research Desk",
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  return sendDiscordWebhook({
+    embeds: [embed],
+  });
+}
+

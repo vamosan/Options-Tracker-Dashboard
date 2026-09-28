@@ -4,6 +4,8 @@ import {
   sendTradeEntryCallout, 
   sendTradeExitCallout, 
   sendDailyCalloutsSummary, 
+  sendDailyBriefingCallout,
+  sendProspectiveStockAlert,
   sendTestSignal,
   DEFAULT_DISCORD_WEBHOOK_URL
 } from '@/lib/discord';
@@ -29,6 +31,22 @@ export async function POST(req: Request) {
     if (action === 'test') {
       const result = await sendTestSignal();
       return NextResponse.json({ success: result.success, message: 'Test signal sent to Discord', details: result });
+    }
+
+    if (action === 'daily-briefing') {
+      if (!payload || !payload.marketBias || !payload.topStocks) {
+        return NextResponse.json({ success: false, error: 'Invalid briefing payload' }, { status: 400 });
+      }
+      const result = await sendDailyBriefingCallout(payload);
+      return NextResponse.json({ success: result.success, message: 'Daily heads-up briefing sent to Discord', details: result });
+    }
+
+    if (action === 'prospective-alert') {
+      if (!payload || !payload.symbol || !payload.catalyst) {
+        return NextResponse.json({ success: false, error: 'Invalid prospective alert payload' }, { status: 400 });
+      }
+      const result = await sendProspectiveStockAlert(payload);
+      return NextResponse.json({ success: result.success, message: `Prospective alert sent for ${payload.symbol}`, details: result });
     }
 
     if (action === 'entry') {
