@@ -287,9 +287,19 @@ function DiscordIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-export function AlpacaBotDashboard() {
+export interface AlpacaBotDashboardProps {
+  currentTab?: "SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS";
+  onTabChange?: (tab: "SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS") => void;
+}
+
+export function AlpacaBotDashboard({ currentTab, onTabChange }: AlpacaBotDashboardProps = {}) {
   const [isRunning, setIsRunning] = useState(true);
-  const [activeTab, setActiveTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
+  const [internalTab, setInternalTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
+  const activeTab = currentTab || internalTab;
+  const setActiveTab = (tab: "SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS") => {
+    setInternalTab(tab);
+    if (onTabChange) onTabChange(tab);
+  };
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [isSendingDiscord, setIsSendingDiscord] = useState(false);
   const [setups, setSetups] = useState<DiscoveredSetup[]>([]);

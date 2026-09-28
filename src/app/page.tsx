@@ -7,22 +7,15 @@ import { PositionsTable } from "@/components/PositionsTable";
 import { Position, Trade } from "@/lib/types";
 import { fetchOptionPrice, getPortfolioData, savePositions, saveHistory, listProfiles, deleteTrade, analyzeTrade } from "./actions";
 import { getRecommendation } from "@/lib/intelligence";
-import { Activity, DollarSign, TrendingUp, Wallet, History, Users, ArrowUpRight, ArrowDownRight, BarChart2, Sparkles, Calendar, Bot, Search, Home as HomeIcon, Zap } from "lucide-react";
+import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HistoryTable } from "@/components/HistoryTable";
-import { TradePerformanceSummary } from "@/components/TradePerformanceSummary";
 import { ProfileSelector } from "@/components/ProfileSelector";
-import { IntelligenceSidebar } from "@/components/IntelligenceSidebar";
 import { GeneralGeminiChat } from "@/components/GeneralGeminiChat";
 import dynamic from "next/dynamic";
 const MarketHeatmap = dynamic(() => import("@/components/MarketHeatmap").then((mod) => mod.MarketHeatmap), { ssr: false });
 import { MonthlyAnalytics } from "@/components/MonthlyAnalytics";
-import { NewsDashboard } from "@/components/NewsDashboard";
 import { ChatBox } from "@/components/ChatBox";
 import { AlertHistoryPanel } from "@/components/AlertHistoryPanel";
-const ScannerDashboard = dynamic(() => import("@/components/ScannerDashboard").then((mod) => mod.ScannerDashboard), { ssr: false });
-const MomentumDashboard = dynamic(() => import("@/components/MomentumDashboard").then((mod) => mod.MomentumDashboard), { ssr: false });
-import { PreMarketWatchlist } from "@/components/PreMarketWatchlist";
 import { AlpacaBotDashboard } from "@/components/AlpacaBotDashboard";
 
 const LOCAL_STORAGE_KEY = 'options_tracker_positions';
@@ -30,13 +23,13 @@ const CLOSED_POSITIONS_KEY = 'options_tracker_closed';
 const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'analytics' | 'news' | 'scanner' | 'momentum' | 'premarket' | 'alpaca'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'alpaca' | 'dashboard'>('alpaca');
+  const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [username, setUsername] = useState<string>("default");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isGeneralChatOpen, setIsGeneralChatOpen] = useState(false);
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false);
   const [selectedPositionForReview, setSelectedPositionForReview] = useState<Position | null>(null);
@@ -283,62 +276,57 @@ export default function Home() {
             <p className="text-slate-400 mt-1">Real-time portfolio analytics</p>
           </div>
           <div className="flex flex-row flex-wrap items-center justify-start md:justify-end gap-2 md:gap-3 w-full pb-2 md:pb-0">
+            {/* 1. HOME (Alpaca Institutional Bot Desk) */}
             <button
-              onClick={() => setActiveTab("dashboard")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "dashboard" ? "bg-cyan-500/10 border-cyan-500/50 text-cyan-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-cyan-400"}`}
+              onClick={() => {
+                setActiveTab("alpaca");
+                setAlpacaTab("SETUPS");
+              }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
+                activeTab === "alpaca" && alpacaTab !== "CALENDAR"
+                  ? "bg-cyan-500/10 border-cyan-500/50 text-cyan-400 font-bold"
+                  : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-cyan-400"
+              }`}
             >
               <BarChart2 className="h-3.5 w-3.5" />
               <span className="text-xs font-black uppercase tracking-tight">Home</span>
             </button>
 
+            {/* 2. CALENDAR (Direct Access to 3-Month Performance Calendar) */}
             <button
-              onClick={() => setActiveTab("news")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "news" ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-emerald-400"}`}
+              onClick={() => {
+                setActiveTab("alpaca");
+                setAlpacaTab("CALENDAR");
+              }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(16,185,129,0.1)] ${
+                activeTab === "alpaca" && alpacaTab === "CALENDAR"
+                  ? "bg-emerald-500/20 border-emerald-500/60 text-emerald-300 font-bold"
+                  : "bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
+              }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span className="text-xs font-black uppercase tracking-tight">News</span>
+              <Calendar className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-black uppercase tracking-tight">Calendar</span>
             </button>
 
+            {/* 3. PORTFOLIO (Trade Execution, Active Positions & Greek Risk) */}
             <button
-              onClick={() => setActiveTab("history")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "history" ? "bg-orange-500/10 border-orange-500/50 text-orange-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-orange-400"}`}
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
+                activeTab === "dashboard"
+                  ? "bg-violet-500/10 border-violet-500/50 text-violet-400 font-bold"
+                  : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-violet-400"
+              }`}
             >
-              <History className="h-3.5 w-3.5" />
-              <span className="text-xs font-black uppercase tracking-tight">History</span>
+              <Wallet className="h-3.5 w-3.5" />
+              <span className="text-xs font-black uppercase tracking-tight">Portfolio</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab("scanner")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "scanner" ? "bg-blue-500/10 border-blue-500/50 text-blue-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-blue-400"}`}
-            >
-              <Search className="h-3.5 w-3.5" />
-              <span className="text-xs font-black uppercase tracking-tight">Scanner</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("momentum")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "momentum" ? "bg-fuchsia-500/10 border-fuchsia-500/50 text-fuchsia-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-fuchsia-400"}`}
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span className="text-xs font-black uppercase tracking-tight">Momentum</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("premarket")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "premarket" ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-emerald-400"}`}
-            >
-              <Activity className="h-3.5 w-3.5" />
-              <span className="text-xs font-black uppercase tracking-tight">Pre-Market</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("alpaca")}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${activeTab === "alpaca" ? "bg-violet-500/10 border-violet-500/50 text-violet-400" : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-violet-400"}`}
-            >
-              <Bot className="h-3.5 w-3.5" />
-              <span className="text-xs font-black uppercase tracking-tight">Alpaca Bot</span>
-            </button>
+            {/* 4. ALERTS (Notification Panel) */}
+            <AlertHistoryPanel />
 
             <div className="h-5 w-px bg-slate-800 mx-1 flex-shrink-0" />
 
+            {/* 5. GEMINI AI COPILOT */}
             <button
               onClick={() => setIsGeneralChatOpen(true)}
               className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-400 transition-all group shadow-[0_0_10px_rgba(79,70,229,0.1)]"
@@ -346,26 +334,6 @@ export default function Home() {
               <Bot className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-black uppercase tracking-tight hidden sm:inline">Gemini</span>
             </button>
-            <button
-              onClick={() => setIsMonthlyOpen(true)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-400 transition-all group shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-            >
-              <Calendar className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-black uppercase tracking-tight hidden sm:inline">Calendar</span>
-            </button>
-            <button
-              onClick={() => {
-                setIsSidebarOpen(true);
-                setSelectedPositionForReview(null); // Default to market tab
-              }}
-              className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/50 hover:bg-cyan-500/10 border border-slate-800 hover:border-cyan-500/30 rounded-lg text-slate-300 hover:text-cyan-400 transition-all group"
-            >
-              <Activity className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium hidden sm:inline">Pulse</span>
-            </button>
-
-            {/* Alert History Bell */}
-            <AlertHistoryPanel />
 
             <div className="flex items-center gap-1.5 ml-auto pl-1.5 border-l border-slate-800">
               <ProfileSelector currentUser={username} onUserChange={handleUserChange} />
@@ -468,7 +436,7 @@ export default function Home() {
                     onSellTrade={handleSellTrade}
                     onReviewTrade={(pos) => {
                       setSelectedPositionForReview(pos);
-                      setIsSidebarOpen(true);
+                      setIsGeneralChatOpen(true);
                     }}
                     onManualPriceUpdate={handleManualPriceUpdate}
                   />
@@ -478,71 +446,11 @@ export default function Home() {
           </div>
         )}
 
-        {activeTab === "history" && (
-          <div className="space-y-8 w-full animate-in slide-in-from-bottom max-w-[1400px] mx-auto pb-24">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h2 className="text-3xl font-black text-white flex items-center gap-3">
-                  <Activity className="h-8 w-8 text-cyan-500" />
-                  TRADE JOURNAL & ANALYTICS
-                </h2>
-                <p className="text-slate-400 mt-1">Track your win rate, capture gains, and review past paper trades.</p>
-              </div>
-            </div>
-
-            {closedPositions.length > 0 ? (
-              <section className="space-y-4">
-                <TradePerformanceSummary closedPositions={closedPositions} />
-                <HistoryTable
-                  closedPositions={closedPositions}
-                  onDeleteHistory={handleDeleteHistory}
-                  onUpdateHistory={loadData}
-                />
-              </section>
-            ) : (
-              <div className="p-20 text-center text-slate-500 font-bold border border-slate-800 rounded-2xl bg-slate-900/50">
-                No trade history found.
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "news" && (
-          <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <NewsDashboard activeTickers={Array.from(new Set(positions.map(p => p.symbol)))} />
-          </div>
-        )}
-
-        {activeTab === "scanner" && (
-          <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <ScannerDashboard />
-          </div>
-        )}
-
-        {activeTab === "momentum" && (
-          <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <MomentumDashboard onAddTrade={handleAddTrade} />
-          </div>
-        )}
-
-        {activeTab === "premarket" && (
-          <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <PreMarketWatchlist />
-          </div>
-        )}
-
         {activeTab === "alpaca" && (
           <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <AlpacaBotDashboard />
+            <AlpacaBotDashboard currentTab={alpacaTab} onTabChange={setAlpacaTab} />
           </div>
         )}
-
-        <IntelligenceSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          activeTickers={Array.from(new Set(positions.map(p => p.symbol)))}
-          selectedPosition={selectedPositionForReview}
-        />
 
         <GeneralGeminiChat
           isOpen={isGeneralChatOpen}
@@ -555,11 +463,14 @@ export default function Home() {
           closedPositions={closedPositions}
         />
 
-        {/* Floating Home Button — visible on every tab except dashboard */}
-        {activeTab !== 'dashboard' && (
+        {/* Floating Home Button — visible when viewing Portfolio */}
+        {activeTab === 'dashboard' && (
           <button
-            onClick={() => setActiveTab('dashboard')}
-            title="Go to Home"
+            onClick={() => {
+              setActiveTab('alpaca');
+              setAlpacaTab('SETUPS');
+            }}
+            title="Return to Home Desk"
             className="fixed bottom-6 left-6 z-[150] flex items-center gap-2 px-4 py-3 bg-slate-900/95 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-400 rounded-2xl shadow-2xl backdrop-blur-xl transition-all duration-200 group hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]"
           >
             <HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
