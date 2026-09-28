@@ -7,7 +7,7 @@ import { PositionsTable } from "@/components/PositionsTable";
 import { Position, Trade } from "@/lib/types";
 import { fetchOptionPrice, getPortfolioData, savePositions, saveHistory, listProfiles, deleteTrade, analyzeTrade } from "./actions";
 import { getRecommendation } from "@/lib/intelligence";
-import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History } from "lucide-react";
+import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileSelector } from "@/components/ProfileSelector";
 import { GeneralGeminiChat } from "@/components/GeneralGeminiChat";
@@ -17,13 +17,14 @@ import { MonthlyAnalytics } from "@/components/MonthlyAnalytics";
 import { ChatBox } from "@/components/ChatBox";
 import { AlertHistoryPanel } from "@/components/AlertHistoryPanel";
 import { AlpacaBotDashboard } from "@/components/AlpacaBotDashboard";
+import { SPXPowerHourDesk } from "@/components/SPXPowerHourDesk";
 
 const LOCAL_STORAGE_KEY = 'options_tracker_positions';
 const CLOSED_POSITIONS_KEY = 'options_tracker_closed';
 const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'alpaca' | 'dashboard'>('alpaca');
+  const [activeTab, setActiveTab] = useState<'alpaca' | 'dashboard' | 'powerhour'>('alpaca');
   const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
@@ -308,6 +309,19 @@ export default function Home() {
               <span className="text-xs font-black uppercase tracking-tight">Calendar</span>
             </button>
 
+            {/* 3. ⚡ SPX POWER HOUR (0DTE Institutional MOC & Pin Desk) */}
+            <button
+              onClick={() => setActiveTab("powerhour")}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(245,158,11,0.15)] ${
+                activeTab === "powerhour"
+                  ? "bg-amber-500/20 border-amber-500/60 text-amber-300 font-bold"
+                  : "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 fill-current text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-black uppercase tracking-tight">SPX Power Hour</span>
+            </button>
+
             {/* 3. PORTFOLIO (Trade Execution, Active Positions & Greek Risk) */}
             <button
               onClick={() => setActiveTab("dashboard")}
@@ -452,6 +466,12 @@ export default function Home() {
           </div>
         )}
 
+        {activeTab === "powerhour" && (
+          <div className="animate-in slide-in-from-bottom max-w-[1400px]">
+            <SPXPowerHourDesk />
+          </div>
+        )}
+
         <GeneralGeminiChat
           isOpen={isGeneralChatOpen}
           onClose={() => setIsGeneralChatOpen(false)}
@@ -463,8 +483,8 @@ export default function Home() {
           closedPositions={closedPositions}
         />
 
-        {/* Floating Home Button — visible when viewing Portfolio */}
-        {activeTab === 'dashboard' && (
+        {/* Floating Home Button — visible when viewing Portfolio or SPX Power Hour */}
+        {activeTab !== 'alpaca' && (
           <button
             onClick={() => {
               setActiveTab('alpaca');

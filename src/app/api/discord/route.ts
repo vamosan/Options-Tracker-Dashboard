@@ -7,6 +7,7 @@ import {
   sendDailyBriefingCallout,
   sendProspectiveStockAlert,
   sendTestSignal,
+  sendSPXPowerHourAlert,
   DEFAULT_DISCORD_WEBHOOK_URL
 } from '@/lib/discord';
 import { CURRENT_MARKET_OUTLOOK } from '@/lib/prospectiveStocks';
@@ -58,6 +59,14 @@ export async function POST(req: Request) {
       }
       const result = await sendProspectiveStockAlert(payload);
       return NextResponse.json({ success: result.success, message: `Prospective alert sent for ${payload.symbol}`, details: result });
+    }
+
+    if (action === 'spx-powerhour') {
+      if (!payload || !payload.contract || !payload.entryAsk) {
+        return NextResponse.json({ success: false, error: 'Invalid SPX power hour payload: contract and entryAsk required' }, { status: 400 });
+      }
+      const result = await sendSPXPowerHourAlert(payload);
+      return NextResponse.json({ success: result.success, message: `SPX Power Hour Alert sent for ${payload.contract}`, details: result });
     }
 
     if (action === 'entry') {
