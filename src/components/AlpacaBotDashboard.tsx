@@ -212,6 +212,7 @@ interface CalendarDay {
   isHoliday?: boolean;
   holidayName?: string;
   trades: DailyTradeRecord[];
+  allDayTrades?: DailyTradeRecord[];
   dailyPnl: number;
   winCount: number;
   lossCount: number;
@@ -684,7 +685,8 @@ export function AlpacaBotDashboard() {
           isTradingDay: true,
           isHoliday: item.isHoliday || false,
           holidayName: item.holidayName,
-          trades: evaluatedTrades,
+          trades: activeTrades,
+          allDayTrades: evaluatedTrades,
           dailyPnl: Math.round(totalPnlPerCt * simContractQty * 100) / 100,
           winCount: wins,
           lossCount: losses
@@ -1668,14 +1670,19 @@ export function AlpacaBotDashboard() {
                 </span>
               </div>
 
-              {selectedDayData.trades.length === 0 ? (
-                <div className="p-6 text-center text-slate-500 text-xs font-mono">
-                  {selectedDayData.isHoliday ? selectedDayData.holidayName : "No breakout criteria met on this date."}
-                </div>
-              ) : (() => {
-                const qualifiedTrades = selectedDayData.trades.filter(t => (t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
-                const blockedTrades = selectedDayData.trades.filter(t => !(t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
-                const displayTrades = gatekeeperFilterEnabled ? qualifiedTrades : selectedDayData.trades;
+              {(() => {
+                const allTrades = selectedDayData.allDayTrades || selectedDayData.trades;
+                if (!allTrades || allTrades.length === 0) {
+                  return (
+                    <div className="p-6 text-center text-slate-500 text-xs font-mono">
+                      {selectedDayData.isHoliday ? selectedDayData.holidayName : "No breakout criteria met on this date."}
+                    </div>
+                  );
+                }
+
+                const qualifiedTrades = allTrades.filter(t => (t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
+                const blockedTrades = allTrades.filter(t => !(t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
+                const displayTrades = gatekeeperFilterEnabled ? qualifiedTrades : allTrades;
 
                 return (
                   <div className="space-y-2.5">
