@@ -4,7 +4,6 @@ const next = require("next");
 const { loadEnvConfig } = require("@next/env");
 const { Server } = require("socket.io");
 const { startBackgroundScanner } = require("./src/lib/backgroundScanner");
-const { startMomentumScanner } = require("./src/lib/momentumBot");
 
 // Load Next.js environment variables (like .env.local)
 const projectDir = process.cwd();
@@ -28,8 +27,6 @@ app.prepare().then(() => {
 
     // Start background options scanner
     startBackgroundScanner(io);
-    // Momentum scanner disabled per user request to remove momentum and prevent Webull 2FA requests
-    // startMomentumScanner(io);
 
     io.on("connection", (socket) => {
         console.log("Client connected:", socket.id);

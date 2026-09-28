@@ -63,10 +63,9 @@ export function AgenticDeskPanel() {
 
     const handleExecute = async (symbol: string) => {
         setExecuting(symbol);
-        // Simulate Webull API execution using the configured token
         setTimeout(() => {
             setExecuting(false);
-            setExecutionResult(`Order successfully routed to Webull for ${symbol}. Fill pending.`);
+            setExecutionResult(`Order successfully routed for ${symbol}. Fill pending.`);
         }, 1500);
     };
 
@@ -334,7 +333,7 @@ export function AgenticDeskPanel() {
                                 </div>
                             </div>
 
-                            {/* Active Flags & Webull Execution */}
+                            {/* Active Flags & Paper Execution */}
                             <div className="mt-6 flex items-center justify-between">
                                 <div className="flex flex-wrap gap-2">
                                     {result.decision?.flags && Object.values(result.decision.flags).flat().length > 0 && (
@@ -353,7 +352,7 @@ export function AgenticDeskPanel() {
                                         className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-bold py-2 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] flex items-center gap-2"
                                     >
                                         {executing === result.symbol ? <Activity className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                                        {executionResult ? "Order Sent" : "Execute on Webull"}
+                                        {executionResult ? "Order Sent" : "Execute Paper Order"}
                                     </button>
                                 )}
                             </div>
