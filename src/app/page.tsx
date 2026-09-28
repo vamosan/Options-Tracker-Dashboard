@@ -462,7 +462,7 @@ export default function Home() {
 
         {activeTab === "alpaca" && (
           <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <AlpacaBotDashboard currentTab={alpacaTab} onTabChange={setAlpacaTab} />
+            <AlpacaBotDashboard currentTab={alpacaTab} onTabChange={setAlpacaTab} onNavigateTab={setActiveTab} />
           </div>
         )}
 

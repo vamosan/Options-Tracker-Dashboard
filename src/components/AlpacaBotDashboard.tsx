@@ -290,9 +290,10 @@ function DiscordIcon({ className = "w-4 h-4" }: { className?: string }) {
 export interface AlpacaBotDashboardProps {
   currentTab?: "SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS";
   onTabChange?: (tab: "SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS") => void;
+  onNavigateTab?: (tab: "alpaca" | "dashboard" | "powerhour") => void;
 }
 
-export function AlpacaBotDashboard({ currentTab, onTabChange }: AlpacaBotDashboardProps = {}) {
+export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: AlpacaBotDashboardProps = {}) {
   const [isRunning, setIsRunning] = useState(true);
   const [internalTab, setInternalTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
   const activeTab = currentTab || internalTab;
@@ -302,6 +303,84 @@ export function AlpacaBotDashboard({ currentTab, onTabChange }: AlpacaBotDashboa
   };
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [isSendingDiscord, setIsSendingDiscord] = useState(false);
+
+  // SPX 0DTE Power Hour Live State
+  const [spxPowerHourState, setSpxPowerHourState] = useState<any>(null);
+  const [spxSubPanelSimulate, setSpxSubPanelSimulate] = useState(false);
+  const [autoDiscordArm, setAutoDiscordArm] = useState(true);
+
+  const loadSPXPowerHourData = async () => {
+    try {
+      let url = "/api/spx-powerhour";
+      if (spxSubPanelSimulate) {
+        url += "?phase=MOC_EXECUTION&moc=BUY";
+      }
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        setSpxPowerHourState(json);
+      }
+    } catch (e) {
+      console.warn("SPX Power Hour subpanel fetch error:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadSPXPowerHourData();
+    const interval = setInterval(loadSPXPowerHourData, 20000);
+    return () => clearInterval(interval);
+  }, [spxSubPanelSimulate]);
+
+  const triggerDiscordSPXAlert = async () => {
+    if (!spxPowerHourState) return;
+    setIsSendingDiscord(true);
+    const surge = spxPowerHourState.activeSurgeCandidate;
+    const isCall = surge?.type === "CALL";
+    try {
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "spx-powerhour",
+          payload: {
+            setupType: isCall ? "MOC_GAMMA_CALL" : "MOC_GAMMA_PUT",
+            triggerTime: spxPowerHourState.currentTimeET,
+            spxSpot: spxPowerHourState.spxSpot,
+            contract: `SPX 0DTE ${surge?.strike} ${surge?.type}`,
+            strike: surge?.strike || 5850,
+            entryAsk: surge?.estimatedAsk || 0.65,
+            target1: surge?.target1 || 1.45,
+            target2: surge?.target2 || 2.95,
+            stopLoss: surge?.stopLoss || 0.20,
+            maxRiskPerContract: surge?.maxRiskDollars || 65,
+            mocImbalance: spxPowerHourState.mocImbalance.rawText,
+            mocImbalanceType: spxPowerHourState.mocImbalance.direction,
+            morningBias: spxPowerHourState.morningMomentumBias.bias,
+            shelfBreak: `Broke above H30 ($${spxPowerHourState.rangeShelf.high30})`,
+            exitCutoff: "3:58 PM ET"
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: `⚡ SPX Power Hour alert sent to Discord for SPX ${surge?.strike} ${surge?.type}!`,
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({
+          message: `Discord error: ${data.error || "Failed to deliver"}`,
+          type: "error"
+        });
+      }
+    } catch (e: any) {
+      setDiscordNotice({ message: `Network error: ${e.message}`, type: "error" });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 6000);
+    }
+  };
+
   const [setups, setSetups] = useState<DiscoveredSetup[]>([]);
   const [signalsHistory, setSignalsHistory] = useState<SignalEvent[]>([]);
   const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>([]);
@@ -2238,6 +2317,127 @@ export function AlpacaBotDashboard({ currentTab, onTabChange }: AlpacaBotDashboa
       {activeTab === "SETUPS" && (
         <div className="space-y-4">
           
+          {/* SPX 0DTE POWER HOUR SCANNER SUB-PANEL */}
+          <div className="rounded-xl bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-950/50">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                  <Flame className="w-4 h-4 fill-current" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-sm font-black text-slate-100 tracking-tight flex items-center gap-1.5">
+                      ⚡ SPX 0DTE Power Hour Scanner Desk
+                    </h2>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                      spxPowerHourState?.phaseInfo?.phase === "MOC_EXECUTION"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse"
+                        : spxPowerHourState?.phaseInfo?.phase === "PRE_MOC_PREP"
+                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        : "bg-slate-800 text-slate-300 border-slate-700"
+                    }`}>
+                      {spxPowerHourState?.phaseInfo?.badge || "STANDBY (3:00 PM ET)"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Auto-Alert Discord: ARMED
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                    {spxPowerHourState?.phaseInfo?.title || "Stage 1 Range Build & 3:50 PM MOC Imbalance Breakout Monitor"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sub-Panel Controls */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSpxSubPanelSimulate(!spxSubPanelSimulate)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all border ${
+                    spxSubPanelSimulate 
+                      ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow" 
+                      : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
+                  }`}
+                  title="Simulate 3:50 PM MOC Trigger to verify strike calculation and Discord delivery"
+                >
+                  <span className="text-[10px]">{spxSubPanelSimulate ? "Simulating 3:50 PM MOC" : "Simulate MOC"}</span>
+                </button>
+
+                <button
+                  onClick={triggerDiscordSPXAlert}
+                  disabled={isSendingDiscord}
+                  className="px-2.5 py-1 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white text-xs font-mono font-bold flex items-center gap-1 transition-all disabled:opacity-50 shadow-sm"
+                  title="Send SPX Power Hour Call-Out to Discord"
+                >
+                  <DiscordIcon className="w-3 h-3 text-white" />
+                  <span className="text-[10px]">Alert Discord</span>
+                </button>
+
+                {onNavigateTab && (
+                  <button
+                    onClick={() => onNavigateTab("powerhour")}
+                    className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-md active:scale-95"
+                  >
+                    <span>Full Desk</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Sub-Panel Real-Time Metrics */}
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/30">
+              {/* Metric 1: SPX Spot & Shelf */}
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">SPX SPOT & SHELF</span>
+                <div className="text-lg font-mono font-black text-white">
+                  ${spxPowerHourState?.spxSpot ? spxPowerHourState.spxSpot.toFixed(2) : "5,842.15"}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 flex justify-between">
+                  <span>L30: <b className="text-rose-400">${spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "5836.5"}</b></span>
+                  <span>H30: <b className="text-emerald-400">${spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "5848.0"}</b></span>
+                </div>
+              </div>
+
+              {/* Metric 2: Target 0DTE Strike */}
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">TARGET 0DTE GAMMA STRIKE</span>
+                <div className="text-lg font-mono font-black text-emerald-400">
+                  SPX {spxPowerHourState?.activeSurgeCandidate?.strike || 5850} {spxPowerHourState?.activeSurgeCandidate?.type || "CALL"}
+                </div>
+                <div className="text-[10px] font-mono text-slate-400 flex justify-between">
+                  <span>Ask: <b className="text-emerald-300">${spxPowerHourState?.activeSurgeCandidate?.estimatedAsk?.toFixed(2) || "0.65"}</b></span>
+                  <span>Max Risk: <b>${spxPowerHourState?.activeSurgeCandidate?.maxRiskDollars || 65}/ct</b></span>
+                </div>
+              </div>
+
+              {/* Metric 3: Targets & Payout */}
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">PROFIT TARGET SCALING</span>
+                <div className="text-sm font-mono font-bold text-white flex items-center justify-between">
+                  <span className="text-emerald-300">T1 (+120%): ${spxPowerHourState?.activeSurgeCandidate?.target1?.toFixed(2) || "1.45"}</span>
+                  <span className="text-emerald-400">T2 (+350%): ${spxPowerHourState?.activeSurgeCandidate?.target2?.toFixed(2) || "2.95"}</span>
+                </div>
+                <div className="text-[10px] font-mono text-amber-400">
+                  Mandatory Exit: 3:58 PM ET (Before Cash Settlement)
+                </div>
+              </div>
+
+              {/* Metric 4: MOC Imbalance Reading */}
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
+                <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">3:50 PM MOC IMBALANCE</span>
+                <div className={`text-sm font-mono font-black ${
+                  spxPowerHourState?.mocImbalance?.direction === "BUY" ? "text-emerald-400" : "text-rose-400"
+                }`}>
+                  {spxPowerHourState?.mocImbalance?.rawText || "Pending 3:50:00 PM ET Release"}
+                </div>
+                <div className="text-[9.5px] font-mono text-slate-400 truncate">
+                  {spxPowerHourState?.morningMomentumBias?.predictiveSignificance || "66.7% morning trend continuation"}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* DAILY MACRO OUTLOOK & TAPE HEADS-UP BRIEFING */}
           <div className="rounded-xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-xl overflow-hidden">
             <div className="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-950/40">
