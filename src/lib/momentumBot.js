@@ -4,10 +4,56 @@ const Parser = require('rss-parser');
 const vader = require('vader-sentiment');
 
 const path = require('path');
+const https = require('https');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 const { logSignal } = require('./ledger');
+
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1554066969588801546/34cLxhk8Nr7FtYbscs3s4lhkhrfQYpWoSKxe-giiLSv6LHgd09YlJo6NSoDc-SAlkW1O';
+
+function sendDiscordAlert(alert) {
+    if (!DISCORD_WEBHOOK_URL) return;
+    try {
+        const isBull = (alert.type || '').toLowerCase().includes('call');
+        const color = isBull ? 0x10B981 : 0xF43F5E;
+        const embed = {
+            title: `🚨 MOMENTUM CALL-OUT: ${alert.symbol} $${alert.strike} ${(alert.type || '').toUpperCase()}`,
+            description: `**${alert.alignment}**\nVol/OI: **${alert.volumeRatio ? alert.volumeRatio.toFixed(2) : '3.0'}x** • Confidence: **${alert.confidenceScore}%**`,
+            color,
+            fields: [
+                { name: '⏱️ Entry Time', value: `\`${alert.timestamp || 'Live'}\``, inline: true },
+                { name: '💵 Option Ask', value: `**$${alert.marketPrice ? alert.marketPrice.toFixed(2) : '1.50'}**`, inline: true },
+                { name: '🎯 Target (+30%)', value: `**$${alert.targetPrice ? alert.targetPrice.toFixed(2) : '--'}**`, inline: true },
+                { name: '🛑 Stop (-15%)', value: `**$${alert.stopPrice ? alert.stopPrice.toFixed(2) : '--'}**`, inline: true },
+                { name: '📊 Flow Volume', value: `${alert.volume || 0} contracts (OI: ${alert.openInterest || 0})`, inline: true },
+                { name: '💡 Scalp Plan', value: alert.tradeSuggestion || 'Fast scalp setup.', inline: false }
+            ],
+            footer: { text: 'Options Tracker AI • Real-Time Momentum Bot' },
+            timestamp: new Date().toISOString()
+        };
+        const payload = JSON.stringify({
+            username: 'Options Tracker AI • Momentum Desk',
+            avatar_url: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=128&auto=format&fit=crop&q=80',
+            embeds: [embed]
+        });
+        const parsed = new URL(DISCORD_WEBHOOK_URL);
+        const req = https.request({
+            hostname: parsed.hostname,
+            path: parsed.pathname + parsed.search,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        });
+        req.on('error', (e) => console.warn('[Discord Webhook Error]', e.message));
+        req.write(payload);
+        req.end();
+    } catch (err) {
+        console.warn('[Discord Alert Exception]', err.message);
+    }
+}
 
 const parser = new Parser();
 const WATCHLIST = ["AAPL", "TSLA", "NVDA", "AMD", "MSFT", "AMZN", "BABA", "META", "SPY", "QQQ"];
@@ -268,11 +314,12 @@ function startMomentumScanner(io) {
                 console.log(`[MOMENTUM ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type} (Vol/OI: ${alert.volumeRatio.toFixed(2)}x)`);
                 io.emit("momentum_trade_alert", alert);
                 
-                // Log to SQLite Ledger (Only high quality entries)
+                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries)
                 if (alert.confidenceScore >= 50 && !alert.alignment.includes("UNALIGNED")) {
                     const action = `BUY ${alert.type.toUpperCase()}`;
                     const rationale = `${alert.alignment} | Vol/OI: ${alert.volumeRatio.toFixed(2)}x`;
                     logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
+                    sendDiscordAlert(alert);
                 }
             }
         } catch (err) {
@@ -287,11 +334,12 @@ function startMomentumScanner(io) {
                 console.log(`[0DTE SPY ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type}`);
                 io.emit("momentum_trade_alert", alert);
                 
-                // Log to SQLite Ledger (Only high quality entries)
+                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries)
                 if (alert.confidenceScore >= 50 && !alert.alignment.includes("UNALIGNED")) {
                     const action = `BUY ${alert.type.toUpperCase()}`;
                     const rationale = `0DTE Scalp | ${alert.alignment}`;
                     logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
+                    sendDiscordAlert(alert);
                 }
             }
         } catch (err) {

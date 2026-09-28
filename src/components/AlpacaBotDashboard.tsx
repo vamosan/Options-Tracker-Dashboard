@@ -8,7 +8,7 @@ import {
   Briefcase, FileText, Terminal, Filter, Flame, ChevronRight,
   Calendar as CalendarIcon, ChevronLeft, ArrowDownRight,
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
-  TrendingDown, Info
+  TrendingDown, Info, Send, Bell
 } from "lucide-react";
 
 interface ConfidenceBreakdown {
@@ -278,9 +278,19 @@ export function evaluateGatekeeperRule(trade: DailyTradeRecord) {
   };
 }
 
+function DiscordIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+    </svg>
+  );
+}
+
 export function AlpacaBotDashboard() {
   const [isRunning, setIsRunning] = useState(true);
   const [activeTab, setActiveTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
+  const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [isSendingDiscord, setIsSendingDiscord] = useState(false);
   const [setups, setSetups] = useState<DiscoveredSetup[]>([]);
   const [signalsHistory, setSignalsHistory] = useState<SignalEvent[]>([]);
   const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>([]);
@@ -341,6 +351,192 @@ export function AlpacaBotDashboard() {
     }
     return () => clearInterval(interval);
   }, [isRunning]);
+
+  // Real-Time Discord Dispatch Helpers
+  const triggerDiscordTestSignal = async () => {
+    try {
+      setIsSendingDiscord(true);
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: "✓ Test signal delivered to your Discord channel!",
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({
+          message: `Discord dispatch error: ${data.error || "Failed to send"}`,
+          type: "error"
+        });
+      }
+    } catch (err: any) {
+      setDiscordNotice({
+        message: `Network error: ${err.message}`,
+        type: "error"
+      });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 5000);
+    }
+  };
+
+  const triggerDiscordDailySummary = async (dateStr: string, trades: DailyTradeRecord[]) => {
+    try {
+      setIsSendingDiscord(true);
+      const activeTrades = gatekeeperFilterEnabled 
+        ? trades.filter(t => (t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed)) 
+        : trades;
+
+      const wins = activeTrades.filter(t => t.pnlPerContract > 0).length;
+      const losses = activeTrades.filter(t => t.pnlPerContract <= 0).length;
+      const totalPnlPerCt = activeTrades.reduce((acc, t) => acc + t.pnlPerContract, 0);
+      const winRate = activeTrades.length > 0 ? Math.round((wins / activeTrades.length) * 100) : 0;
+
+      const formattedTrades = activeTrades.map(t => ({
+        symbol: t.symbol,
+        contract: t.contract,
+        entryTime: t.entryTime || t.time,
+        exitTime: t.exitTime || "EOD",
+        entryPrice: t.entryAsk,
+        exitPrice: t.peakPrice,
+        pnlPercent: t.percentGain,
+        pnlPerContract: t.pnlPerContract,
+        status: t.outcome === "TARGET_2" ? "TARGET 2 HIT" : t.outcome === "TARGET_1" ? "TARGET 1 HIT" : "STOPPED OUT",
+        lessons: t.catalyst || t.invalidationNote,
+        gatekeeperStatus: (t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed) ? "QUALIFIED" : "REJECTED"
+      }));
+
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "daily-summary",
+          payload: {
+            date: dateStr,
+            monthName: currentMonthData.monthName,
+            trades: formattedTrades,
+            totalPnlPerCt,
+            winRate,
+            winCount: wins,
+            lossCount: losses
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: `✓ Dispatched ${formattedTrades.length} call-out(s) for ${dateStr} with Entry & Exit times to Discord!`,
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({
+          message: `Discord error: ${data.error || "Failed to send"}`,
+          type: "error"
+        });
+      }
+    } catch (err: any) {
+      setDiscordNotice({
+        message: `Network error: ${err.message}`,
+        type: "error"
+      });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 5000);
+    }
+  };
+
+  const triggerDiscordSingleTrade = async (t: DailyTradeRecord) => {
+    try {
+      setIsSendingDiscord(true);
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "exit",
+          payload: {
+            symbol: t.symbol,
+            contract: t.contract,
+            entryTime: t.entryTime || t.time,
+            exitTime: t.exitTime || "EOD",
+            entryPrice: t.entryAsk,
+            exitPrice: t.peakPrice,
+            pnlPercent: t.percentGain,
+            pnlPerContract: t.pnlPerContract,
+            status: t.outcome === "TARGET_2" ? "TARGET 2 HIT" : t.outcome === "TARGET_1" ? "TARGET 1 HIT" : "STOPPED OUT",
+            lessons: t.catalyst || t.invalidationNote,
+            qty: simContractQty
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: `✓ Call-out for ${t.symbol} ${t.contract} sent to Discord!`,
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({
+          message: `Discord error: ${data.error}`,
+          type: "error"
+        });
+      }
+    } catch (err: any) {
+      setDiscordNotice({ message: err.message, type: "error" });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 4000);
+    }
+  };
+
+  const triggerDiscordLiveEntry = async (setup: DiscoveredSetup) => {
+    try {
+      setIsSendingDiscord(true);
+      const res = await fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "entry",
+          payload: {
+            symbol: setup.symbol,
+            contract: `${setup.contract.strike}C ${setup.contract.expiration}`,
+            underlyingPrice: setup.price,
+            entryTime: setup.discoveredAt,
+            entryPrice: setup.contract.ask,
+            stopLoss: setup.targets.stopLoss,
+            target1: setup.targets.target1,
+            target2: setup.targets.target2,
+            rvol: setup.rvol,
+            gatekeeperBadge: setup.gatekeeper?.badge,
+            gatekeeperReason: setup.gatekeeper?.reason,
+            catalyst: setup.catalyst.headline,
+            confidenceScore: setup.confidence.score
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscordNotice({
+          message: `✓ Live entry call-out for ${setup.symbol} ${setup.contract.strike}C sent to Discord!`,
+          type: "success"
+        });
+      } else {
+        setDiscordNotice({
+          message: `Discord error: ${data.error}`,
+          type: "error"
+        });
+      }
+    } catch (err: any) {
+      setDiscordNotice({ message: err.message, type: "error" });
+    } finally {
+      setIsSendingDiscord(false);
+      setTimeout(() => setDiscordNotice(null), 4000);
+    }
+  };
 
   // Filtered Setups
   const filteredSetups = useMemo(() => {
@@ -1076,9 +1272,46 @@ export function AlpacaBotDashboard() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin text-cyan-400' : ''}`} />
           </button>
+
+          {/* Discord Webhook HUD Control */}
+          <div className="flex items-center gap-1.5 bg-[#5865F2]/10 border border-[#5865F2]/30 px-2.5 py-1.5 rounded-lg text-xs">
+            <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
+            <span className="hidden sm:inline text-[11px] font-bold text-indigo-200">Discord</span>
+            <button
+              onClick={triggerDiscordTestSignal}
+              disabled={isSendingDiscord}
+              className="ml-1 px-2 py-0.5 rounded bg-[#5865F2] hover:bg-[#4752C4] text-white text-[10px] font-black tracking-wide uppercase transition-all disabled:opacity-50 flex items-center gap-1 shadow-sm"
+              title="Send real-time test call-out to Discord"
+            >
+              {isSendingDiscord ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Send className="w-2.5 h-2.5" />}
+              <span>Test Alert</span>
+            </button>
+          </div>
         </div>
 
       </div>
+
+      {/* DISCORD STATUS BANNER */}
+      {discordNotice && (
+        <div className={`px-4 py-2.5 rounded-xl border flex items-center justify-between text-xs font-mono transition-all animate-in fade-in duration-150 ${
+          discordNotice.type === "success" 
+            ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300" 
+            : discordNotice.type === "error"
+            ? "bg-rose-950/60 border-rose-500/40 text-rose-300"
+            : "bg-blue-950/60 border-blue-500/40 text-blue-300"
+        }`}>
+          <div className="flex items-center gap-2">
+            <DiscordIcon className="w-4 h-4 text-[#5865F2]" />
+            <span className="font-semibold">{discordNotice.message}</span>
+          </div>
+          <button 
+            onClick={() => setDiscordNotice(null)}
+            className="text-slate-400 hover:text-white text-sm font-bold ml-2 leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* 2. COMPACT WORKSPACE TABS */}
       <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2.5 overflow-x-auto custom-scrollbar">
@@ -1665,9 +1898,23 @@ export function AlpacaBotDashboard() {
                   )}
                 </div>
 
-                <span className="text-xs font-mono text-slate-400">
-                  {selectedDayData.trades.length} Setups Executed ({simContractQty}x Sizing)
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono text-slate-400">
+                    {selectedDayData.trades.length} Setups Executed ({simContractQty}x Sizing)
+                  </span>
+                  <button
+                    onClick={() => {
+                      const rawTrades = selectedDayData.allDayTrades || selectedDayData.trades;
+                      triggerDiscordDailySummary(selectedDayData.date, rawTrades);
+                    }}
+                    disabled={isSendingDiscord}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-200 text-xs font-mono font-bold transition-all disabled:opacity-50 shadow-sm"
+                    title="Send all call-outs for this day with Entry & Exit times to Discord"
+                  >
+                    <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
+                    <span>Send Day Call-Outs to Discord</span>
+                  </button>
+                </div>
               </div>
 
               {(() => {
@@ -1748,13 +1995,24 @@ export function AlpacaBotDashboard() {
                                 <span className="text-[11px] font-mono text-fuchsia-400">RVOL: {trade.rvol}</span>
                               </div>
 
-                              <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-black border ${
-                                isWin 
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                                  : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                              }`}>
-                                {isWin ? `+$${tradeTotalPnl.toFixed(2)} (${trade.percentGain})` : `-$${Math.abs(tradeTotalPnl).toFixed(2)} (${trade.percentGain})`}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-black border ${
+                                  isWin 
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                                    : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                                }`}>
+                                  {isWin ? `+$${tradeTotalPnl.toFixed(2)} (${trade.percentGain})` : `-$${Math.abs(tradeTotalPnl).toFixed(2)} (${trade.percentGain})`}
+                                </span>
+                                <button
+                                  onClick={() => triggerDiscordSingleTrade(trade)}
+                                  disabled={isSendingDiscord}
+                                  className="px-2 py-0.5 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/25 border border-[#5865F2]/40 text-indigo-300 text-[10px] font-mono font-bold transition-all flex items-center gap-1 disabled:opacity-50"
+                                  title="Send this call-out to Discord"
+                                >
+                                  <DiscordIcon className="w-3 h-3 text-[#5865F2]" />
+                                  <span>To Discord</span>
+                                </button>
+                              </div>
                             </div>
 
                             {/* GATEKEEPER DEFENSE EVALUATION BADGE */}
@@ -2076,13 +2334,25 @@ export function AlpacaBotDashboard() {
                         R:R <b className="text-emerald-400">{s.targets.rrRatio}</b>
                       </span>
 
-                      <button
-                        onClick={() => handleExecutePaperTrade(s, 3)}
-                        className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95"
-                      >
-                        <Zap className="w-3.5 h-3.5 fill-current" />
-                        Execute Paper (3x @ ${s.contract.ask})
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => triggerDiscordLiveEntry(s)}
+                          disabled={isSendingDiscord}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-300 font-bold text-xs uppercase flex items-center gap-1 transition-all disabled:opacity-50"
+                          title="Broadcast Live Entry Call-Out to Discord"
+                        >
+                          <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
+                          <span>Alert Discord</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleExecutePaperTrade(s, 3)}
+                          className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                        >
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                          Execute Paper (3x @ ${s.contract.ask})
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -2308,7 +2578,7 @@ export function AlpacaBotDashboard() {
               <span className="text-slate-400">•</span>
               <span className="text-slate-300 font-bold">{scopedSignals.length} Signals Alerted</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-emerald-400 font-bold">
                 {scopedSignals.filter((s: any) => s.pnlPerContract > 0).length} Wins
               </span>
@@ -2320,6 +2590,22 @@ export function AlpacaBotDashboard() {
                   {scopedSignals.reduce((acc: number, s: any) => acc + s.pnlPerContract, 0) >= 0 ? "+" : ""}${scopedSignals.reduce((acc: number, s: any) => acc + s.pnlPerContract, 0).toFixed(1)}/ct
                 </strong>
               </span>
+              <button
+                onClick={() => {
+                  if (signalViewMode === "DAY") {
+                    const rawTrades = (currentMonthData.days as any)[selectedCalendarDate]?.trades || [];
+                    triggerDiscordDailySummary(selectedCalendarDate, rawTrades);
+                  } else {
+                    triggerDiscordTestSignal();
+                  }
+                }}
+                disabled={isSendingDiscord}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white text-[10.5px] font-mono font-bold transition-all disabled:opacity-50 shadow-sm"
+                title="Send Day Call-Outs with Entry & Exit times to Discord"
+              >
+                <DiscordIcon className="w-3.5 h-3.5 text-white" />
+                <span>Send to Discord</span>
+              </button>
             </div>
           </div>
 
@@ -2337,6 +2623,7 @@ export function AlpacaBotDashboard() {
                   <th className="p-3">Gain / Drawdown</th>
                   <th className="p-3">Real Outcome</th>
                   <th className="p-3">Chart Invalidation / Catalyst Reason</th>
+                  <th className="p-3 text-right">Discord</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
@@ -2406,6 +2693,34 @@ export function AlpacaBotDashboard() {
                         ) : (
                           <span className="text-slate-400 block">{sig.catalyst}</span>
                         )}
+                      </td>
+                      <td className="p-3 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => triggerDiscordSingleTrade({
+                            id: sig.id,
+                            symbol: sig.symbol,
+                            name: sig.name,
+                            contract: sig.contract,
+                            time: sig.time || sig.entryTime,
+                            entryTime: sig.entryTime,
+                            exitTime: sig.exitTime,
+                            entryAsk: sig.entryPrice,
+                            peakPrice: sig.peakPrice,
+                            outcome: sig.outcome,
+                            percentGain: sig.percentGain,
+                            pnlPerContract: sig.pnlPerContract,
+                            catalyst: sig.catalyst,
+                            rvol: sig.rvol,
+                            session: sig.session,
+                            invalidationNote: sig.invalidationNote
+                          } as any)}
+                          disabled={isSendingDiscord}
+                          className="px-2 py-1 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/30 border border-[#5865F2]/40 text-indigo-300 hover:text-white text-[10px] font-mono font-bold transition-all inline-flex items-center gap-1 disabled:opacity-50"
+                          title="Broadcast this call-out to Discord"
+                        >
+                          <DiscordIcon className="w-3 h-3 text-[#5865F2]" />
+                          <span>Discord</span>
+                        </button>
                       </td>
                     </tr>
                   );
