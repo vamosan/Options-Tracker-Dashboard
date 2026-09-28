@@ -16,7 +16,6 @@ export function SPXPowerHourDesk() {
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [executingOrder, setExecutingOrder] = useState<string | null>(null);
   const [executionNotice, setExecutionNotice] = useState<string | null>(null);
-  const [selectedSurgeSide, setSelectedSurgeSide] = useState<"CALL" | "PUT" | null>(null);
 
   const fetchData = async () => {
     try {
@@ -151,11 +150,8 @@ export function SPXPowerHourDesk() {
   }
 
   const phase = data?.phaseInfo;
-  const surge = selectedSurgeSide === "CALL" 
-    ? (data?.callCandidate || data?.activeSurgeCandidate) 
-    : selectedSurgeSide === "PUT" 
-    ? (data?.putCandidate || data?.activeSurgeCandidate) 
-    : data?.activeSurgeCandidate;
+  // 1-Trade Strict Discipline: surge is strictly the confirmed active breakout candidate (or null when in standby/inside shelf)
+  const surge = data?.activeSurgeCandidate || null;
   const fly = data?.pinButterfly;
 
   return (
@@ -406,58 +402,65 @@ export function SPXPowerHourDesk() {
               <span className="text-[10px] text-slate-400">Optimal Window: 3:30–3:39 PM</span>
             </div>
 
-            {/* Direction Selection: CALL vs PUT */}
-            <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs font-mono">
-              <span className="text-[10px] text-slate-400 pl-1 font-bold uppercase">Setup Side:</span>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setSelectedSurgeSide("CALL")}
-                  className={`px-3 py-1 rounded text-xs font-bold transition-all ${
-                    (selectedSurgeSide === "CALL" || (!selectedSurgeSide && data?.recommendedSide === "CALL"))
-                      ? "bg-emerald-500 text-slate-950 font-black shadow"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  CALL Setup (&gt; ${data?.rangeShelf?.high30?.toFixed(1)}) {data?.recommendedSide === "CALL" && "★ FAVORED"}
-                </button>
-                <button
-                  onClick={() => setSelectedSurgeSide("PUT")}
-                  className={`px-3 py-1 rounded text-xs font-bold transition-all ${
-                    (selectedSurgeSide === "PUT" || (!selectedSurgeSide && data?.recommendedSide === "PUT"))
-                      ? "bg-rose-500 text-white font-black shadow"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  PUT Setup (&lt; ${data?.rangeShelf?.low30?.toFixed(1)}) {data?.recommendedSide === "PUT" && "★ FAVORED"}
-                </button>
+            {/* Breakout Status & 1-Trade Rule */}
+            {!surge ? (
+              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 font-mono text-xs">
+                <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-bold">
+                  <span>Breakout Triggers (Exact 1-Trade Rule)</span>
+                  <span className="text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Inside Shelf (${data?.rangeShelf?.low30?.toFixed(1)} - ${data?.rangeShelf?.high30?.toFixed(1)})</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
+                    <span className="text-emerald-400 text-[10px] block font-bold">▲ CALL TRIGGER</span>
+                    <span className="text-white font-bold text-sm">&gt; ${data?.rangeShelf?.high30?.toFixed(1)}</span>
+                    <span className="text-[9px] text-slate-400 block mt-0.5">Arms 1 Call upon verified breach</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-rose-950/20 border border-rose-500/30">
+                    <span className="text-rose-400 text-[10px] block font-bold">▼ PUT TRIGGER</span>
+                    <span className="text-white font-bold text-sm">&lt; ${data?.rangeShelf?.low30?.toFixed(1)}</span>
+                    <span className="text-[9px] text-slate-400 block mt-0.5">Arms 1 Put upon verified breach</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className={`p-2.5 rounded-lg border text-xs font-mono font-bold flex items-center justify-between ${
+                surge.type === "CALL" ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-300" : "bg-rose-500/10 border-rose-500/40 text-rose-300"
+              }`}>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-current animate-ping"></span>
+                  <span>⚡ EXACTLY 1 TRADE: CONFIRMED {surge.type} BREAKOUT</span>
+                </span>
+                <span>{surge.triggerCondition}</span>
+              </div>
+            )}
 
             {/* Target Contract Card */}
             {!surge ? (
               <div className="p-8 rounded-xl bg-slate-950/80 border border-slate-800 text-center space-y-3">
                 <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 inline-block">
-                  🔒 PLAYBOOK 1 IN STANDBY (ARMS AT 3:00 PM ET)
+                  🔒 PLAYBOOK 1 IN STANDBY: AWAITING SHELF BREAKOUT
                 </span>
-                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                  Range shelf accumulation begins at 3:00 PM ET. Pre-cutoff breakout entries calculate at 3:30 PM before the 15:40 broker lockout.
+                <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+                  SPX Spot (${data?.spxSpot?.toFixed(2)}) is inside the 3:00–3:35 PM Shelf (${data?.rangeShelf?.low30?.toFixed(1)} - ${data?.rangeShelf?.high30?.toFixed(1)}). Strict rule: <b>ZERO trades allowed inside range</b> to prevent theta decay.
                 </p>
                 <div className="text-[11px] font-mono text-cyan-400">
-                  Switch to <b>Simulate Buy Imbalance</b> or <b>Simulate Sell Imbalance</b> in the top banner to test.
+                  Switch to <b>Simulate Buy Imbalance</b> or <b>Simulate Sell Imbalance</b> in the top banner to test the 1-trade breakout flow.
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+              <div className={`p-4 rounded-xl bg-slate-950/80 border space-y-3 ${
+                surge.type === "CALL" ? "border-emerald-500/60" : "border-rose-500/60"
+              }`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">RECOMMENDED CONTRACT</span>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">CONFIRMED 1-TRADE CONTRACT</span>
                     <div className="text-xl font-mono font-black text-white">
                       SPX 0DTE {surge.strike} {surge.type}
                     </div>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">ENTRY ASK (MAX RISK)</span>
-                    <div className="text-2xl font-mono font-black text-emerald-400">
+                    <div className="text-2xl font-mono font-black text-white">
                       ${surge.estimatedAsk.toFixed(2)} <span className="text-xs text-slate-400 font-normal">(${surge.maxRiskDollars}/ct)</span>
                     </div>
                   </div>
@@ -501,20 +504,20 @@ export function SPXPowerHourDesk() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleSendDiscord(surge?.type === "CALL" ? "MOC_GAMMA_CALL" : "MOC_GAMMA_PUT")}
-                disabled={isSendingDiscord}
-                className="py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                disabled={isSendingDiscord || !surge}
+                className="py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Alert Discord</span>
+                <span>{surge ? `Alert Discord (${surge.type})` : "Standby (No Alert)"}</span>
               </button>
 
               <button
                 onClick={() => handleExecutePaperOrder(`SPX ${surge?.strike} ${surge?.type}`, surge?.maxRiskDollars || 65)}
-                disabled={executingOrder !== null}
-                className="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
+                disabled={executingOrder !== null || !surge}
+                className="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>{executingOrder ? "Routing..." : "Execute Paper"}</span>
+                <span>{executingOrder ? "Routing..." : surge ? `Execute Paper (${surge.type})` : "Standby"}</span>
               </button>
             </div>
           </div>

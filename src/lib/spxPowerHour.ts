@@ -68,6 +68,10 @@ export interface SPXPowerHourState {
     spreadPts: number;
     currentPositionPct: number; // 0% = low, 100% = high
     breakoutDirection: "UPWARD_BREAKOUT" | "DOWNWARD_BREAKOUT" | "INSIDE_RANGE";
+    callTriggerPrice?: number;
+    putTriggerPrice?: number;
+    ptsToCallBreakout?: number;
+    ptsToPutBreakdown?: number;
   };
   mocImbalance: MOCImbalanceData;
   activeSurgeCandidate: SPXPowerHourStrikeCandidate | null;
@@ -302,9 +306,10 @@ export async function getLiveSPXPowerHourData(options?: {
   };
 
   // CHECK: If outside of Power Hour and not simulating, return clean STANDBY state
-  const isStandby = phaseInfo.phase === "PRE_POWER_HOUR" && !options?.simulatePhase;
+  const isOutsidePowerHour = (phaseInfo.phase === "PRE_POWER_HOUR" || phaseInfo.phase === "SESSION_CLOSED") && !options?.simulatePhase;
 
-  if (isStandby) {
+  if (isOutsidePowerHour) {
+    const isClosed = phaseInfo.phase === "SESSION_CLOSED";
     return {
       timestamp: new Date().toISOString(),
       currentTimeET: phaseInfo.timeDisplay,
@@ -325,21 +330,29 @@ export async function getLiveSPXPowerHourData(options?: {
         low30: dayLow,
         spreadPts: Math.round((dayHigh - dayLow) * 10) / 10,
         currentPositionPct: Math.min(100, Math.max(0, Math.round(((spxSpot - dayLow) / (dayHigh - dayLow)) * 100))),
-        breakoutDirection: "INSIDE_RANGE"
+        breakoutDirection: "INSIDE_RANGE",
+        callTriggerPrice: Math.round((spxSpot + 5.5) * 10) / 10,
+        putTriggerPrice: Math.round((spxSpot - 6.0) * 10) / 10,
+        ptsToCallBreakout: 5.5,
+        ptsToPutBreakdown: 6.0
       },
       mocImbalance: {
-        status: "PENDING",
+        status: isClosed ? "PUBLISHED" : "PENDING",
         amountBillions: 0,
         direction: "BALANCED",
-        rawText: "Pending 3:50:00 PM ET Release",
-        institutionalFlow: "Institutional TWAP/VWAP algorithms executing daytime flows. MOC window opens at 3:50 PM ET.",
+        rawText: isClosed ? "NYSE 4:00 PM MOC Rebalance Completed" : "Pending 3:50:00 PM ET Release",
+        institutionalFlow: isClosed
+          ? "Closing benchmark cross completed. SPX 0DTE contracts cash-settled flat."
+          : "Institutional TWAP/VWAP algorithms executing daytime flows. MOC window opens at 3:50 PM ET.",
         thresholdMet: false
       },
       activeSurgeCandidate: null,
       callCandidate: null,
       putCandidate: null,
       recommendedSide: "STANDBY",
-      recommendationReason: "STANDBY: Range accumulation starts at 3:00 PM ET. Pre-15:40 broker cutoff breakout window opens at 3:30 PM ET. Trades disabled during midday.",
+      recommendationReason: isClosed
+        ? "SESSION CLOSED: SPX 4:00 PM cash settlement complete. All 0DTE options expired/settled flat. Trading resumes tomorrow at 3:00 PM ET."
+        : "STANDBY: Midday session theta decay risk. Range accumulation begins at 3:00 PM ET. Pre-15:40 broker cutoff breakout window opens at 3:30 PM ET.",
       brokerCutoffTimeET: "03:40 PM ET",
       brokerCutoffWarning: "Most retail brokers (Webull, Robinhood, IBKR) reject 0DTE orders after 15:40 ET and auto-liquidate near-ATM contracts. Optimal execution window is 3:30–3:39 PM ET.",
       pinButterfly,
@@ -357,20 +370,29 @@ export async function getLiveSPXPowerHourData(options?: {
   const shelfSpread = 11.5;
   const high30 = Math.round((spxSpot + 5.5) * 10) / 10;
   const low30 = Math.round((spxSpot - 6.0) * 10) / 10;
-  const currentPositionPct = Math.min(100, Math.max(0, Math.round(((spxSpot - low30) / (high30 - low30)) * 100)));
+
+  // If user explicitly simulates Buy or Sell Imbalance, simulate the price breaking the shelf
+  let effectiveSpot = spxSpot;
+  if (options?.simulateMOCDirection === "BUY") {
+    effectiveSpot = high30 + 1.8;
+  } else if (options?.simulateMOCDirection === "SELL") {
+    effectiveSpot = low30 - 1.8;
+  }
+
+  const currentPositionPct = Math.min(100, Math.max(0, Math.round(((effectiveSpot - low30) / (high30 - low30)) * 100)));
 
   let breakoutDirection: "UPWARD_BREAKOUT" | "DOWNWARD_BREAKOUT" | "INSIDE_RANGE" = "INSIDE_RANGE";
-  if (spxSpot >= high30) breakoutDirection = "UPWARD_BREAKOUT";
-  else if (spxSpot <= low30) breakoutDirection = "DOWNWARD_BREAKOUT";
+  if (effectiveSpot >= high30) breakoutDirection = "UPWARD_BREAKOUT";
+  else if (effectiveSpot <= low30) breakoutDirection = "DOWNWARD_BREAKOUT";
 
-  const mocDir = options?.simulateMOCDirection || (morningBias === "BULLISH" ? "BUY" : "SELL");
-  const mocAmount = mocDir === "BUY" ? 1.85 : 1.45;
+  const mocDir = options?.simulateMOCDirection || (breakoutDirection === "UPWARD_BREAKOUT" ? "BUY" : breakoutDirection === "DOWNWARD_BREAKOUT" ? "SELL" : "BALANCED");
+  const mocAmount = mocDir === "BUY" ? 1.85 : mocDir === "SELL" ? 1.45 : 0.0;
   const isMOCPublished = phaseInfo.phase === "MOC_EXECUTION" || Boolean(options?.simulatePhase);
 
   const mocImbalance: MOCImbalanceData = {
     status: isMOCPublished ? "PUBLISHED" : "PENDING",
     amountBillions: isMOCPublished ? mocAmount : 0,
-    direction: isMOCPublished ? mocDir : "BALANCED",
+    direction: isMOCPublished ? (mocDir as any) : "BALANCED",
     rawText: isMOCPublished
       ? `NYSE 3:50 PM Net ${mocDir === "BUY" ? "+" : "-"}$${mocAmount.toFixed(2)}B ${mocDir} Imbalance`
       : "Pending release at 3:50:00 PM ET",
@@ -387,86 +409,84 @@ export async function getLiveSPXPowerHourData(options?: {
   const T_years = minutesToClose / (252 * 390);
   const ivDecimal = Math.max(0.12, Math.min(0.35, vixVal / 100));
 
-  // 1. CALL Candidate (5-8 pts above H30)
-  const callStrike = Math.ceil((high30 + 4) / 5) * 5;
-  const callDist = Math.abs(Math.round((callStrike - spxSpot) * 10) / 10);
-  const callShelfDist = Math.round((high30 - spxSpot) * 10) / 10;
-  
-  // Real Black-Scholes Ask for SPX at 3:35 PM
-  const bsCallPrice = calculateBlackScholes(spxSpot, callStrike, T_years, 0.05, ivDecimal, true);
-  // SPX option ask (minimum tick $0.05, realistic market ask)
-  const callAsk = Math.max(0.40, Math.round(bsCallPrice * 20) / 20);
-  const callMiniAsk = Math.max(0.40, Math.round((bsCallPrice / 10.038) * 100) / 100);
-
-  const callCandidate: SPXPowerHourStrikeCandidate = {
-    type: "CALL",
-    strike: callStrike,
-    distancePts: callDist,
-    estimatedAsk: callAsk,
-    target1: Math.round((callAsk * 2.2) * 100) / 100, // +120%
-    target2: Math.round((callAsk * 4.5) * 100) / 100, // +350%
-    stopLoss: Math.max(0.20, Math.round(callAsk * 0.3 * 100) / 100),
-    maxRiskDollars: Math.round(callAsk * 100),
-    gammaLeverage: "8.5x Delta Acceleration",
-    triggerCondition: `Breakout above H30 ($${high30.toFixed(1)})`,
-    distToShelfPts: callShelfDist,
-    miniContractEquivalent: `XSP/SPY ${Math.round(callStrike / 10)} CALL @ ~$${callMiniAsk.toFixed(2)} ($${Math.round(callMiniAsk * 100)}/ct)`
-  };
-
-  // 2. PUT Candidate (5-8 pts below L30)
-  const putStrike = Math.floor((low30 - 4) / 5) * 5;
-  const putDist = Math.abs(Math.round((spxSpot - putStrike) * 10) / 10);
-  const putShelfDist = Math.round((spxSpot - low30) * 10) / 10;
-
-  // Real Black-Scholes Ask for SPX at 3:35 PM
-  const bsPutPrice = calculateBlackScholes(spxSpot, putStrike, T_years, 0.05, ivDecimal, false);
-  const putAsk = Math.max(0.40, Math.round(bsPutPrice * 20) / 20);
-  const putMiniAsk = Math.max(0.40, Math.round((bsPutPrice / 10.038) * 100) / 100);
-
-  const putCandidate: SPXPowerHourStrikeCandidate = {
-    type: "PUT",
-    strike: putStrike,
-    distancePts: putDist,
-    estimatedAsk: putAsk,
-    target1: Math.round((putAsk * 2.2) * 100) / 100, // +120%
-    target2: Math.round((putAsk * 4.5) * 100) / 100, // +350%
-    stopLoss: Math.max(0.20, Math.round(putAsk * 0.3 * 100) / 100),
-    maxRiskDollars: Math.round(putAsk * 100),
-    gammaLeverage: "8.2x Delta Acceleration",
-    triggerCondition: `Breakdown below L30 ($${low30.toFixed(1)})`,
-    distToShelfPts: putShelfDist,
-    miniContractEquivalent: `XSP/SPY ${Math.round(putStrike / 10)} PUT @ ~$${putMiniAsk.toFixed(2)} ($${Math.round(putMiniAsk * 100)}/ct)`
-  };
-
-  // Evaluate Best Entry Irrespective of Calls or Puts
-  let recommendedSide: "CALL" | "PUT" | "NEUTRAL" = "NEUTRAL";
+  // 1-TRADE DISCIPLINE: Only generate candidate if confirmed breakout occurred
+  let recommendedSide: "CALL" | "PUT" | "STANDBY" = "STANDBY";
   let recommendationReason = "";
+  let activeSurgeCandidate: SPXPowerHourStrikeCandidate | null = null;
+  let callCandidate: SPXPowerHourStrikeCandidate | null = null;
+  let putCandidate: SPXPowerHourStrikeCandidate | null = null;
 
   if (breakoutDirection === "UPWARD_BREAKOUT") {
+    // 1. CALL Breakout (SPX broke above H30)
     recommendedSide = "CALL";
-    recommendationReason = `CALL BREAKOUT CONFIRMED: SPX ($${spxSpot.toFixed(1)}) broke above H30 shelf ($${high30.toFixed(1)}). Active upside gamma surge!`;
-  } else if (breakoutDirection === "DOWNWARD_BREAKOUT") {
-    recommendedSide = "PUT";
-    recommendationReason = `PUT BREAKDOWN CONFIRMED: SPX ($${spxSpot.toFixed(1)}) broke below L30 shelf ($${low30.toFixed(1)}). Active downside waterfall flush!`;
-  } else {
-    const distToH30 = high30 - spxSpot;
-    const distToL30 = spxSpot - low30;
+    const callStrike = Math.ceil((high30 + 4) / 5) * 5;
+    const callDist = Math.abs(Math.round((callStrike - effectiveSpot) * 10) / 10);
+    const callShelfDist = Math.round((high30 - effectiveSpot) * 10) / 10;
+    const bsCallPrice = calculateBlackScholes(effectiveSpot, callStrike, T_years, 0.05, ivDecimal, true);
+    const callAsk = Math.max(0.40, Math.round(bsCallPrice * 20) / 20);
+    const callMiniAsk = Math.max(0.40, Math.round((bsCallPrice / 10.038) * 100) / 100);
 
-    if (distToH30 < distToL30) {
-      recommendedSide = "CALL";
-      recommendationReason = `CALL FAVORED: Testing H30 resistance ($${high30.toFixed(1)}), only ${distToH30.toFixed(1)} pts away. Pre-cutoff upside breakout favored.`;
-    } else {
-      recommendedSide = "PUT";
-      recommendationReason = `PUT FAVORED: Testing L30 support ($${low30.toFixed(1)}), only ${distToL30.toFixed(1)} pts away. Pre-cutoff downside breakdown favored.`;
-    }
+    callCandidate = {
+      type: "CALL",
+      strike: callStrike,
+      distancePts: callDist,
+      estimatedAsk: callAsk,
+      target1: Math.round((callAsk * 2.2) * 100) / 100, // +120%
+      target2: Math.round((callAsk * 4.5) * 100) / 100, // +350%
+      stopLoss: Math.max(0.20, Math.round(callAsk * 0.3 * 100) / 100),
+      maxRiskDollars: Math.round(callAsk * 100),
+      gammaLeverage: "8.5x Delta Acceleration",
+      triggerCondition: `Confirmed Breakout above H30 ($${high30.toFixed(1)})`,
+      distToShelfPts: callShelfDist,
+      miniContractEquivalent: `XSP/SPY ${Math.round(callStrike / 10)} CALL @ ~$${callMiniAsk.toFixed(2)} ($${Math.round(callMiniAsk * 100)}/ct)`
+    };
+
+    activeSurgeCandidate = callCandidate;
+    putCandidate = null; // STRICT RULE: NO PUT WHEN CALL BROKE OUT
+    recommendationReason = `CONFIRMED CALL BREAKOUT: SPX ($${effectiveSpot.toFixed(1)}) crossed above H30 resistance ($${high30.toFixed(1)}). Active upside gamma squeeze. Exactly 1 trade recommended.`;
+  } else if (breakoutDirection === "DOWNWARD_BREAKOUT") {
+    // 2. PUT Breakdown (SPX broke below L30)
+    recommendedSide = "PUT";
+    const putStrike = Math.floor((low30 - 4) / 5) * 5;
+    const putDist = Math.abs(Math.round((effectiveSpot - putStrike) * 10) / 10);
+    const putShelfDist = Math.round((effectiveSpot - low30) * 10) / 10;
+    const bsPutPrice = calculateBlackScholes(effectiveSpot, putStrike, T_years, 0.05, ivDecimal, false);
+    const putAsk = Math.max(0.40, Math.round(bsPutPrice * 20) / 20);
+    const putMiniAsk = Math.max(0.40, Math.round((bsPutPrice / 10.038) * 100) / 100);
+
+    putCandidate = {
+      type: "PUT",
+      strike: putStrike,
+      distancePts: putDist,
+      estimatedAsk: putAsk,
+      target1: Math.round((putAsk * 2.2) * 100) / 100, // +120%
+      target2: Math.round((putAsk * 4.5) * 100) / 100, // +350%
+      stopLoss: Math.max(0.20, Math.round(putAsk * 0.3 * 100) / 100),
+      maxRiskDollars: Math.round(putAsk * 100),
+      gammaLeverage: "8.2x Delta Acceleration",
+      triggerCondition: `Confirmed Breakdown below L30 ($${low30.toFixed(1)})`,
+      distToShelfPts: putShelfDist,
+      miniContractEquivalent: `XSP/SPY ${Math.round(putStrike / 10)} PUT @ ~$${putMiniAsk.toFixed(2)} ($${Math.round(putMiniAsk * 100)}/ct)`
+    };
+
+    activeSurgeCandidate = putCandidate;
+    callCandidate = null; // STRICT RULE: NO CALL WHEN PUT BROKE OUT
+    recommendationReason = `CONFIRMED PUT BREAKDOWN: SPX ($${effectiveSpot.toFixed(1)}) broke below L30 support ($${low30.toFixed(1)}). Active downside waterfall flush. Exactly 1 trade recommended.`;
+  } else {
+    // 3. INSIDE SHELF: STRICT STANDBY - ZERO TRADES
+    recommendedSide = "STANDBY";
+    activeSurgeCandidate = null;
+    callCandidate = null;
+    putCandidate = null;
+    recommendationReason = `STANDBY — INSIDE 3:00–3:35 PM SHELF: SPX ($${effectiveSpot.toFixed(1)}) is inside shelf ($${low30.toFixed(1)} - $${high30.toFixed(1)}). ZERO trades permitted inside range to eliminate theta decay. Awaiting verified breakout.`;
   }
 
-  const activeSurgeCandidate = recommendedSide === "CALL" ? callCandidate : putCandidate;
+  const finalSpot = options?.simulateMOCDirection ? effectiveSpot : spxSpot;
 
   return {
     timestamp: new Date().toISOString(),
     currentTimeET: phaseInfo.timeDisplay,
-    spxSpot,
+    spxSpot: finalSpot,
     spySpot: spyPrice,
     dayHigh,
     dayLow,
@@ -483,7 +503,11 @@ export async function getLiveSPXPowerHourData(options?: {
       low30,
       spreadPts: shelfSpread,
       currentPositionPct,
-      breakoutDirection
+      breakoutDirection,
+      callTriggerPrice: high30,
+      putTriggerPrice: low30,
+      ptsToCallBreakout: Math.round((high30 - finalSpot) * 10) / 10,
+      ptsToPutBreakdown: Math.round((finalSpot - low30) * 10) / 10
     },
     mocImbalance,
     activeSurgeCandidate,
