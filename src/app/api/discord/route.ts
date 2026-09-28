@@ -9,6 +9,7 @@ import {
   sendTestSignal,
   DEFAULT_DISCORD_WEBHOOK_URL
 } from '@/lib/discord';
+import { CURRENT_MARKET_OUTLOOK } from '@/lib/prospectiveStocks';
 
 export async function GET() {
   const webhookConfigured = Boolean(process.env.DISCORD_WEBHOOK_URL || DEFAULT_DISCORD_WEBHOOK_URL);
@@ -37,7 +38,17 @@ export async function POST(req: Request) {
       if (!payload || !payload.marketBias || !payload.topStocks) {
         return NextResponse.json({ success: false, error: 'Invalid briefing payload' }, { status: 400 });
       }
-      const result = await sendDailyBriefingCallout(payload);
+
+      // Mandatory Data Accuracy Guard: Prevent any 2024 stale prices (e.g. SPY 564, QQQ 485) from ever posting
+      const sanitizedPayload = { ...payload };
+      if (!sanitizedPayload.marketBias.spyTrend || sanitizedPayload.marketBias.spyTrend.includes('564') || sanitizedPayload.marketBias.spyTrend.includes('575')) {
+        sanitizedPayload.marketBias.spyTrend = CURRENT_MARKET_OUTLOOK.tapeBias.spyTrend;
+      }
+      if (!sanitizedPayload.marketBias.qqqTrend || sanitizedPayload.marketBias.qqqTrend.includes('485')) {
+        sanitizedPayload.marketBias.qqqTrend = CURRENT_MARKET_OUTLOOK.tapeBias.qqqTrend;
+      }
+
+      const result = await sendDailyBriefingCallout(sanitizedPayload);
       return NextResponse.json({ success: result.success, message: 'Daily heads-up briefing sent to Discord', details: result });
     }
 

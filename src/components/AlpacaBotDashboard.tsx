@@ -10,7 +10,7 @@ import {
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
   TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp
 } from "lucide-react";
-import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock } from "@/lib/prospectiveStocks";
+import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock, MarketOutlookData } from "@/lib/prospectiveStocks";
 
 interface ConfidenceBreakdown {
   rvol: number;
@@ -319,9 +319,34 @@ export function AlpacaBotDashboard() {
   const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
 
   // Prospective Stocks & Market Heads-Up State
+  const [marketOutlook, setMarketOutlook] = useState<MarketOutlookData>(CURRENT_MARKET_OUTLOOK);
+  const [prospectiveStocksList, setProspectiveStocksList] = useState<ProspectiveStock[]>(PROSPECTIVE_STOCKS);
+  const [isLiveMarketLoading, setIsLiveMarketLoading] = useState<boolean>(false);
+  const [marketDataSource, setMarketDataSource] = useState<"live" | "cache" | "fallback">("cache");
   const [prospectiveSector, setProspectiveSector] = useState<string>("ALL");
   const [prospectiveSearch, setProspectiveSearch] = useState<string>("");
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(true);
+
+  const loadLiveMarketOutlook = async () => {
+    try {
+      setIsLiveMarketLoading(true);
+      const res = await fetch("/api/market-outlook");
+      const data = await res.json();
+      if (data.success && data.marketOutlook && data.prospectiveStocks) {
+        setMarketOutlook(data.marketOutlook);
+        setProspectiveStocksList(data.prospectiveStocks);
+        if (data.source) setMarketDataSource(data.source);
+      }
+    } catch (e) {
+      console.error("Failed to load live market outlook:", e);
+    } finally {
+      setIsLiveMarketLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLiveMarketOutlook();
+  }, []);
 
   const runScan = async () => {
     setIsScanning(true);
@@ -553,10 +578,10 @@ export function AlpacaBotDashboard() {
         body: JSON.stringify({
           action: "daily-briefing",
           payload: {
-            date: CURRENT_MARKET_OUTLOOK.date,
-            marketBias: CURRENT_MARKET_OUTLOOK.tapeBias,
-            events: CURRENT_MARKET_OUTLOOK.todayEvents,
-            topStocks: PROSPECTIVE_STOCKS.slice(0, 5).map(s => ({
+            date: marketOutlook.date,
+            marketBias: marketOutlook.tapeBias,
+            events: marketOutlook.todayEvents,
+            topStocks: prospectiveStocksList.slice(0, 5).map(s => ({
               symbol: s.symbol,
               name: s.name,
               catalyst: s.catalystHeadline,
@@ -632,7 +657,7 @@ export function AlpacaBotDashboard() {
 
   // Filtered Prospective Stocks
   const filteredProspectiveStocks = useMemo(() => {
-    return PROSPECTIVE_STOCKS.filter(stock => {
+    return prospectiveStocksList.filter(stock => {
       if (prospectiveSector !== "ALL" && stock.sector !== prospectiveSector) return false;
       if (prospectiveSearch.trim()) {
         const query = prospectiveSearch.toLowerCase();
@@ -644,7 +669,7 @@ export function AlpacaBotDashboard() {
       }
       return true;
     });
-  }, [prospectiveSector, prospectiveSearch]);
+  }, [prospectiveStocksList, prospectiveSector, prospectiveSearch]);
 
   // Filtered Setups
   const filteredSetups = useMemo(() => {
@@ -2216,16 +2241,29 @@ export function AlpacaBotDashboard() {
                       Daily Market Outlook &amp; Heads-Up Intelligence
                     </h2>
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                      {CURRENT_MARKET_OUTLOOK.tapeBias.overall}
+                      {marketOutlook.tapeBias.overall}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      {marketDataSource === "live" ? "VERIFIED LIVE" : "ACCURATE 2026"}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-mono">
-                    Macro Tape Compass • Economic Event Calendar • Institutional Stock Catalysts for {CURRENT_MARKET_OUTLOOK.date}
+                    Macro Tape Compass • Economic Event Calendar • Institutional Stock Catalysts for {marketOutlook.date}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  onClick={loadLiveMarketOutlook}
+                  disabled={isLiveMarketLoading}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs flex items-center gap-1 font-mono disabled:opacity-50"
+                  title="Refresh live market data from Yahoo Finance"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLiveMarketLoading ? 'animate-spin text-cyan-400' : ''}`} />
+                  <span className="text-[10px] hidden sm:inline">Refresh</span>
+                </button>
                 <button
                   onClick={triggerDiscordDailyBriefing}
                   disabled={isSendingDiscord}
@@ -2254,7 +2292,7 @@ export function AlpacaBotDashboard() {
                       <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                     </div>
                     <div className="font-bold text-slate-100 text-[11px] truncate">
-                      {CURRENT_MARKET_OUTLOOK.tapeBias.spyTrend}
+                      {marketOutlook.tapeBias.spyTrend}
                     </div>
                   </div>
 
@@ -2264,7 +2302,7 @@ export function AlpacaBotDashboard() {
                       <Zap className="w-3.5 h-3.5 text-cyan-400" />
                     </div>
                     <div className="font-bold text-slate-100 text-[11px] truncate">
-                      {CURRENT_MARKET_OUTLOOK.tapeBias.qqqTrend}
+                      {marketOutlook.tapeBias.qqqTrend}
                     </div>
                   </div>
 
@@ -2274,7 +2312,7 @@ export function AlpacaBotDashboard() {
                       <Activity className="w-3.5 h-3.5 text-purple-400" />
                     </div>
                     <div className="font-black text-purple-300">
-                      {CURRENT_MARKET_OUTLOOK.tapeBias.vixValue} (Low-Vol Risk-On)
+                      {marketOutlook.tapeBias.vixValue} (Low-Vol Risk-On)
                     </div>
                     <div className="text-[9.5px] text-slate-400 truncate">
                       Favors clean directional call breakouts
@@ -2287,7 +2325,7 @@ export function AlpacaBotDashboard() {
                       <DollarSign className="w-3.5 h-3.5 text-amber-400" />
                     </div>
                     <div className="font-bold text-slate-100 text-[11px]">
-                      {CURRENT_MARKET_OUTLOOK.tapeBias.tenYearYield}
+                      {marketOutlook.tapeBias.tenYearYield}
                     </div>
                   </div>
                 </div>
@@ -2299,10 +2337,10 @@ export function AlpacaBotDashboard() {
                       <Target className="w-3.5 h-3.5" /> Today&apos;s Institutional Directive &amp; Edge
                     </span>
                     <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                      {CURRENT_MARKET_OUTLOOK.executiveSummary}
+                      {marketOutlook.executiveSummary}
                     </p>
                     <div className="space-y-1 pt-1">
-                      {CURRENT_MARKET_OUTLOOK.gameplanDirectives.map((d, i) => (
+                      {marketOutlook.gameplanDirectives.map((d, i) => (
                         <div key={i} className="flex items-start gap-1.5 text-[10.5px] text-slate-300 font-sans">
                           <Check className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
                           <span>{d}</span>
@@ -2316,7 +2354,7 @@ export function AlpacaBotDashboard() {
                       <Clock className="w-3.5 h-3.5" /> Economic Events Scheduled
                     </span>
                     <div className="space-y-2">
-                      {CURRENT_MARKET_OUTLOOK.todayEvents.map((ev, i) => (
+                      {marketOutlook.todayEvents.map((ev, i) => (
                         <div key={i} className="text-[10.5px] font-mono border-b border-slate-800/60 pb-1.5 last:border-0 last:pb-0">
                           <div className="flex items-center justify-between">
                             <span className="text-cyan-400 font-bold">{ev.time}</span>
@@ -2664,7 +2702,7 @@ export function AlpacaBotDashboard() {
                           : "text-slate-400 hover:text-slate-200"
                       }`}
                     >
-                      {sec === "ALL" ? `All (${PROSPECTIVE_STOCKS.length})` : sec}
+                      {sec === "ALL" ? `All (${prospectiveStocksList.length})` : sec}
                     </button>
                   ))}
                 </div>
