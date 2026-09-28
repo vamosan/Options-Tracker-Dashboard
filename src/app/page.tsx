@@ -7,7 +7,7 @@ import { PositionsTable } from "@/components/PositionsTable";
 import { Position, Trade } from "@/lib/types";
 import { fetchOptionPrice, getPortfolioData, savePositions, saveHistory, listProfiles, deleteTrade, analyzeTrade } from "./actions";
 import { getRecommendation } from "@/lib/intelligence";
-import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon } from "lucide-react";
+import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileSelector } from "@/components/ProfileSelector";
 import { GeneralGeminiChat } from "@/components/GeneralGeminiChat";
