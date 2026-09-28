@@ -349,6 +349,20 @@ export async function POST() {
             },
             {
                 id: 'sig_28_02',
+                timestamp: '09:33 AM',
+                symbol: 'PLTR',
+                priceAtTrigger: 186.50,
+                signalType: 'ORB Breakout > $185.80 Shelf (RVOL 3.8x)',
+                contract: 'PLTR $187.5C',
+                entryPremium: 1.65,
+                peakPremium: 2.40,
+                peakGainPercent: '+45.5%',
+                outcome: 'TARGET 2 HIT (+45.5%)',
+                outcomeColor: 'emerald',
+                mfe: '+$75/ct (Ran $186.50 to $189.60)'
+            },
+            {
+                id: 'sig_28_03',
                 timestamp: '09:32 AM',
                 symbol: 'CRWD',
                 priceAtTrigger: 255.40,
@@ -362,7 +376,7 @@ export async function POST() {
                 mfe: '-$55/ct (Avoided $256 to $246 Waterfall Loss via Rule 2 & 3)'
             },
             {
-                id: 'sig_28_03',
+                id: 'sig_28_04',
                 timestamp: '09:34 AM',
                 symbol: 'TSLA',
                 priceAtTrigger: 367.80,
@@ -395,6 +409,23 @@ export async function POST() {
                 status: 'TARGET 2 HIT',
                 lessons: 'Confirmed 09:35 AM candle close with massive 3.6x paced RVOL on Blackwell volume surge. Clean directional trend into day high $233.21.',
                 tags: ['#ORBBreakout', '#RVOLQualified', '#BlackwellDelivery']
+            },
+            {
+                id: 'tr_28_02',
+                symbol: 'PLTR $187.5C',
+                underlying: 'PLTR',
+                type: 'CALL',
+                entryTime: '09:33 AM',
+                exitTime: '10:05 AM',
+                entryPrice: 1.65,
+                exitPrice: 2.40,
+                qty: 3,
+                stopLoss: 1.24,
+                pnl: 225.00,
+                pnlPercent: '+45.5%',
+                status: 'TARGET 2 HIT',
+                lessons: 'DoD AIP enterprise expansion catalyst. Pushed straight above 09:35 opening shelf to $189.60. Full target 2 captured.',
+                tags: ['#DoDContract', '#GatekeeperPassed', '#CleanTrend']
             }
         ];
 

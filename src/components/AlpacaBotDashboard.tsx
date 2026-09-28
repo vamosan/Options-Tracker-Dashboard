@@ -952,7 +952,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             { id: "s25_4", symbol: "AMZN", name: "Amazon", time: "09:36 AM", entryTime: "09:36 AM", exitTime: "10:05 AM", duration: "29 min (Stop)", session: "MORNING_ORB", contract: "AMZN $250C", entryAsk: 1.95, t1Target: 2.53, t2Target: 3.12, stopLoss: 1.46, peakPrice: 2.02, outcome: "STOPPED", pnlPerContract: -49.0, percentGain: "-25.1%", catalyst: "Opening Shelf Momentum", rvol: "2.3x", invalidationNote: "Spiked to $250.13 then cracked opening shelf down to $247.18; stopped out at $1.46." }
           ]},
           "2026-09-28": { trades: [
-            { id: "s28_1", symbol: "NVDA", name: "NVIDIA", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "NVDA $230C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.72, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+54.3%", catalyst: "Blackwell GPU High-Volume Delivery Acceleration", rvol: "3.6x" }
+            { id: "s28_1", symbol: "NVDA", name: "NVIDIA", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "NVDA $230C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.72, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+54.3%", catalyst: "Blackwell GPU High-Volume Delivery Acceleration", rvol: "3.6x" },
+            { id: "s28_2", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "PLTR $187.5C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.24, peakPrice: 2.40, outcome: "TARGET_2", pnlPerContract: 75.0, percentGain: "+45.5%", catalyst: "Enterprise AIP Bootcamps Commercial Surge & Defense Contract", rvol: "3.8x" }
           ]}
         }
       },
