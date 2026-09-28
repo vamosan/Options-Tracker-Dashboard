@@ -14,16 +14,25 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-    const server = createServer((req, res) => {
-        const parsedUrl = parse(req.url || "", true);
-        handle(req, res, parsedUrl);
-    });
-
-    const io = new Server(server, {
+    const io = new Server({
         cors: {
             origin: "*",
         },
     });
+
+    // Handler for incoming HTTP requests
+    const requestHandler = (req, res) => {
+        const parsedUrl = parse(req.url || "", true);
+        handle(req, res, parsedUrl);
+    };
+
+    // Primary HTTP server on port 3000 (standard Next.js port)
+    const server3000 = createServer(requestHandler);
+    io.attach(server3000);
+
+    // Alternate HTTP server on port 3001 (legacy/configured port)
+    const server3001 = createServer(requestHandler);
+    io.attach(server3001);
 
     // Start background options scanner
     startBackgroundScanner(io);
@@ -42,8 +51,15 @@ app.prepare().then(() => {
         });
     });
 
-    server.listen(3001, (err) => {
-        if (err) throw err;
+    server3000.listen(3000, () => {
+        console.log("> Ready on http://localhost:3000");
+    }).on("error", (err) => {
+        console.warn("> Port 3000 unavailable or in use:", err.message);
+    });
+
+    server3001.listen(3001, () => {
         console.log("> Ready on http://localhost:3001");
+    }).on("error", (err) => {
+        console.warn("> Port 3001 unavailable or in use:", err.message);
     });
 });
