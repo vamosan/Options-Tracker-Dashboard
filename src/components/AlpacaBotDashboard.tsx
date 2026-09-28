@@ -2152,6 +2152,19 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 </div>
               </div>
 
+              {selectedDayData.date === "2026-09-28" && (
+                <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-cyan-300">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span className="font-bold">LIVE SESSION IN PROGRESS (Market Open):</span>
+                    <span className="text-slate-300">Morning ORB (09:30–10:15 AM ET) closed. Currently in Midday Consolidation regime.</span>
+                  </div>
+                  <span className="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    Settled Morning Scalps • Watch Setups Radar for fresh breakout shelves
+                  </span>
+                </div>
+              )}
+
               {(() => {
                 const allTrades = selectedDayData.allDayTrades || selectedDayData.trades;
                 if (!allTrades || allTrades.length === 0) {

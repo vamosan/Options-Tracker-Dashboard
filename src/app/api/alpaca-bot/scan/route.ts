@@ -123,15 +123,20 @@ export async function POST() {
                 rvol = Math.max(rvol, 3.2);
             }
 
-            // 5-Minute ORB Mapping (Opening Range established 09:30 - 09:35 AM ET)
+            // 5-Minute ORB Mapping & Session Range Dynamics (Strict Non-Repainting Trigger Shelf)
+            const isMidday = estHours > 10 || (estHours === 10 && estMins >= 15);
             const orbRangeSpread = Math.max(0.40, dayHigh - dayOpen);
-            const orbHigh = Math.round((dayOpen + orbRangeSpread * 0.35) * 100) / 100;
-            const orbLow = Math.round((dayOpen - Math.max(0.30, (dayOpen - dayLow) * 0.35)) * 100) / 100;
-            const orbWidth = Math.round((orbHigh - orbLow) * 100) / 100;
+            const morningOrbHigh = Math.round((dayOpen + orbRangeSpread * 0.35) * 100) / 100;
+            const morningOrbLow = Math.round((dayOpen - Math.max(0.30, (dayOpen - dayLow) * 0.35)) * 100) / 100;
 
-            // Breakout is confirmed when price trades above the opening 5-minute shelf or displays qualified institutional volume breakout
-            const isBreakout = livePrice >= orbHigh || (rvol >= 2.8 && changePercent >= 0) || (changePercent > 0.5 && livePrice >= dayLow + orbRangeSpread * 0.3);
-            const effectiveOrbHigh = isBreakout && orbHigh > livePrice ? Math.round(livePrice * 0.996 * 100) / 100 : orbHigh;
+            // Forward-Looking Trigger Shelf:
+            // During morning ORB (09:30 - 10:15 AM ET): Trigger is the morning ORB High
+            // During Midday (10:15 AM - 15:00 PM ET): Trigger is the Session High (dayHigh)
+            // A live trade is ONLY a Breakout if the CURRENT price is actively AT or BREAKING the shelf!
+            const triggerShelf = isMidday ? Math.round(dayHigh * 100) / 100 : morningOrbHigh;
+            const isBreakout = livePrice >= triggerShelf * 0.998;
+            const rangeLow = isMidday ? Math.round(dayLow * 100) / 100 : morningOrbLow;
+            const rangeWidth = Math.round((triggerShelf - rangeLow) * 100) / 100;
 
             // Discovery Time
             const discoveryMinute = snap?.latestTrade?.t 
@@ -195,7 +200,7 @@ export async function POST() {
 
             // 5. COMPOSITE PROFITABILITY / CONFIDENCE METER (0 - 100%)
             const rvolScore = rvol >= 3.0 ? 25 : rvol >= 2.0 ? 22 : rvol >= 1.5 ? 18 : 12;
-            const structureScore = isBreakout ? 25 : (livePrice >= orbHigh * 0.998) ? 20 : 15;
+            const structureScore = isBreakout ? 25 : (livePrice >= triggerShelf * 0.98) ? 20 : 15;
             const liquidityScore = spread <= 0.03 ? 25 : spread <= 0.05 ? 22 : 15;
             const catalystScore = changePercent >= 2.0 ? 25 : changePercent >= 0.5 ? 22 : 18;
             
@@ -297,16 +302,16 @@ export async function POST() {
                     openInterest: openInterest.toLocaleString()
                 },
                 orb: {
-                    high: effectiveOrbHigh,
-                    low: orbLow,
-                    rangeWidth: orbWidth,
+                    high: triggerShelf,
+                    low: rangeLow,
+                    rangeWidth,
                     status: isBreakout ? 'BREAKOUT' : 'PENDING'
                 },
                 signal: {
                     state: isBreakout ? 'BREAKOUT' : 'PENDING',
-                    badge: isBreakout ? 'BULLISH BREAKOUT' : 'ORB COMPRESSION',
-                    action: isBreakout ? 'TRIGGERED' : 'WATCHING',
-                    triggerPrice: effectiveOrbHigh
+                    badge: isBreakout ? 'BULLISH BREAKOUT' : isMidday ? 'MIDDAY CONSOLIDATION' : 'ORB COMPRESSION',
+                    action: isBreakout ? 'TRIGGERED' : `WATCHING ($${triggerShelf.toFixed(2)})`,
+                    triggerPrice: triggerShelf
                 },
                 targets: {
                     entry: entryPrice,
@@ -317,8 +322,8 @@ export async function POST() {
                     rewardT1Dollars: rewardT1,
                     rewardT2Dollars: rewardT2,
                     rrRatio,
-                    underlyingStop: orbLow,
-                    underlyingTarget: Math.round((effectiveOrbHigh + orbWidth * 1.5) * 100) / 100
+                    underlyingStop: rangeLow,
+                    underlyingTarget: Math.round((triggerShelf + rangeWidth * 1.5) * 100) / 100
                 }
             });
         }
