@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { 
   Zap, Clock, TrendingUp, TrendingDown, Target, ShieldCheck, 
   Send, RefreshCw, AlertTriangle, CheckCircle2, ChevronRight,
-  Sliders, Info, Activity, Flame, DollarSign, Layers
+  Sliders, Info, Activity, Flame, DollarSign, Layers, AlertCircle
 } from "lucide-react";
 import { SPXPowerHourState } from "@/lib/spxPowerHour";
 
@@ -16,6 +16,7 @@ export function SPXPowerHourDesk() {
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [executingOrder, setExecutingOrder] = useState<string | null>(null);
   const [executionNotice, setExecutionNotice] = useState<string | null>(null);
+  const [selectedSurgeSide, setSelectedSurgeSide] = useState<"CALL" | "PUT" | null>(null);
 
   const fetchData = async () => {
     try {
@@ -140,7 +141,11 @@ export function SPXPowerHourDesk() {
   }
 
   const phase = data?.phaseInfo;
-  const surge = data?.activeSurgeCandidate;
+  const surge = selectedSurgeSide === "CALL" 
+    ? (data?.callCandidate || data?.activeSurgeCandidate) 
+    : selectedSurgeSide === "PUT" 
+    ? (data?.putCandidate || data?.activeSurgeCandidate) 
+    : data?.activeSurgeCandidate;
   const fly = data?.pinButterfly;
 
   return (
@@ -375,11 +380,47 @@ export function SPXPowerHourDesk() {
 
             <div>
               <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                ⚡ MOC Asymmetric Gamma Surge
+                ⚡ Directional Gamma Breakout
               </h3>
               <p className="text-slate-400 text-xs mt-1">
-                Triggered at 3:50 PM when NYSE MOC Imbalance exceeds $750M and price breaks the 3:00–3:35 PM shelf.
+                Monitored continuously across 3:00–4:00 PM ET. Pre-cutoff entry at 3:30–3:39 PM before 15:40 broker lockout, with MOC surge at 3:50 PM.
               </p>
+            </div>
+
+            {/* Broker 15:40 ET Cutoff Banner */}
+            <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-mono text-amber-300 flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 font-bold">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                <span>Broker 15:40 ET Cutoff: Webull, Robinhood, &amp; IBKR reject 0DTE orders after 15:40.</span>
+              </span>
+              <span className="text-[10px] text-slate-400">Optimal Window: 3:30–3:39 PM</span>
+            </div>
+
+            {/* Direction Selection: CALL vs PUT */}
+            <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs font-mono">
+              <span className="text-[10px] text-slate-400 pl-1 font-bold uppercase">Setup Side:</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setSelectedSurgeSide("CALL")}
+                  className={`px-3 py-1 rounded text-xs font-bold transition-all ${
+                    (selectedSurgeSide === "CALL" || (!selectedSurgeSide && data?.recommendedSide === "CALL"))
+                      ? "bg-emerald-500 text-slate-950 font-black shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  CALL Setup (&gt; ${data?.rangeShelf?.high30?.toFixed(1)}) {data?.recommendedSide === "CALL" && "★ FAVORED"}
+                </button>
+                <button
+                  onClick={() => setSelectedSurgeSide("PUT")}
+                  className={`px-3 py-1 rounded text-xs font-bold transition-all ${
+                    (selectedSurgeSide === "PUT" || (!selectedSurgeSide && data?.recommendedSide === "PUT"))
+                      ? "bg-rose-500 text-white font-black shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  PUT Setup (&lt; ${data?.rangeShelf?.low30?.toFixed(1)}) {data?.recommendedSide === "PUT" && "★ FAVORED"}
+                </button>
+              </div>
             </div>
 
             {/* Target Contract Card */}

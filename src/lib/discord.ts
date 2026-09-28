@@ -502,7 +502,7 @@ export async function sendProspectiveStockAlert(stock: {
 }
 
 export interface SPXPowerHourDiscordPayload {
-  setupType: "MOC_GAMMA_CALL" | "MOC_GAMMA_PUT" | "GAMMA_PIN_BUTTERFLY";
+  setupType: "MOC_GAMMA_CALL" | "MOC_GAMMA_PUT" | "GAMMA_PIN_BUTTERFLY" | "PRE_CUTOFF_BREAKOUT_CALL" | "PRE_CUTOFF_BREAKOUT_PUT";
   triggerTime: string;
   spxSpot: number;
   contract: string;
@@ -517,6 +517,8 @@ export interface SPXPowerHourDiscordPayload {
   morningBias: string;
   shelfBreak: string;
   exitCutoff: string;
+  alternateSetup?: string;
+  brokerCutoffWarning?: string;
 }
 
 /**
@@ -524,10 +526,15 @@ export interface SPXPowerHourDiscordPayload {
  */
 export async function sendSPXPowerHourAlert(payload: SPXPowerHourDiscordPayload) {
   const isPin = payload.setupType === "GAMMA_PIN_BUTTERFLY";
-  const isCall = payload.setupType === "MOC_GAMMA_CALL";
+  const isCall = payload.setupType === "MOC_GAMMA_CALL" || payload.setupType === "PRE_CUTOFF_BREAKOUT_CALL";
+  const isPreCutoff = payload.setupType === "PRE_CUTOFF_BREAKOUT_CALL" || payload.setupType === "PRE_CUTOFF_BREAKOUT_PUT";
 
   const title = isPin
     ? `🎯 SPX POWER HOUR: 0DTE GAMMA PIN BUTTERFLY`
+    : isPreCutoff
+    ? isCall
+      ? `🚨 SPX POWER HOUR: PRE-15:40 CALL BREAKOUT (>H30)`
+      : `🚨 SPX POWER HOUR: PRE-15:40 PUT BREAKDOWN (<L30)`
     : isCall
     ? `⚡ SPX POWER HOUR: MOC GAMMA SQUEEZE (CALL)`
     : `⚡ SPX POWER HOUR: MOC WATERFALL FLUSH (PUT)`;
@@ -536,57 +543,76 @@ export async function sendSPXPowerHourAlert(payload: SPXPowerHourDiscordPayload)
   const reward1Pct = Math.round(((payload.target1 - payload.entryAsk) / payload.entryAsk) * 100);
   const reward2Pct = Math.round(((payload.target2 - payload.entryAsk) / payload.entryAsk) * 100);
 
+  const fields: DiscordField[] = [
+    {
+      name: "⏱️ Trigger Time (ET)",
+      value: `**${payload.triggerTime}**`,
+      inline: true,
+    },
+    {
+      name: "📊 SPX Index Spot",
+      value: `**${payload.spxSpot.toFixed(2)}**`,
+      inline: true,
+    },
+    {
+      name: "🎯 Target 0DTE Contract",
+      value: `**${payload.contract}**`,
+      inline: true,
+    },
+    {
+      name: "💵 Entry Ask Price",
+      value: `**$${payload.entryAsk.toFixed(2)}** ($${payload.maxRiskPerContract} max risk)`,
+      inline: true,
+    },
+    {
+      name: "🚀 Target 1 (+Scale 50%)",
+      value: `**$${payload.target1.toFixed(2)} (+${reward1Pct}%)**`,
+      inline: true,
+    },
+    {
+      name: "🚀 Target 2 (+Scale 25%)",
+      value: `**$${payload.target2.toFixed(2)} (+${reward2Pct}%)**`,
+      inline: true,
+    },
+    {
+      name: "🛑 Hard Stop / Trailing",
+      value: `$${payload.stopLoss.toFixed(2)} (or timeout cutoff)`,
+      inline: true,
+    },
+    {
+      name: "⚠️ Mandatory Exit Cutoff",
+      value: `**${payload.exitCutoff}**`,
+      inline: true,
+    },
+  ];
+
+  if (payload.alternateSetup) {
+    fields.push({
+      name: "🔄 Alternate Direction Setup",
+      value: payload.alternateSetup,
+      inline: false,
+    });
+  }
+
+  if (payload.brokerCutoffWarning) {
+    fields.push({
+      name: "⚠️ Broker 15:40 ET Cutoff Notice",
+      value: `**${payload.brokerCutoffWarning}**`,
+      inline: false,
+    });
+  }
+
+  fields.push({
+    name: "🛡️ Institutional Risk Rule",
+    value: "Fixed 1% capital allocation. Never average down on expiring 0DTE contracts. Cash-settled European style.",
+    inline: false,
+  });
+
   const embed: DiscordEmbed = {
     title,
-    description: `**Institutional Catalyst:** ${payload.mocImbalance}\n**Morning Bias (JFE Indicator):** \`${payload.morningBias}\`\n**Range Status:** \`${payload.shelfBreak}\``,
+    description: `**Shelf Status:** \`${payload.shelfBreak}\`\n**Morning Bias (JFE Indicator):** \`${payload.morningBias}\`\n**MOC Flow:** ${payload.mocImbalance}`,
     color,
-    fields: [
-      {
-        name: "⏱️ Trigger Time (ET)",
-        value: `**${payload.triggerTime}**`,
-        inline: true,
-      },
-      {
-        name: "📊 SPX Index Spot",
-        value: `**${payload.spxSpot.toFixed(2)}**`,
-        inline: true,
-      },
-      {
-        name: "🎯 Target 0DTE Contract",
-        value: `**${payload.contract}**`,
-        inline: true,
-      },
-      {
-        name: "💵 Entry Ask Price",
-        value: `**$${payload.entryAsk.toFixed(2)}** ($${payload.maxRiskPerContract} max risk)`,
-        inline: true,
-      },
-      {
-        name: "🚀 Target 1 (+Scale 50%)",
-        value: `**$${payload.target1.toFixed(2)} (+${reward1Pct}%)**`,
-        inline: true,
-      },
-      {
-        name: "🚀 Target 2 (+Scale 25%)",
-        value: `**$${payload.target2.toFixed(2)} (+${reward2Pct}%)**`,
-        inline: true,
-      },
-      {
-        name: "🛑 Hard Stop / Trailing",
-        value: `$${payload.stopLoss.toFixed(2)} (or 3:53 PM timeout)`,
-        inline: true,
-      },
-      {
-        name: "⚠️ Mandatory Exit Cutoff",
-        value: `**${payload.exitCutoff}** (Before 4:00 PM Cash Settlement)`,
-        inline: true,
-      },
-      {
-        name: "🛡️ Institutional Risk Rule",
-        value: "Fixed 1% capital allocation. Never average down on expiring 0DTE contracts. Cash-settled European style.",
-        inline: false,
-      }
-    ],
+    fields,
     footer: {
       text: "SPX 0DTE Power Hour Desk • Options Tracker AI",
     },

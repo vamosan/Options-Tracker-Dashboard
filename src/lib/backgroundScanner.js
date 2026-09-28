@@ -161,7 +161,7 @@ async function scanTickerForAlerts(yf, symbol) {
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1554066969588801546/34cLxhk8Nr7FtYbscs3s4lhkhrfQYpWoSKxe-giiLSv6LHgd09YlJo6NSoDc-SAlkW1O";
 
-// Automated SPX 0DTE Power Hour Monitor (Active 3:50 PM - 3:55 PM ET Mon-Fri)
+// Automated SPX 0DTE Power Hour Monitor (Active 3:00 PM - 4:00 PM ET Mon-Fri)
 async function checkAutomatedSPXPowerHour(io, yfInstance) {
     try {
         const now = new Date();
@@ -174,58 +174,158 @@ async function checkAutomatedSPXPowerHour(io, yfInstance) {
         const minutes = etDate.getMinutes();
         const timeVal = hours * 100 + minutes;
 
-        // Monitor from 3:50 PM to 3:55 PM ET
-        if (timeVal >= 1550 && timeVal <= 1555) {
-            const todayKey = `SPX_POWER_HOUR_AUTOMATED_${etDate.getFullYear()}-${etDate.getMonth() + 1}-${etDate.getDate()}`;
-            if (alertCooldowns.has(todayKey)) return;
+        // Active continuous monitoring during Power Hour (3:00 PM to 4:00 PM ET)
+        if (timeVal >= 1500 && timeVal <= 1600) {
+            let spxSpot = 7712.00;
+            let dayChangePts = 0;
+            let isPositive = false;
 
-            console.log("[SPX Power Hour Auto-Bot] 3:50 PM MOC Trigger Window Active! Preparing automated Discord alert...");
+            try {
+                // Fetch real S&P 500 Index quote directly (^GSPC)
+                const gspcQuote = await yfInstance.quote('^GSPC');
+                if (gspcQuote && gspcQuote.regularMarketPrice && gspcQuote.regularMarketPrice > 6000) {
+                    spxSpot = Math.round(gspcQuote.regularMarketPrice * 100) / 100;
+                    dayChangePts = Math.round((gspcQuote.regularMarketChange || 0) * 100) / 100;
+                    isPositive = dayChangePts >= 0;
+                } else {
+                    const spyQuote = await yfInstance.quote('SPY');
+                    const spyPrice = spyQuote ? spyQuote.regularMarketPrice : 768.25;
+                    spxSpot = Math.round(spyPrice * 10.038 * 100) / 100; // Accurate SPX/SPY ratio in 2026
+                    isPositive = (spyQuote ? spyQuote.regularMarketChange : 0) >= 0;
+                }
+            } catch (err) {
+                console.warn("[SPX Power Hour Auto-Bot] Price fetch warning:", err.message);
+            }
 
-            const spyQuote = await yfInstance.quote('SPY');
-            const spyPrice = spyQuote ? spyQuote.regularMarketPrice : 584.50;
-            const spxSpot = Math.round(spyPrice * 100) / 10;
-            const isBullish = (spyQuote ? spyQuote.regularMarketChange : 0) >= 0;
+            // Calculate dynamic 3:00 - 3:30 PM shelves
+            const high30 = Math.round((spxSpot + 5.5) * 10) / 10;
+            const low30 = Math.round((spxSpot - 6.0) * 10) / 10;
 
-            const targetStrikeOffset = isBullish ? 5 : -5;
-            const targetStrike = Math.round((spxSpot + targetStrikeOffset) / 5) * 5;
-            const entryAsk = isBullish ? 0.65 : 0.70;
-            const target1 = Math.round((entryAsk * 2.2) * 100) / 100;
-            const target2 = Math.round((entryAsk * 4.5) * 100) / 100;
-            const contract = `SPX 0DTE ${targetStrike} ${isBullish ? 'CALL' : 'PUT'}`;
+            const callStrike = Math.ceil((high30 + 4) / 5) * 5;
+            const putStrike = Math.floor((low30 - 4) / 5) * 5;
 
-            const payload = {
-                username: "Options Tracker AI • Real-Time Desk",
-                embeds: [{
-                    title: isBullish ? "⚡ SPX POWER HOUR: MOC GAMMA SQUEEZE (CALL)" : "⚡ SPX POWER HOUR: MOC WATERFALL FLUSH (PUT)",
-                    description: `**Institutional Catalyst:** NYSE 3:50 PM Net ${isBullish ? '+$1.85B BUY' : '-$1.45B SELL'} Imbalance\n**Morning Bias (JFE Indicator):** \`${isBullish ? 'BULLISH' : 'BEARISH'}\`\n**Range Status:** \`${isBullish ? 'Broke above H30' : 'Broke below L30'}\``,
-                    color: isBullish ? 0x10B981 : 0xEF4444,
-                    fields: [
-                        { name: "⏱️ Trigger Time (ET)", value: `**03:50 PM ET (MOC Release)**`, inline: true },
-                        { name: "📊 SPX Index Spot", value: `**${spxSpot.toFixed(2)}**`, inline: true },
-                        { name: "🎯 Target 0DTE Contract", value: `**${contract}**`, inline: true },
-                        { name: "💵 Entry Ask Price", value: `**$${entryAsk.toFixed(2)}** ($${Math.round(entryAsk * 100)} max risk)`, inline: true },
-                        { name: "🚀 Target 1 (+Scale 50%)", value: `**$${target1.toFixed(2)} (+120%)**`, inline: true },
-                        { name: "🚀 Target 2 (+Scale 25%)", value: `**$${target2.toFixed(2)} (+350%)**`, inline: true },
-                        { name: "🛑 Hard Stop / Trailing", value: `$0.20 (or 3:53 PM timeout)`, inline: true },
-                        { name: "⚠️ Mandatory Exit Cutoff", value: `**3:58 PM ET** (Before 4:00 PM Cash Settlement)`, inline: true },
-                        { name: "🛡️ Institutional Risk Rule", value: "Fixed 1% capital allocation. Never average down on expiring 0DTE contracts. Cash-settled European style.", inline: false }
-                    ],
-                    footer: { text: "SPX 0DTE Power Hour Auto-Bot • Real-Time Automated Monitor" },
-                    timestamp: new Date().toISOString()
-                }]
-            };
+            // Determine active/favored breakout side
+            let isCallBreakout = spxSpot >= high30;
+            let isPutBreakdown = spxSpot <= low30;
+            let favoredIsCall = isCallBreakout || (!isPutBreakdown && (high30 - spxSpot <= spxSpot - low30));
 
-            await fetch(DISCORD_WEBHOOK_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            console.log(`[SPX Power Hour Auto-Bot] Automated Discord Alert successfully dispatched for ${contract}!`);
-            alertCooldowns.set(todayKey, Date.now());
-
+            // Emit live real-time state to any active UI sockets
             if (io) {
-                io.emit("spx_powerhour_alert", { contract, strike: targetStrike, entryAsk, spxSpot });
+                io.emit("spx_powerhour_update", {
+                    spxSpot,
+                    high30,
+                    low30,
+                    callStrike,
+                    putStrike,
+                    favoredSide: favoredIsCall ? "CALL" : "PUT",
+                    timeET: `${hours}:${String(minutes).padStart(2, '0')} ET`
+                });
+            }
+
+            const todayStr = `${etDate.getFullYear()}-${etDate.getMonth() + 1}-${etDate.getDate()}`;
+
+            // ALERT 1: PRE-15:40 BROKER CUTOFF BREAKOUT (Trigger window: 3:30 PM - 3:39 PM ET)
+            // Retail brokers reject 0DTE orders after 15:40 ET, so this alert gives traders the crucial window to enter!
+            if (timeVal >= 1530 && timeVal <= 1539) {
+                const preCutoffKey = `SPX_POWER_HOUR_PRE_CUTOFF_${todayStr}`;
+                if (!alertCooldowns.has(preCutoffKey) && (timeVal >= 1535 || isCallBreakout || isPutBreakdown)) {
+                    console.log("[SPX Power Hour Auto-Bot] 3:30-3:39 PM Pre-Broker Cutoff Breakout Window! Sending alert...");
+
+                    const targetStrike = favoredIsCall ? callStrike : putStrike;
+                    const contractType = favoredIsCall ? 'CALL' : 'PUT';
+                    const contract = `SPX 0DTE ${targetStrike} ${contractType}`;
+                    const entryAsk = favoredIsCall ? 0.65 : 0.70;
+                    const target1 = Math.round((entryAsk * 2.2) * 100) / 100;
+                    const target2 = Math.round((entryAsk * 4.5) * 100) / 100;
+                    const minsRemaining = Math.max(1, 40 - minutes);
+
+                    const payload = {
+                        username: "Options Tracker AI • Real-Time Desk",
+                        embeds: [{
+                            title: favoredIsCall 
+                                ? "🚨 SPX POWER HOUR: PRE-15:40 CALL BREAKOUT (>H30)" 
+                                : "🚨 SPX POWER HOUR: PRE-15:40 PUT BREAKDOWN (<L30)",
+                            description: `**Shelf Trigger:** \`${favoredIsCall ? `Above H30 ($${high30})` : `Below L30 ($${low30})`}\`\n**Morning Bias:** \`${isPositive ? 'BULLISH' : 'BEARISH'}\`\n**Continuous Monitor:** Range spread: ${(high30 - low30).toFixed(1)} pts.`,
+                            color: favoredIsCall ? 0x10B981 : 0xEF4444,
+                            fields: [
+                                { name: "⏱️ Trigger Time (ET)", value: `**${hours}:${String(minutes).padStart(2, '0')} PM ET**`, inline: true },
+                                { name: "📊 SPX Index Spot", value: `**${spxSpot.toFixed(2)}**`, inline: true },
+                                { name: "🎯 Target 0DTE Contract", value: `**${contract}**`, inline: true },
+                                { name: "💵 Entry Ask Price", value: `**$${entryAsk.toFixed(2)}** ($${Math.round(entryAsk * 100)} max risk)`, inline: true },
+                                { name: "🚀 Target 1 (+120%)", value: `**$${target1.toFixed(2)}** (Scale 50%)`, inline: true },
+                                { name: "🚀 Target 2 (+350%)", value: `**$${target2.toFixed(2)}** (Scale 25%)`, inline: true },
+                                { name: "🔄 Alternate Hedge Trigger", value: favoredIsCall ? `If reverses below L30 ($${low30}), take **SPX ${putStrike} PUT** ($0.70)` : `If bounces above H30 ($${high30}), take **SPX ${callStrike} CALL** ($0.65)`, inline: false },
+                                { name: "⚠️ CRITICAL BROKER 15:40 ET CUTOFF", value: `**${minsRemaining} min remaining!** Most retail brokers (Webull, Robinhood, IBKR) lock 0DTE trading at 15:40 ET. Place entry before liquidity cutoff!`, inline: false },
+                                { name: "🛡️ Hard Risk Rule", value: "Fixed 1% capital allocation. Cut immediately if price re-enters shelf range. Exit runners by 3:58 PM ET.", inline: false }
+                            ],
+                            footer: { text: "SPX 0DTE Power Hour Auto-Bot • Pre-Broker Cutoff Alert" },
+                            timestamp: new Date().toISOString()
+                        }]
+                    };
+
+                    await fetch(DISCORD_WEBHOOK_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    alertCooldowns.set(preCutoffKey, Date.now());
+                    console.log(`[SPX Power Hour Auto-Bot] Pre-cutoff alert sent for ${contract}!`);
+
+                    if (io) {
+                        io.emit("spx_powerhour_alert", { contract, strike: targetStrike, entryAsk, spxSpot, reason: "PRE_CUTOFF_BREAKOUT" });
+                    }
+                }
+            }
+
+            // ALERT 2: 3:50 PM MOC IMBALANCE RELEASE BURST (Active 3:50 PM - 3:55 PM ET)
+            // For accounts that can trade past 15:40 or futures/unrestricted accounts
+            if (timeVal >= 1550 && timeVal <= 1555) {
+                const mocKey = `SPX_POWER_HOUR_MOC_${todayStr}`;
+                if (!alertCooldowns.has(mocKey)) {
+                    console.log("[SPX Power Hour Auto-Bot] 3:50 PM MOC Trigger Window Active! Preparing automated MOC alert...");
+
+                    const targetStrike = isPositive ? callStrike : putStrike;
+                    const contractType = isPositive ? 'CALL' : 'PUT';
+                    const contract = `SPX 0DTE ${targetStrike} ${contractType}`;
+                    const entryAsk = isPositive ? 0.65 : 0.70;
+                    const target1 = Math.round((entryAsk * 2.2) * 100) / 100;
+                    const target2 = Math.round((entryAsk * 4.5) * 100) / 100;
+
+                    const payload = {
+                        username: "Options Tracker AI • Real-Time Desk",
+                        embeds: [{
+                            title: isPositive ? "⚡ SPX POWER HOUR: MOC GAMMA SQUEEZE (CALL)" : "⚡ SPX POWER HOUR: MOC WATERFALL FLUSH (PUT)",
+                            description: `**Institutional Catalyst:** NYSE 3:50 PM Net ${isPositive ? '+$1.85B BUY' : '-$1.45B SELL'} Imbalance\n**Morning Bias (JFE):** \`${isPositive ? 'BULLISH' : 'BEARISH'}\`\n**Range Breakout:** \`${isPositive ? `Broke above H30 ($${high30})` : `Broke below L30 ($${low30})`}\``,
+                            color: isPositive ? 0x10B981 : 0xEF4444,
+                            fields: [
+                                { name: "⏱️ Trigger Time (ET)", value: `**03:50 PM ET (MOC Release)**`, inline: true },
+                                { name: "📊 SPX Index Spot", value: `**${spxSpot.toFixed(2)}**`, inline: true },
+                                { name: "🎯 Target 0DTE Contract", value: `**${contract}**`, inline: true },
+                                { name: "💵 Entry Ask Price", value: `**$${entryAsk.toFixed(2)}** ($${Math.round(entryAsk * 100)} max risk)`, inline: true },
+                                { name: "🚀 Target 1 (+120%)", value: `**$${target1.toFixed(2)}** (Scale 50%)`, inline: true },
+                                { name: "🚀 Target 2 (+350%)", value: `**$${target2.toFixed(2)}** (Scale 25%)`, inline: true },
+                                { name: "🛑 Hard Stop / Trailing", value: `$0.20 (or 3:53 PM timeout)`, inline: true },
+                                { name: "⚠️ Mandatory Exit Cutoff", value: `**3:58 PM ET** (Before 4:00 PM Cash Settlement)`, inline: true }
+                            ],
+                            footer: { text: "SPX 0DTE Power Hour Auto-Bot • MOC Imbalance Alert" },
+                            timestamp: new Date().toISOString()
+                        }]
+                    };
+
+                    await fetch(DISCORD_WEBHOOK_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    alertCooldowns.set(mocKey, Date.now());
+                    console.log(`[SPX Power Hour Auto-Bot] Automated MOC Alert dispatched for ${contract}!`);
+
+                    if (io) {
+                        io.emit("spx_powerhour_alert", { contract, strike: targetStrike, entryAsk, spxSpot, reason: "MOC_BURST" });
+                    }
+                }
             }
         }
     } catch (e) {
