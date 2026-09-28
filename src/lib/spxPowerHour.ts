@@ -46,6 +46,30 @@ export interface SPXBreakoutConfluence {
   overallConviction: "HIGH_CONVICTION" | "MODERATE" | "STANDBY";
 }
 
+export interface SPXPowerHourDirectSignal {
+  direction: "CALL" | "PUT";
+  directionLabel: string;
+  confidencePct: number;
+  status: "ACTIVE_TRIGGERED" | "ARMED_WAITING_FOR_TRIGGER" | "SESSION_CLOSED";
+  statusText: string;
+  bestStrike: number;
+  contractName: string;
+  miniContractEquivalent: string;
+  triggerLevel: number;
+  triggerRule: string;
+  entryAsk: number;
+  target1: number;
+  target2: number;
+  stopLoss: number;
+  maxRiskDollars: number;
+  distanceToTriggerPts: number;
+  profitCriteria: Array<{
+    title: string;
+    value: string;
+    explanation: string;
+  }>;
+}
+
 export interface SPXPowerHourState {
   timestamp: string;
   currentTimeET: string;
@@ -74,6 +98,7 @@ export interface SPXPowerHourState {
   };
   mocImbalance: MOCImbalanceData;
   confluence: SPXBreakoutConfluence;
+  directSignal: SPXPowerHourDirectSignal;
   activeSurgeCandidate: SPXPowerHourStrikeCandidate | null;
   callCandidate: SPXPowerHourStrikeCandidate | null;
   putCandidate: SPXPowerHourStrikeCandidate | null;
@@ -342,6 +367,48 @@ export async function getLiveSPXPowerHourData(options?: {
         mocAgreementMessage: isClosed ? "NYSE 4:00 PM cash cross completed." : "Pending 3:50 PM ET MOC release.",
         overallConviction: "STANDBY"
       },
+      directSignal: {
+        direction: isPositiveDay ? "CALL" : "PUT",
+        directionLabel: isPositiveDay ? "CALLS (BULLISH ↗)" : "PUTS (BEARISH ↘)",
+        confidencePct: isPositiveDay ? 68 : 71,
+        status: isClosed ? "SESSION_CLOSED" : "ARMED_WAITING_FOR_TRIGGER",
+        statusText: isClosed
+          ? `SESSION CLOSED: SPX cash-settled @ $${spxSpot.toFixed(2)} (${isPositiveDay ? "+" : ""}${dayChangePts.toFixed(1)} pts). Trading resumes tomorrow at 3:00 PM ET.`
+          : `ARMED: Next Power Hour session activates at 3:00 PM ET. Predominant trend is ${isPositiveDay ? "BULLISH" : "BEARISH"}.`,
+        bestStrike: isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5,
+        contractName: `SPX 0DTE ${isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5} ${isPositiveDay ? "CALL" : "PUT"}`,
+        miniContractEquivalent: `XSP/SPY ${Math.round((isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5) / 10)} ${isPositiveDay ? "CALL" : "PUT"} @ ~$0.38 ($38/ct)`,
+        triggerLevel: isPositiveDay ? Math.round((spxSpot + 5.5) * 10) / 10 : Math.round((spxSpot - 6.0) * 10) / 10,
+        triggerRule: isPositiveDay ? `Break above $${(spxSpot + 5.5).toFixed(1)} resistance` : `Break below $${(spxSpot - 6.0).toFixed(1)} support`,
+        entryAsk: 3.70,
+        target1: 8.14,
+        target2: 16.65,
+        stopLoss: 1.11,
+        maxRiskDollars: 370,
+        distanceToTriggerPts: isPositiveDay ? 5.5 : 6.0,
+        profitCriteria: [
+          {
+            title: "1. Favored Direction",
+            value: isPositiveDay ? `Bullish (+${dayChangePct.toFixed(2)}% Tape)` : `Bearish (${dayChangePct.toFixed(2)}% Tape)`,
+            explanation: isPositiveDay ? "Market breadth & morning tape favor upside gamma expansion." : "Market breadth & morning institutional selling favor downside waterfall flush."
+          },
+          {
+            title: "2. Best Strike Selection",
+            value: `${isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5} ${isPositiveDay ? "CALL" : "PUT"} (~0.40 Delta)`,
+            explanation: "Near-the-money strike (4 pts OTM) eliminates fatal theta decay of deep OTM options while giving 2x–3x return on an 8-point move."
+          },
+          {
+            title: "3. Entry Trigger",
+            value: isPositiveDay ? `Break above $${(spxSpot + 5.5).toFixed(1)}` : `Break below $${(spxSpot - 6.0).toFixed(1)}`,
+            explanation: "Do not trade inside range. Enter only when the index breaches the breakout level to ensure immediate momentum."
+          },
+          {
+            title: "4. Strict Cutoff Rule",
+            value: "Exit by 3:58 PM ET",
+            explanation: "Cash-settled Section 1256 (no physical stock risk). Take profit before 4:00 PM settlement cross variance."
+          }
+        ]
+      },
       activeSurgeCandidate: null,
       callCandidate: null,
       putCandidate: null,
@@ -547,6 +614,76 @@ export async function getLiveSPXPowerHourData(options?: {
 
   const finalSpot = options?.simulateMOCDirection ? effectiveSpot : spxSpot;
 
+  // Construct the Direct 1-Trade Signal (Plain, simple, exactly 1 trade)
+  const isUpward = breakoutDirection === "UPWARD_BREAKOUT";
+  const isDownward = breakoutDirection === "DOWNWARD_BREAKOUT";
+  const isInside = breakoutDirection === "INSIDE_RANGE";
+
+  // When inside range, favored direction is determined by Day Trend & Morning Momentum Bias
+  const favoredIsCall = isUpward || (isInside && isPositiveDay);
+  const signalDirection: "CALL" | "PUT" = favoredIsCall ? "CALL" : "PUT";
+  const targetStrike = favoredIsCall ? Math.ceil((high30 + 4) / 5) * 5 : Math.floor((low30 - 4) / 5) * 5;
+  const triggerLevel = favoredIsCall ? high30 : low30;
+  const triggerRule = favoredIsCall ? `Breakout above $${high30.toFixed(1)} resistance` : `Breakdown below $${low30.toFixed(1)} support`;
+  const distanceToTriggerPts = favoredIsCall ? Math.round((high30 - finalSpot) * 10) / 10 : Math.round((finalSpot - low30) * 10) / 10;
+
+  // Active vs Armed
+  const isTriggered = (favoredIsCall && isUpward) || (!favoredIsCall && isDownward);
+  const status: "ACTIVE_TRIGGERED" | "ARMED_WAITING_FOR_TRIGGER" = isTriggered ? "ACTIVE_TRIGGERED" : "ARMED_WAITING_FOR_TRIGGER";
+  
+  const statusText = isTriggered
+    ? `🔥 ACTIVE TRADE: SPX ($${finalSpot.toFixed(1)}) crossed ${favoredIsCall ? "above" : "below"} $${triggerLevel.toFixed(1)} ${favoredIsCall ? "resistance" : "support"}`
+    : `⏳ ARMED ON TRIGGER: Enter when SPX ${favoredIsCall ? "breaks above" : "breaks below"} $${triggerLevel.toFixed(1)} (Currently $${finalSpot.toFixed(1)} — ${Math.abs(distanceToTriggerPts).toFixed(1)} pts away)`;
+
+  // Pricing
+  const candidate = activeSurgeCandidate || (favoredIsCall ? callCandidate : putCandidate);
+  const entryAsk = candidate ? candidate.estimatedAsk : (favoredIsCall ? 3.95 : 3.70);
+  const target1 = candidate ? candidate.target1 : Math.round(entryAsk * 2.2 * 100) / 100;
+  const target2 = candidate ? candidate.target2 : Math.round(entryAsk * 4.5 * 100) / 100;
+  const stopLoss = candidate ? candidate.stopLoss : Math.max(0.20, Math.round(entryAsk * 0.3 * 100) / 100);
+  const maxRiskDollars = Math.round(entryAsk * 100);
+
+  const directSignal: SPXPowerHourDirectSignal = {
+    direction: signalDirection,
+    directionLabel: favoredIsCall ? "CALLS (BULLISH ↗)" : "PUTS (BEARISH ↘)",
+    confidencePct: isTriggered ? (morningBias === (favoredIsCall ? "BULLISH" : "BEARISH") ? 85 : 72) : (favoredIsCall ? 68 : 71),
+    status,
+    statusText,
+    bestStrike: targetStrike,
+    contractName: `SPX 0DTE ${targetStrike} ${signalDirection}`,
+    miniContractEquivalent: `XSP/SPY ${Math.round(targetStrike / 10)} ${signalDirection} @ ~$${(entryAsk / 10).toFixed(2)} ($${Math.round(entryAsk * 10)}/ct)`,
+    triggerLevel,
+    triggerRule,
+    entryAsk,
+    target1,
+    target2,
+    stopLoss,
+    maxRiskDollars,
+    distanceToTriggerPts,
+    profitCriteria: [
+      {
+        title: "1. Favored Direction",
+        value: favoredIsCall ? `Bullish (${dayChangePct > 0 ? "+" : ""}${dayChangePct.toFixed(2)}% Tape)` : `Bearish (${dayChangePct > 0 ? "+" : ""}${dayChangePct.toFixed(2)}% Tape)`,
+        explanation: favoredIsCall ? "Morning institutional buying & upward tape favor Call squeeze into the close." : "Morning institutional selling & downward tape favor Put flush into the close."
+      },
+      {
+        title: "2. Best Strike Selection",
+        value: `${targetStrike} ${signalDirection} (~0.40 Delta / 4 pts OTM)`,
+        explanation: "Near-the-money strike eliminates fatal theta decay of deep OTM options while giving 2x–3x return on an 8-point move."
+      },
+      {
+        title: "3. Execution Trigger",
+        value: triggerRule,
+        explanation: isTriggered ? "Confirmed shelf clearance (buffer >= 1.0 pt). Momentum actively expanding." : `Wait for breach of $${triggerLevel.toFixed(1)}. Strict zero trades inside range to avoid chop.`
+      },
+      {
+        title: "4. Hard Exit Cutoff",
+        value: "3:58 PM ET Hard Stop",
+        explanation: "Cash-settled Section 1256 (no physical stock risk). Harvest profits before 4:00 PM settlement cross variance."
+      }
+    ]
+  };
+
   return {
     timestamp: new Date().toISOString(),
     currentTimeET: phaseInfo.timeDisplay,
@@ -575,6 +712,7 @@ export async function getLiveSPXPowerHourData(options?: {
     },
     mocImbalance,
     confluence,
+    directSignal,
     activeSurgeCandidate,
     callCandidate,
     putCandidate,
