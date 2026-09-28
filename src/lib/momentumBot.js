@@ -115,44 +115,13 @@ async function scanTickerForMomentum(yf, symbol) {
     try {
         let optionsResult = null;
         let quote = null;
-        let usingWebullOptions = true;
 
         try {
-            const webullQuotesPath = path.join(process.cwd(), 'src', 'lib', 'agentic-desk', 'fetch_webull_quotes.py');
-            const { stdout: quoteOut } = await execAsync(`python "${webullQuotesPath}" "${symbol}"`, {
-                env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
-            });
-            const quoteData = JSON.parse(quoteOut.trim());
-            if (quoteData.error) throw new Error(quoteData.error);
-            quote = quoteData;
-
-            const webullOptionsPath = path.join(process.cwd(), 'src', 'lib', 'agentic-desk', 'fetch_webull_options.py');
-            const { stdout: optionsOut } = await execAsync(`python "${webullOptionsPath}" "${symbol}"`, {
-                env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
-            });
-            const optionsData = JSON.parse(optionsOut.trim());
-            if (optionsData.error) throw new Error(optionsData.error);
-            
-            if (optionsData.contracts && optionsData.contracts.length > 0) {
-                const expirations = {};
-                for (const c of optionsData.contracts) {
-                    if (!expirations[c.expiration]) expirations[c.expiration] = { expirationDate: c.expiration, calls: [], puts: [] };
-                    if (c.type === 'calls') expirations[c.expiration].calls.push(c);
-                    else expirations[c.expiration].puts.push(c);
-                }
-                const sortedExps = Object.values(expirations).sort((a, b) => new Date(a.expirationDate) - new Date(b.expirationDate));
-                optionsResult = { options: sortedExps };
-            } else {
-                throw new Error("No contracts");
-            }
-        } catch (e) {
-            console.warn(`[Webull API] Fallback to Yahoo for ${symbol}: ${e.message}`);
-            usingWebullOptions = false;
-        }
-
-        if (!usingWebullOptions) {
             optionsResult = await yf.options(symbol);
             quote = await yf.quote(symbol);
+        } catch (e) {
+            console.warn(`[Yahoo Options API] Failed for ${symbol}: ${e.message}`);
+            return [];
         }
 
         if (!optionsResult.options || optionsResult.options.length === 0) return [];
@@ -173,34 +142,19 @@ async function scanTickerForMomentum(yf, symbol) {
         ];
 
         let closes = [];
-        let usingWebull = true;
         const startDate = new Date();
         startDate.setFullYear(startDate.getFullYear() - 1);
 
         try {
-            const webullScriptPath = path.join(process.cwd(), 'src', 'lib', 'agentic-desk', 'fetch_webull.py');
-            const { stdout } = await execAsync(`python "${webullScriptPath}" "${symbol}"`, {
-                env: { ...process.env, PYTHONIOENCODING: 'utf8', PYTHONUTF8: '1' }
-            });
-            
-            const webullData = JSON.parse(stdout.trim());
-            if (webullData.error || !webullData.close || webullData.close.length < 200) {
-                usingWebull = false;
-            } else {
-                closes = webullData.close;
-            }
-        } catch (e) {
-            usingWebull = false;
-        }
-
-        if (!usingWebull) {
             // Use chart instead of historical to support v3 correctly without null errors
             const chartData = await yahooFinance.chart(symbol, {
                 period1: startDate,
                 interval: '1d'
             });
-            const historical = chartData.quotes.filter(q => q.close !== null);
+            const historical = (chartData?.quotes || []).filter(q => q && q.close !== null);
             closes = historical.map(day => day.close);
+        } catch (e) {
+            closes = [];
         }
 
         let passingSetups = [];

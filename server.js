@@ -28,7 +28,8 @@ app.prepare().then(() => {
 
     // Start background options scanner
     startBackgroundScanner(io);
-    startMomentumScanner(io);
+    // Momentum scanner disabled per user request to remove momentum and prevent Webull 2FA requests
+    // startMomentumScanner(io);
 
     io.on("connection", (socket) => {
         console.log("Client connected:", socket.id);
