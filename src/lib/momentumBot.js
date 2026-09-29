@@ -53,6 +53,8 @@ function sendDiscordAlert(alert) {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload)
             }
+        }, (res) => {
+            console.log(`[Momentum Bot] Discord alert dispatched for ${alert.symbol} $${alert.strike} ${alert.type}! (HTTP ${res.statusCode})`);
         });
         req.on('error', (e) => console.warn('[Discord Webhook Error]', e.message));
         req.write(payload);
@@ -275,12 +277,16 @@ function startMomentumScanner(io) {
                 console.log(`[MOMENTUM ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type} (Vol/OI: ${alert.volumeRatio.toFixed(2)}x)`);
                 if (io) io.emit("momentum_trade_alert", alert);
                 
-                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries)
+                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries with cooldown)
                 if (alert.confidenceScore >= 50 && !alert.alignment.includes("Divergence")) {
-                    const action = `BUY ${alert.type.toUpperCase()}`;
-                    const rationale = `${alert.alignment} | Vol/OI: ${alert.volumeRatio.toFixed(2)}x`;
-                    logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
-                    sendDiscordAlert(alert);
+                    const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
+                    const lastAlert = alertCooldowns.get(cooldownKey);
+                    if (!lastAlert || (Date.now() - lastAlert >= COOLDOWN_MS)) {
+                        const action = `BUY ${alert.type.toUpperCase()}`;
+                        const rationale = `${alert.alignment} | Vol/OI: ${alert.volumeRatio.toFixed(2)}x`;
+                        logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
+                        sendDiscordAlert(alert);
+                    }
                 }
             }
         } catch (err) {
@@ -295,12 +301,16 @@ function startMomentumScanner(io) {
                 console.log(`[0DTE SPY ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type}`);
                 if (io) io.emit("momentum_trade_alert", alert);
                 
-                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries)
+                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries with cooldown)
                 if (alert.confidenceScore >= 50 && !alert.alignment.includes("Divergence")) {
-                    const action = `BUY ${alert.type.toUpperCase()}`;
-                    const rationale = `0DTE Scalp | ${alert.alignment}`;
-                    logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
-                    sendDiscordAlert(alert);
+                    const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
+                    const lastAlert = alertCooldowns.get(cooldownKey);
+                    if (!lastAlert || (Date.now() - lastAlert >= COOLDOWN_MS)) {
+                        const action = `BUY ${alert.type.toUpperCase()}`;
+                        const rationale = `0DTE Scalp | ${alert.alignment}`;
+                        logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
+                        sendDiscordAlert(alert);
+                    }
                 }
             }
         } catch (err) {
