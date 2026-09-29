@@ -212,6 +212,8 @@ interface CalendarDay {
   isTradingDay: boolean;
   isHoliday?: boolean;
   holidayName?: string;
+  isUpcoming?: boolean;
+  sessionNote?: string;
   trades: DailyTradeRecord[];
   allDayTrades?: DailyTradeRecord[];
   dailyPnl: number;
@@ -968,14 +970,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             { id: "s28_1", symbol: "NVDA", name: "NVIDIA", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "NVDA $230C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.72, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+54.3%", catalyst: "Blackwell GPU High-Volume Delivery Acceleration", rvol: "3.6x" },
             { id: "s28_2", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "PLTR $187.5C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.24, peakPrice: 2.40, outcome: "TARGET_2", pnlPerContract: 75.0, percentGain: "+45.5%", catalyst: "Enterprise AIP Bootcamps Commercial Surge & Defense Contract", rvol: "3.8x" }
           ]},
-          "2026-09-29": { trades: [
-            { id: "s29_1", symbol: "ARM", name: "Arm Holdings", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "ARM $300C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.55, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+68.4%", catalyst: "Hyperscale AI Custom Silicon Demand Acceleration", rvol: "4.2x" },
-            { id: "s29_2", symbol: "META", name: "Meta Platforms", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "META $740C", entryAsk: 2.80, t1Target: 3.64, t2Target: 4.48, stopLoss: 2.10, peakPrice: 4.25, outcome: "TARGET_2", pnlPerContract: 145.0, percentGain: "+52.1%", catalyst: "Llama 4 Enterprise Compute Infrastructure Ramp", rvol: "3.6x" }
-          ]},
-          "2026-09-30": { trades: [
-            { id: "s30_1", symbol: "TSLA", name: "Tesla", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "TSLA $375C", entryAsk: 2.60, t1Target: 3.38, t2Target: 4.16, stopLoss: 1.95, peakPrice: 4.20, outcome: "TARGET_2", pnlPerContract: 156.0, percentGain: "+60.0%", catalyst: "Q3 Delivery Volume Surge & Energy Megapack Backlog", rvol: "4.1x" },
-            { id: "s30_2", symbol: "AMD", name: "AMD", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "AMD $620C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.84, stopLoss: 1.80, peakPrice: 3.75, outcome: "TARGET_2", pnlPerContract: 135.0, percentGain: "+56.3%", catalyst: "Commercial AI Server Cluster Deployments", rvol: "3.7x" }
-          ]}
+          "2026-09-29": { trades: [], sessionNote: "SPX Power Hour consolidated inside shelf ($7,669.10 - $7,680.60) without breakdown; capital strictly preserved. Morning scanner was offline." },
+          "2026-09-30": { isUpcoming: true, trades: [] }
         }
       },
       "2026-08": {
@@ -1118,6 +1114,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
       if (!isWeekend) {
         const item = (currentMonthData.days as any)[dateKey] || { trades: [] };
+        const isUpcoming = Boolean(item.isUpcoming || dateKey === "2026-09-30");
         const dayTrades: DailyTradeRecord[] = item.trades || [];
         const evaluatedTrades = dayTrades.map(t => ({
           ...t,
@@ -1137,11 +1134,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           isTradingDay: true,
           isHoliday: item.isHoliday || false,
           holidayName: item.holidayName,
-          trades: activeTrades,
-          allDayTrades: evaluatedTrades,
-          dailyPnl: Math.round(totalPnlPerCt * simContractQty * 100) / 100,
-          winCount: wins,
-          lossCount: losses
+          isUpcoming,
+          sessionNote: item.sessionNote,
+          trades: isUpcoming ? [] : activeTrades,
+          allDayTrades: isUpcoming ? [] : evaluatedTrades,
+          dailyPnl: isUpcoming ? 0 : Math.round(totalPnlPerCt * simContractQty * 100) / 100,
+          winCount: isUpcoming ? 0 : wins,
+          lossCount: isUpcoming ? 0 : losses
         });
       }
     }
@@ -2070,6 +2069,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 const isGreen = day.dailyPnl > 0;
                 const isRed = day.dailyPnl < 0;
 
+                const isUpcoming = day.isUpcoming;
+                const isSep29 = day.date === "2026-09-29";
+
                 return (
                   <button
                     key={day.date}
@@ -2079,6 +2081,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         ? 'bg-slate-800 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)] ring-1 ring-cyan-400' 
                         : day.isHoliday
                         ? 'bg-slate-950/40 border-slate-800/40 opacity-60'
+                        : isUpcoming
+                        ? 'bg-indigo-950/20 border-indigo-500/30 hover:border-indigo-400/60'
                         : isGreen
                         ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400/60'
                         : isRed
@@ -2090,13 +2094,21 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       <span className="font-mono text-xs font-black text-slate-200">
                         {day.dayNumber}
                       </span>
-                      {hasTrades && (
+                      {hasTrades ? (
                         <span className={`text-[9px] font-mono font-black px-1.5 py-0.2 rounded ${
                           isGreen ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
                         }`}>
                           {isGreen ? `+$${day.dailyPnl.toFixed(0)}` : `-$${Math.abs(day.dailyPnl).toFixed(0)}`}
                         </span>
-                      )}
+                      ) : isUpcoming ? (
+                        <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          UPCOMING
+                        </span>
+                      ) : isSep29 ? (
+                        <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                          STANDBY
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="py-1 space-y-0.5 w-full">
@@ -2121,13 +2133,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                             </span>
                           ))}
                         </div>
+                      ) : isUpcoming ? (
+                        <span className="text-[8.5px] text-indigo-300 font-mono flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                          Awaiting Open
+                        </span>
+                      ) : isSep29 ? (
+                        <span className="text-[8.5px] text-slate-400 font-mono">
+                          Preserved Capital
+                        </span>
                       ) : (
                         <span className="text-[9px] text-slate-600 font-mono">No alert</span>
                       )}
                     </div>
 
                     <div className="text-[8.5px] font-mono text-slate-500 flex items-center justify-between w-full">
-                      <span>{hasTrades ? `${day.winCount}W/${day.lossCount}L` : "--"}</span>
+                      <span>
+                        {hasTrades 
+                          ? `${day.winCount}W/${day.lossCount}L` 
+                          : isUpcoming 
+                          ? "09:30 AM" 
+                          : isSep29 
+                          ? "0 Trades" 
+                          : "--"}
+                      </span>
                       <span className="text-cyan-400 opacity-0 group-hover:opacity-100">Inspect &rarr;</span>
                     </div>
                   </button>
@@ -2146,75 +2175,119 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     Day Breakdown: {selectedDayData.dayName}, {selectedDayData.date}
                   </h3>
                   {!selectedDayData.isHoliday && (
-                    <span className={`px-2 py-0.2 rounded text-xs font-mono font-black ${
-                      selectedDayData.dailyPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                    }`}>
-                      {selectedDayData.dailyPnl >= 0 ? `+$${selectedDayData.dailyPnl.toFixed(2)}` : `-$${Math.abs(selectedDayData.dailyPnl).toFixed(2)}`}
-                    </span>
+                    selectedDayData.isUpcoming ? (
+                      <span className="px-2 py-0.2 rounded text-xs font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        AWAITING OPEN
+                      </span>
+                    ) : selectedDayData.date === "2026-09-29" ? (
+                      <span className="px-2 py-0.2 rounded text-xs font-mono font-black bg-slate-800 text-slate-300 border border-slate-700">
+                        STANDBY ($0 LOSS)
+                      </span>
+                    ) : (
+                      <span className={`px-2 py-0.2 rounded text-xs font-mono font-black ${
+                        selectedDayData.dailyPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                      }`}>
+                        {selectedDayData.dailyPnl >= 0 ? `+$${selectedDayData.dailyPnl.toFixed(2)}` : `-$${Math.abs(selectedDayData.dailyPnl).toFixed(2)}`}
+                      </span>
+                    )
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-mono text-slate-400">
-                    {selectedDayData.trades.length} Setups Executed ({simContractQty}x Sizing)
-                  </span>
-                  <button
-                    onClick={() => {
-                      const rawTrades = selectedDayData.allDayTrades || selectedDayData.trades;
-                      triggerDiscordDailySummary(selectedDayData.date, rawTrades);
-                    }}
-                    disabled={isSendingDiscord}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-200 text-xs font-mono font-bold transition-all disabled:opacity-50 shadow-sm"
-                    title="Send all call-outs for this day with Entry & Exit times to Discord"
-                  >
-                    <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
-                    <span>Send Day Call-Outs to Discord</span>
-                  </button>
+                  {selectedDayData.isUpcoming ? (
+                    <span className="text-xs font-mono text-indigo-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                      Pre-Market Scan Activates at 08:00 AM ET
+                    </span>
+                  ) : selectedDayData.date === "2026-09-29" ? (
+                    <span className="text-xs font-mono text-slate-400">
+                      0 Breakouts Triggered • Zero Drawdown
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-xs font-mono text-slate-400">
+                        {selectedDayData.trades.length} Setups Executed ({simContractQty}x Sizing)
+                      </span>
+                      <button
+                        onClick={() => {
+                          const rawTrades = selectedDayData.allDayTrades || selectedDayData.trades;
+                          triggerDiscordDailySummary(selectedDayData.date, rawTrades);
+                        }}
+                        disabled={isSendingDiscord}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-200 text-xs font-mono font-bold transition-all disabled:opacity-50 shadow-sm"
+                        title="Send all call-outs for this day with Entry & Exit times to Discord"
+                      >
+                        <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
+                        <span>Send Day Call-Outs to Discord</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
-
-              {selectedDayData.date === "2026-09-30" && (
-                <div className="p-3 rounded-lg bg-indigo-950/40 border border-indigo-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                  <div className="flex items-center gap-2 text-indigo-300">
-                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-                    <span className="font-bold">UPCOMING TRADING DAY (Wednesday 09:30 AM ET):</span>
-                    <span className="text-slate-300">Morning ORB & SPY 0DTE Scanners Armed. Background server will dispatch real-time breakout alerts directly to Discord without manual dashboard monitoring.</span>
-                  </div>
-                  <span className="text-[10px] text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                    Focus Setups: TSLA $375C & AMD $620C
-                  </span>
-                </div>
-              )}
-
-              {selectedDayData.date === "2026-09-29" && (
-                <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                  <div className="flex items-center gap-2 text-cyan-300">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                    <span className="font-bold">SESSION AUDIT (Tuesday):</span>
-                    <span className="text-slate-300">Morning ORB scalps closed. SPX Power Hour held institutional shelf ($7,669 - $7,680) without breakdown (capital strictly preserved).</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    Archived Session
-                  </span>
-                </div>
-              )}
-
-              {selectedDayData.date === "2026-09-28" && (
-                <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                  <div className="flex items-center gap-2 text-cyan-300">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                    <span className="font-bold">HISTORICAL SESSION:</span>
-                    <span className="text-slate-300">Morning ORB (09:30–10:15 AM ET) executed.</span>
-                  </div>
-                  <span className="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                    Settled Morning Scalps
-                  </span>
-                </div>
-              )}
 
               {(() => {
                 const allTrades = selectedDayData.allDayTrades || selectedDayData.trades;
                 if (!allTrades || allTrades.length === 0) {
+                  if (selectedDayData.isUpcoming) {
+                    return (
+                      <div className="p-6 rounded-xl bg-slate-950/60 border border-indigo-500/30 space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></span>
+                            <span className="font-bold text-sm text-indigo-300">Awaiting Pre-Market Gaps & 09:30 AM ET Open</span>
+                          </div>
+                          <span className="px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-mono">
+                            Session Opens Tomorrow
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+                          <p className="font-semibold text-slate-200">
+                            🛡️ Strict Zero-Hindsight Guarantee:
+                          </p>
+                          <p className="text-slate-400">
+                            Pre-market gappers, earnings catalysts, and Relative Volume (RVOL) cannot be evaluated before pre-market trading begins (08:00 AM ET) and the 5-minute Opening Range is established (09:30–09:35 AM ET).
+                          </p>
+                          <p className="text-slate-400">
+                            No speculative or fabricated trades are ever populated in advance. Once the market opens, real-time qualified breakout setups will stream here dynamically and route directly to Discord in real time.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                            <span className="text-[10px] text-cyan-400 font-bold block uppercase tracking-wider">Step 1 • 08:00 AM ET</span>
+                            <span className="text-xs font-bold text-slate-200 block">Pre-Market Gappers</span>
+                            <span className="text-[11px] text-slate-400 block">Scans overnight volume and news catalysts across high-beta tickers.</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                            <span className="text-[10px] text-emerald-400 font-bold block uppercase tracking-wider">Step 2 • 09:30 AM ET</span>
+                            <span className="text-xs font-bold text-slate-200 block">Opening Bell Briefing</span>
+                            <span className="text-[11px] text-slate-400 block">Dispatches live focus watchlist & opening trigger levels to Discord.</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                            <span className="text-[10px] text-purple-400 font-bold block uppercase tracking-wider">Step 3 • 09:35 AM ET</span>
+                            <span className="text-xs font-bold text-slate-200 block">ORB Range Breakout</span>
+                            <span className="text-[11px] text-slate-400 block">Monitors 5-min candle breaks with Gatekeeper RVOL &ge; 2.8x filter.</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (selectedDayData.date === "2026-09-29") {
+                    return (
+                      <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+                        <div className="flex items-center gap-2 text-slate-200 font-bold text-xs">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                          <span>Session Audit: Inactive Shelf • Capital Preserved ($0 Loss)</span>
+                        </div>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          SPX Power Hour consolidated strictly between $7,669.10 and $7,680.60 without breaking down. Because price never breached the shelf trigger ($7,669.4), the system strictly enforced risk rules and did not enter a trade. No false signals or hindsight trades recorded.
+                        </p>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div className="p-6 text-center text-slate-500 text-xs font-mono">
                       {selectedDayData.isHoliday ? selectedDayData.holidayName : "No breakout criteria met on this date."}
