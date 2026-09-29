@@ -439,6 +439,8 @@ function startBackgroundScanner(io) {
                     io.emit("profitable_trade_alert", simulatedAlert);
                     alertCooldowns.set("SIMULATED_ALERT", now);
                 }
+            }
+
             // Automated SPX 0DTE Power Hour Monitor (3:50 PM - 3:55 PM ET Mon-Fri)
             await checkAutomatedSPXPowerHour(io, yf);
 
