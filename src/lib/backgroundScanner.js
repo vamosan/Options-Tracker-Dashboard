@@ -181,17 +181,28 @@ async function checkAutomatedSPXPowerHour(io, yfInstance) {
             let isPositive = false;
 
             try {
-                // Fetch real S&P 500 Index quote directly (^GSPC)
-                const gspcQuote = await yfInstance.quote('^GSPC');
-                if (gspcQuote && gspcQuote.regularMarketPrice && gspcQuote.regularMarketPrice > 6000) {
-                    spxSpot = Math.round(gspcQuote.regularMarketPrice * 100) / 100;
-                    dayChangePts = Math.round((gspcQuote.regularMarketChange || 0) * 100) / 100;
-                    isPositive = dayChangePts >= 0;
+                // Primary: Direct Finnhub Institutional Real-Time Quote
+                const finnhubKey = process.env.Finnhub_API_Key || "d69m4lhr01qhe6mo0g6gd69m4lhr01qhe6mo0g70";
+                const fhRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=SPY&token=${finnhubKey}`, {
+                    signal: AbortSignal.timeout(3000)
+                }).catch(() => null);
+
+                if (fhRes && fhRes.ok) {
+                    const q = await fhRes.json();
+                    if (q && q.c && q.c > 200) {
+                        const ratio = 10.038;
+                        spxSpot = Math.round(q.c * ratio * 100) / 100;
+                        dayChangePts = Math.round((q.d || 0) * ratio * 100) / 100;
+                        isPositive = dayChangePts >= 0;
+                    }
                 } else {
-                    const spyQuote = await yfInstance.quote('SPY');
-                    const spyPrice = spyQuote ? spyQuote.regularMarketPrice : 768.25;
-                    spxSpot = Math.round(spyPrice * 10.038 * 100) / 100; // Accurate SPX/SPY ratio in 2026
-                    isPositive = (spyQuote ? spyQuote.regularMarketChange : 0) >= 0;
+                    // Secondary fallback: Yahoo Finance
+                    const gspcQuote = await yfInstance.quote('^GSPC').catch(() => null);
+                    if (gspcQuote && gspcQuote.regularMarketPrice && gspcQuote.regularMarketPrice > 6000) {
+                        spxSpot = Math.round(gspcQuote.regularMarketPrice * 100) / 100;
+                        dayChangePts = Math.round((gspcQuote.regularMarketChange || 0) * 100) / 100;
+                        isPositive = dayChangePts >= 0;
+                    }
                 }
             } catch (err) {
                 console.warn("[SPX Power Hour Auto-Bot] Price fetch warning:", err.message);

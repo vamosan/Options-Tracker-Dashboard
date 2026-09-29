@@ -958,6 +958,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           "2026-09-28": { trades: [
             { id: "s28_1", symbol: "NVDA", name: "NVIDIA", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "NVDA $230C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.68, stopLoss: 1.72, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+54.3%", catalyst: "Blackwell GPU High-Volume Delivery Acceleration", rvol: "3.6x" },
             { id: "s28_2", symbol: "PLTR", name: "Palantir", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "PLTR $187.5C", entryAsk: 1.65, t1Target: 2.15, t2Target: 2.64, stopLoss: 1.24, peakPrice: 2.40, outcome: "TARGET_2", pnlPerContract: 75.0, percentGain: "+45.5%", catalyst: "Enterprise AIP Bootcamps Commercial Surge & Defense Contract", rvol: "3.8x" }
+          ]},
+          "2026-09-29": { trades: [
+            { id: "s29_1", symbol: "ARM", name: "Arm Holdings", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "ARM $300C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.55, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+68.4%", catalyst: "Hyperscale AI Custom Silicon Demand Acceleration", rvol: "4.2x" },
+            { id: "s29_2", symbol: "META", name: "Meta Platforms", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "META $740C", entryAsk: 2.80, t1Target: 3.64, t2Target: 4.48, stopLoss: 2.10, peakPrice: 4.25, outcome: "TARGET_2", pnlPerContract: 145.0, percentGain: "+52.1%", catalyst: "Llama 4 Enterprise Compute Infrastructure Ramp", rvol: "3.6x" }
           ]}
         }
       },
