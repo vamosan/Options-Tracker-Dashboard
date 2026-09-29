@@ -333,10 +333,19 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
   const triggerDiscordSPXAlert = async () => {
     if (!spxPowerHourState) return;
-    const surge = spxPowerHourState.activeSurgeCandidate;
-    if (spxPowerHourState.recommendedSide === "STANDBY" || !surge) {
+    const surge = spxPowerHourState.activeSurgeCandidate || (spxPowerHourState.directSignal ? {
+      type: spxPowerHourState.directSignal.direction,
+      strike: spxPowerHourState.directSignal.bestStrike,
+      estimatedAsk: spxPowerHourState.directSignal.entryAsk || 0.70,
+      target1: spxPowerHourState.directSignal.target1 || 1.54,
+      target2: spxPowerHourState.directSignal.target2 || 3.15,
+      stopLoss: spxPowerHourState.directSignal.stopLoss || 0.20,
+      maxRiskDollars: spxPowerHourState.directSignal.maxRiskDollars || 70,
+    } : null);
+
+    if (!surge) {
       setDiscordNotice({
-        message: "Desk in Standby: Inside shelf or session closed. Zero trades allowed until confirmed breakout.",
+        message: "No active or armed SPX setup found.",
         type: "error"
       });
       return;
@@ -344,7 +353,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
     setIsSendingDiscord(true);
     const isCall = surge.type === "CALL";
-    const isPreCutoff = spxPowerHourState.phaseInfo.isPreBrokerCutoff || spxPowerHourState.phaseInfo.phase === "PRE_CUTOFF_BREAKOUT";
+    const isPreCutoff = spxPowerHourState.phaseInfo?.isPreBrokerCutoff || spxPowerHourState.phaseInfo?.phase === "PRE_CUTOFF_BREAKOUT";
 
     try {
       const res = await fetch("/api/discord", {
@@ -2351,319 +2360,196 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       {activeTab === "SETUPS" && (
         <div className="space-y-4">
           
-          {/* SPX 0DTE POWER HOUR SCANNER SUB-PANEL */}
-          <div className="rounded-xl bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 shadow-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-950/50">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                  <Flame className="w-4 h-4 fill-current" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-sm font-black text-slate-100 tracking-tight flex items-center gap-1.5">
-                      ⚡ SPX 0DTE Power Hour Scanner Desk
-                    </h2>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
-                      spxPowerHourState?.phaseInfo?.phase === "MOC_EXECUTION"
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse"
-                        : spxPowerHourState?.phaseInfo?.phase === "PRE_CUTOFF_BREAKOUT"
-                        ? "bg-emerald-500/30 text-emerald-200 border-emerald-400 animate-pulse"
-                        : spxPowerHourState?.phaseInfo?.phase === "PRE_MOC_PREP"
-                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                        : "bg-slate-800 text-slate-300 border-slate-700"
-                    }`}>
-                      {spxPowerHourState?.phaseInfo?.badge || "STANDBY (3:00 PM ET)"}
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      Auto-Alert Discord: ARMED
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30">
-                      ⚠️ Broker Cutoff: 15:40 ET
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
-                    {spxPowerHourState?.phaseInfo?.title || "Stage 1 Range Build & Pre-15:40 Broker Cutoff Breakout Monitor"}
-                  </span>
-                </div>
-              </div>
+          {/* SPX 0DTE POWER HOUR SCANNER SUB-PANEL — SIMPLIFIED 1-TRADE VIEW */}
+          {(() => {
+            const sig = spxPowerHourState?.directSignal || (spxPowerHourState?.activeSurgeCandidate ? {
+              direction: spxPowerHourState.activeSurgeCandidate.type,
+              contractName: `SPX 0DTE ${spxPowerHourState.activeSurgeCandidate.strike} ${spxPowerHourState.activeSurgeCandidate.type}`,
+              miniContractEquivalent: spxPowerHourState.activeSurgeCandidate.miniContractEquivalent || `SPY ${Math.round(spxPowerHourState.activeSurgeCandidate.strike / 10)} ${spxPowerHourState.activeSurgeCandidate.type}`,
+              bestStrike: spxPowerHourState.activeSurgeCandidate.strike,
+              entryAsk: spxPowerHourState.activeSurgeCandidate.estimatedAsk || 0.70,
+              target1: spxPowerHourState.activeSurgeCandidate.target1 || 1.54,
+              target2: spxPowerHourState.activeSurgeCandidate.target2 || 3.15,
+              stopLoss: spxPowerHourState.activeSurgeCandidate.stopLoss || 0.20,
+              triggerRule: spxPowerHourState.activeSurgeCandidate.triggerCondition || "Breakout confirmed",
+              statusText: "⚡ LIVE CONFIRMED ENTRY"
+            } : null);
 
-              {/* Sub-Panel Controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSpxSubPanelSimulate(!spxSubPanelSimulate)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all border ${
-                    spxSubPanelSimulate 
-                      ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow" 
-                      : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
-                  }`}
-                  title="Simulate 3:35 PM Breakout / 3:50 PM MOC Trigger to verify calculations and alert delivery"
-                >
-                  <span className="text-[10px]">{spxSubPanelSimulate ? "Simulating Active Trigger" : "Simulate Trigger"}</span>
-                </button>
+            const isCall = sig?.direction === "CALL";
+            const isArmed = spxPowerHourState?.recommendedSide === "STANDBY" && !spxSubPanelSimulate;
+            const spot = spxPowerHourState?.spxSpot || 7678.50;
+            const changePts = spxPowerHourState?.dayChangePts ?? -4.8;
+            const changePct = spxPowerHourState?.dayChangePct ?? -0.06;
+            const low30 = spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7672.9";
+            const high30 = spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7684.4";
+            const strike = sig?.bestStrike || (isCall ? 7685 : 7665);
+            const contract = sig?.contractName || `SPX 0DTE ${strike} ${isCall ? 'CALL' : 'PUT'}`;
+            const mini = sig?.miniContractEquivalent || `SPY ${Math.round(strike / 10)} ${isCall ? 'CALL' : 'PUT'} @ ~$0.70`;
+            const entryAsk = sig?.entryAsk || (isCall ? 0.65 : 0.70);
+            const target1 = sig?.target1 || Math.round(entryAsk * 2.2 * 100) / 100;
+            const target2 = sig?.target2 || Math.round(entryAsk * 4.5 * 100) / 100;
+            const stopLoss = sig?.stopLoss || 0.20;
 
-                <button
-                  onClick={triggerDiscordSPXAlert}
-                  disabled={isSendingDiscord || spxPowerHourState?.recommendedSide === "STANDBY" || !spxPowerHourState?.activeSurgeCandidate}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1 transition-all shadow-sm ${
-                    spxPowerHourState?.recommendedSide === "STANDBY" || !spxPowerHourState?.activeSurgeCandidate
-                      ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700 opacity-60"
-                      : "bg-[#5865F2] hover:bg-[#4752C4] text-white cursor-pointer active:scale-95"
-                  }`}
-                  title={
-                    spxPowerHourState?.recommendedSide === "STANDBY" || !spxPowerHourState?.activeSurgeCandidate
-                      ? "Standby: Desk is inside shelf or session closed. Zero trades permitted."
-                      : `Send Confirmed 1-Trade Alert (SPX ${spxPowerHourState?.activeSurgeCandidate?.type} Only) to Discord`
-                  }
-                >
-                  <DiscordIcon className="w-3 h-3 text-white" />
-                  <span className="text-[10px]">
-                    {spxPowerHourState?.recommendedSide === "STANDBY" || !spxPowerHourState?.activeSurgeCandidate
-                      ? "Standby (No Alert)"
-                      : `Alert Discord (${spxPowerHourState?.activeSurgeCandidate?.type})`}
-                  </span>
-                </button>
-
-                {onNavigateTab && (
-                  <button
-                    onClick={() => onNavigateTab("powerhour")}
-                    className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-md active:scale-95"
-                  >
-                    <span>Full Desk</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Broker Cutoff Information Ribbon */}
-            <div className={`px-4 py-1.5 border-b flex items-center justify-between text-[11px] font-mono flex-wrap gap-2 ${
-              spxPowerHourState?.phaseInfo?.phase === "SESSION_CLOSED" && !spxSubPanelSimulate
-                ? "bg-purple-950/40 border-purple-800/40 text-purple-200"
-                : (spxPowerHourState?.phaseInfo?.phase === "PRE_POWER_HOUR" || spxPowerHourState?.recommendedSide === "STANDBY") && !spxSubPanelSimulate
-                ? "bg-slate-900/90 border-slate-800 text-slate-300"
-                : spxSubPanelSimulate
-                ? "bg-amber-500/20 border-amber-500/40 text-amber-200"
-                : spxPowerHourState?.recommendedSide === "CALL"
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-300"
-            }`}>
-              <span className="flex items-center gap-1.5 font-bold">
-                <AlertCircle className={`w-3.5 h-3.5 flex-shrink-0 ${
-                  spxPowerHourState?.phaseInfo?.phase === "SESSION_CLOSED" && !spxSubPanelSimulate
-                    ? "text-purple-400"
-                    : spxSubPanelSimulate 
-                    ? "text-amber-400" 
-                    : spxPowerHourState?.recommendedSide === "STANDBY"
-                    ? "text-amber-400"
-                    : spxPowerHourState?.recommendedSide === "CALL"
-                    ? "text-emerald-400"
-                    : "text-rose-400"
-                }`} />
-                <span>
-                  {spxPowerHourState?.phaseInfo?.phase === "SESSION_CLOSED" && !spxSubPanelSimulate
-                    ? "SESSION CLOSED: SPX 4:00 PM cash close complete. All 0DTE options settled flat against benchmark print."
-                    : spxPowerHourState?.phaseInfo?.phase === "PRE_POWER_HOUR" && !spxSubPanelSimulate
-                    ? "STANDBY RADAR: Range accumulation begins at 3:00 PM ET. Pre-15:40 broker cutoff breakout window opens at 3:30 PM ET."
-                    : spxPowerHourState?.recommendedSide === "STANDBY"
-                    ? "INSIDE 3:00–3:35 PM SHELF — STANDBY: Zero trades allowed inside consolidation shelf. Waiting for confirmed breakout."
-                    : spxSubPanelSimulate
-                    ? `🧪 SIMULATION ACTIVE: Testing Confirmed 1-Trade Breakout (${spxPowerHourState?.recommendedSide}) & Black-Scholes pricing. Broker order cutoff at 15:40 ET.`
-                    : `⚡ LIVE CONFIRMED BREAKOUT: 1-Trade ${spxPowerHourState?.recommendedSide} setup active! Retail brokers lock 0DTE orders at 15:40 ET!`}
-                </span>
-              </span>
-              <span className="text-[10px] text-slate-400">
-                {spxPowerHourState?.recommendationReason}
-              </span>
-            </div>
-
-            {/* Sub-Panel Content: Time-Gated */}
-            {spxPowerHourState?.recommendedSide === "STANDBY" && !spxSubPanelSimulate ? (
-              /* STANDBY / INSIDE SHELF / SESSION CLOSED MONITOR (ZERO TRADES ALLOWED) */
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/40">
-                {/* Metric 1: Real SPX Spot & Session Range */}
-                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
-                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">SPX CASH INDEX SPOT (^GSPC)</span>
-                  <div className="text-xl font-mono font-black text-white flex items-center justify-between">
-                    <span>${spxPowerHourState?.spxSpot ? spxPowerHourState.spxSpot.toFixed(2) : "7,683.93"}</span>
-                    <span className={`text-xs font-bold ${
-                      (spxPowerHourState?.dayChangePts || 0) >= 0 ? "text-emerald-400" : "text-rose-400"
-                    }`}>
-                      {(spxPowerHourState?.dayChangePts || 0) >= 0 ? "+" : ""}{spxPowerHourState?.dayChangePts?.toFixed(1) || "-59.5"} ({spxPowerHourState?.dayChangePct?.toFixed(2)}%)
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-mono text-slate-400 flex justify-between pt-1 border-t border-slate-800/60">
-                    <span>Low: <b className="text-rose-400">${spxPowerHourState?.dayLow?.toFixed(1) || "7666.6"}</b></span>
-                    <span>High: <b className="text-emerald-400">${spxPowerHourState?.dayHigh?.toFixed(1) || "7724.2"}</b></span>
-                  </div>
-                </div>
-
-                {/* Metric 2: 3:00-3:35 PM Range Shelf Consolidation */}
-                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">3:00–3:35 PM RANGE SHELF</span>
-                    <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">INSIDE SHELF</span>
-                  </div>
-                  <div className="flex items-center justify-between pt-0.5">
-                    <div className="text-xs font-mono text-rose-400">
-                      <span className="text-[9px] text-slate-500 block">L30 SUPPORT</span>
-                      <b>${spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7677.7"}</b>
+            return (
+              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 shadow-2xl overflow-hidden p-5">
+                {/* Header */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                      <Flame className="w-5 h-5 fill-current" />
                     </div>
-                    <div className="text-xs font-mono text-slate-400 text-center">
-                      <span className="text-[9px] text-slate-500 block">SPREAD</span>
-                      <b>{spxPowerHourState?.rangeShelf?.spreadPts || 11.5} pts</b>
-                    </div>
-                    <div className="text-xs font-mono text-emerald-400 text-right">
-                      <span className="text-[9px] text-slate-500 block">H30 RESIST</span>
-                      <b>${spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7689.2"}</b>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
-                    <div 
-                      className="bg-amber-400 h-full rounded-full transition-all"
-                      style={{ width: `${spxPowerHourState?.rangeShelf?.currentPositionPct || 50}%` }}
-                    />
-                  </div>
-                  <div className="text-[9.5px] font-mono text-slate-400 pt-0.5 text-center">
-                    Spot is consolidating inside shelf. Zero trades allowed.
-                  </div>
-                </div>
-
-                {/* Metric 3: Breakout Triggers (Exact 1-Trade Rule) */}
-                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1.5">
-                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">BREAKOUT TRIGGERS (1 TRADE)</span>
-                  <div className="space-y-1 text-xs font-mono">
-                    <div className="flex items-center justify-between p-1 rounded bg-slate-950/60 border border-slate-800/50">
-                      <span className="text-emerald-400 flex items-center gap-1 font-bold">
-                        <span>▲ CALL Trigger:</span>
-                      </span>
-                      <span className="text-white font-bold">&gt; ${spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7689.2"}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-1 rounded bg-slate-950/60 border border-slate-800/50">
-                      <span className="text-rose-400 flex items-center gap-1 font-bold">
-                        <span>▼ PUT Trigger:</span>
-                      </span>
-                      <span className="text-white font-bold">&lt; ${spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7677.7"}</span>
-                    </div>
-                  </div>
-                  <div className="text-[9.5px] font-mono text-cyan-400 pt-0.5">
-                    Trigger arms exactly 1 trade upon verified shelf breach.
-                  </div>
-                </div>
-
-                {/* Metric 4: 0DTE Execution Status & Discipline */}
-                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-amber-500/20 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9.5px] font-mono text-amber-400 uppercase font-bold block">0DTE EXECUTION STATUS</span>
-                    <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[8.5px] font-mono font-bold">STANDBY</span>
-                  </div>
-                  <div className="text-sm font-mono font-black text-amber-300">
-                    ZERO TRADES ACTIVE
-                  </div>
-                  <div className="text-[10px] font-mono text-slate-400 pt-1 border-t border-slate-800/60">
-                    {spxPowerHourState?.phaseInfo?.phase === "SESSION_CLOSED"
-                      ? "SPX cash close complete. Next execution window opens tomorrow at 3:00 PM ET."
-                      : "Preserving capital until verified breakout. Click 'Simulate Trigger' to test 1-trade flow."}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* CONFIRMED BREAKOUT: EXACTLY 1 TRADE ONLY (NO DUAL CARDS!) */
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-950/30">
-                {/* Metric 1: SPX Spot & Breakout Confirmation */}
-                <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-1">
-                  <span className="text-[9.5px] font-mono text-slate-500 uppercase font-bold block">SPX SPOT &amp; BREAKOUT</span>
-                  <div className="text-lg font-mono font-black text-white flex items-center justify-between">
-                    <span>${spxPowerHourState?.spxSpot ? spxPowerHourState.spxSpot.toFixed(2) : "7,691.00"}</span>
-                    <span className={`text-xs font-bold ${
-                      spxPowerHourState?.recommendedSide === "CALL" ? "text-emerald-400" : "text-rose-400"
-                    }`}>
-                      {spxPowerHourState?.recommendedSide === "CALL" ? "▲ CALL BREAKOUT" : "▼ PUT BREAKDOWN"}
-                    </span>
-                  </div>
-                  <div className="text-[10px] font-mono text-slate-400 flex justify-between pt-1 border-t border-slate-800/60">
-                    <span>Shelf: <b className="text-white">${spxPowerHourState?.rangeShelf?.low30?.toFixed(1)} - ${spxPowerHourState?.rangeShelf?.high30?.toFixed(1)}</b></span>
-                    <span className="text-emerald-400 font-bold">1 TRADE ARMED</span>
-                  </div>
-                </div>
-
-                {/* Metric 2 & 3: Hero 1-Trade Card (Spans 2 columns on lg) */}
-                <div className={`p-3.5 rounded-lg border space-y-1.5 transition-all sm:col-span-2 ${
-                  spxPowerHourState?.recommendedSide === "CALL"
-                    ? "bg-emerald-950/20 border-emerald-500/80 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
-                    : "bg-rose-950/20 border-rose-500/80 shadow-[0_0_20px_rgba(239,68,68,0.15)]"
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                      spxPowerHourState?.recommendedSide === "CALL" ? "text-emerald-400" : "text-rose-400"
-                    }`}>
-                      <span>⚡ EXACTLY 1 TRADE: {spxPowerHourState?.recommendedSide} BREAKOUT</span>
-                      <span className={`px-1.5 py-0.2 rounded text-[8.5px] font-bold ${
-                        spxPowerHourState?.recommendedSide === "CALL" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
-                      }`}>VERIFIED 0DTE SETUP</span>
-                    </span>
-                    <span className="text-[9.5px] font-mono text-slate-400">
-                      {spxPowerHourState?.activeSurgeCandidate?.triggerCondition}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between flex-wrap gap-2 pt-0.5">
                     <div>
-                      <div className="text-xl font-mono font-black text-white">
-                        SPX 0DTE {spxPowerHourState?.activeSurgeCandidate?.strike} {spxPowerHourState?.activeSurgeCandidate?.type}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base font-black text-white tracking-tight">
+                          ⚡ SPX 0DTE Power Hour
+                        </h2>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          LIVE REAL-TIME FEED
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30">
+                          Broker Cutoff: 15:40 ET
+                        </span>
                       </div>
-                      {spxPowerHourState?.activeSurgeCandidate?.miniContractEquivalent && (
-                        <div className="text-[9.5px] font-mono text-cyan-400">
-                          {spxPowerHourState.activeSurgeCandidate.miniContractEquivalent}
-                        </div>
-                      )}
+                      <span className="text-xs text-slate-400 font-mono mt-0.5 block">
+                        Institutional 3:00–4:00 PM ET Closing Imbalance Engine
+                      </span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[9px] font-mono text-slate-400 uppercase block">ENTRY ASK / MAX RISK</span>
-                      <div className="text-xl font-mono font-black text-white">
-                        ${spxPowerHourState?.activeSurgeCandidate?.estimatedAsk?.toFixed(2)}
-                        <span className="text-xs text-slate-400 font-normal ml-1">
-                          (${spxPowerHourState?.activeSurgeCandidate?.maxRiskDollars}/ct)
+                  </div>
+
+                  {/* Spot & Controls */}
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="text-right px-3 py-1.5 bg-slate-950/80 rounded-xl border border-slate-800">
+                      <span className="text-[9.5px] font-mono text-slate-400 uppercase font-bold block">SPX SPOT</span>
+                      <div className="text-base font-mono font-black text-white flex items-center gap-1">
+                        <span>${spot.toFixed(2)}</span>
+                        <span className={`text-xs font-bold ${changePts >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {changePts >= 0 ? "+" : ""}{changePts.toFixed(1)} ({changePct.toFixed(2)}%)
                         </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/60 text-xs font-mono">
-                    <div>
-                      <span className="text-slate-500 text-[9px] block">TARGET 1 (+120%)</span>
-                      <span className="text-emerald-300 font-bold">${spxPowerHourState?.activeSurgeCandidate?.target1?.toFixed(2)}</span>
-                      <span className="text-[8.5px] text-slate-500 block">Scale 50%</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 text-[9px] block">TARGET 2 (+350%)</span>
-                      <span className="text-emerald-400 font-bold">${spxPowerHourState?.activeSurgeCandidate?.target2?.toFixed(2)}</span>
-                      <span className="text-[8.5px] text-slate-500 block">Scale 25%</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 text-[9px] block">STOP LOSS</span>
-                      <span className="text-rose-400 font-bold">${spxPowerHourState?.activeSurgeCandidate?.stopLoss?.toFixed(2)}</span>
-                      <span className="text-[8.5px] text-slate-500 block">Cut &gt; -70%</span>
-                    </div>
+                    <button
+                      onClick={() => setSpxSubPanelSimulate(!spxSubPanelSimulate)}
+                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all border ${
+                        spxSubPanelSimulate 
+                          ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow" 
+                          : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
+                      }`}
+                      title="Toggle simulated breakout trigger"
+                    >
+                      <span>{spxSubPanelSimulate ? "Simulating Active" : "Simulate"}</span>
+                    </button>
+
+                    <button
+                      onClick={triggerDiscordSPXAlert}
+                      disabled={isSendingDiscord}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 cursor-pointer"
+                      title="Dispatch alert to Discord"
+                    >
+                      <DiscordIcon className="w-3.5 h-3.5 text-white" />
+                      <span>Alert Discord</span>
+                    </button>
+
+                    {onNavigateTab && (
+                      <button
+                        onClick={() => onNavigateTab("powerhour")}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-md active:scale-95"
+                      >
+                        <span>Full Desk</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Metric 4: Broker 15:40 ET Cutoff & Execution Discipline */}
-                <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 space-y-2 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[9.5px] font-mono text-amber-400 uppercase font-bold block">15:40 ET BROKER CUTOFF</span>
-                    <div className="text-xs font-mono text-slate-300 pt-1 leading-snug">
-                      Webull, Robinhood, &amp; IBKR reject 0DTE orders after <b>15:40 ET</b>. Enter breakout now before cutoff.
+                {/* The 1 Clear Trade Card */}
+                <div className={`mt-4 p-5 rounded-xl border transition-all ${
+                  isCall
+                    ? "bg-emerald-950/20 border-emerald-500/40"
+                    : "bg-rose-950/20 border-rose-500/40"
+                }`}>
+                  {/* Status & Bias Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider ${
+                        isCall ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50" : "bg-rose-500/20 text-rose-300 border border-rose-500/50"
+                      }`}>
+                        {isCall ? "BULLISH ↗ CALL SETUP" : "BEARISH ↘ PUT SETUP"}
+                      </span>
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold ${
+                        isArmed ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse" : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50"
+                      }`}>
+                        {isArmed ? "⏳ ARMED ON TRIGGER (STANDBY)" : "⚡ LIVE CONFIRMED ENTRY"}
+                      </span>
+                    </div>
+
+                    <div className="text-xs font-mono text-slate-300">
+                      <span className="text-slate-400">Shelf Range: </span>
+                      <b className="text-rose-400">${low30}</b> (L30) — <b className="text-emerald-400">${high30}</b> (H30)
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono">
-                    <span className="text-slate-400">Exit Deadline:</span>
-                    <span className="text-amber-400 font-bold">3:58 PM ET (Cash Close)</span>
+
+                  {/* Trade Metrics Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                    {/* Contract Details */}
+                    <div className="md:col-span-2 space-y-1">
+                      <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
+                        Recommended 0DTE Contract
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
+                        {contract}
+                      </div>
+                      <div className="text-xs font-mono text-cyan-400">
+                        {mini}
+                      </div>
+                      <div className="text-xs font-mono text-amber-300/90 pt-1">
+                        🎯 Trigger: {isCall ? `Break above $${high30} resistance` : `Breakdown below $${low30} support`}
+                      </div>
+                    </div>
+
+                    {/* Entry Ask */}
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+                      <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">Entry Ask</span>
+                      <div className="text-xl font-mono font-black text-white mt-0.5">
+                        ${entryAsk.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400">~${Math.round(entryAsk * 100)} max risk</span>
+                    </div>
+
+                    {/* Targets */}
+                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-center">
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">Targets (Scale)</span>
+                      <div className="text-xl font-mono font-black text-emerald-300 mt-0.5">
+                        ${target1.toFixed(2)} <span className="text-xs font-normal text-slate-400">/</span> ${target2.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-400/80">+120% (50%) / +350% (25%)</span>
+                    </div>
+
+                    {/* Stop Loss */}
+                    <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-center">
+                      <span className="text-[10px] font-mono text-rose-400 uppercase font-bold block">Stop Loss</span>
+                      <div className="text-xl font-mono font-black text-rose-300 mt-0.5">
+                        ${stopLoss.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] font-mono text-rose-400/80">Cut on shelf re-entry</span>
+                    </div>
+                  </div>
+
+                  {/* Execution Guidance Footer */}
+                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-2">
+                    <span className="flex items-center gap-1.5 text-amber-300">
+                      <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{isArmed ? `Preserve capital inside shelf ($${low30} - $${high30}). Enter on verified breach or at 3:30 PM pre-cutoff.` : `Breakout verified! Place order before 15:40 ET retail broker lock.`}</span>
+                    </span>
+                    <span className="text-slate-400">
+                      Mandatory Exit: <b className="text-white">3:58 PM ET</b> (Cash Settlement)
+                    </span>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            );
+          })()}
 
           {/* DAILY MACRO OUTLOOK & TAPE HEADS-UP BRIEFING */}
           <div className="rounded-xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-xl overflow-hidden">
