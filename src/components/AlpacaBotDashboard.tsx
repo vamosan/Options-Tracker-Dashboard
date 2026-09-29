@@ -2376,8 +2376,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             } : null);
 
             const isCall = sig?.direction === "CALL";
-            const isPreCutoff = spxPowerHourState?.phaseInfo?.phase === "PRE_CUTOFF_BREAKOUT";
-            const isTriggered = sig?.status === "ACTIVE_TRIGGERED" || isPreCutoff || spxSubPanelSimulate;
+            const isTriggered = sig?.status === "ACTIVE_TRIGGERED" || spxSubPanelSimulate;
             const isArmed = !isTriggered;
             const spot = spxPowerHourState?.spxSpot || 7678.50;
             const changePts = spxPowerHourState?.dayChangePts ?? -4.8;
@@ -2550,7 +2549,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-2">
                     <span className="flex items-center gap-1.5 text-amber-300">
                       <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>{isArmed ? `Preserve capital inside shelf ($${low30} - $${high30}). Enter on verified breach or at 3:30 PM pre-cutoff.` : `Breakout verified! Place order before 15:40 ET retail broker lock.`}</span>
+                      <span>{isArmed ? `Preserve capital inside shelf ($${low30} - $${high30}). DO NOT ENTER until price crosses ${isCall ? `above $${high30}` : `below $${low30}`}.` : `Breakout verified! Place order before 15:40 ET retail broker lock.`}</span>
                     </span>
                     <span className="text-slate-400">
                       Mandatory Exit: <b className="text-white">3:58 PM ET</b> (Cash Settlement)

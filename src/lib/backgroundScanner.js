@@ -278,8 +278,8 @@ async function checkAutomatedSPXPowerHour(io, yfInstance) {
             // Retail brokers reject 0DTE orders after 15:40 ET, so this alert gives traders the crucial window to enter!
             if (timeVal >= 1530 && timeVal <= 1539) {
                 const preCutoffKey = `SPX_POWER_HOUR_PRE_CUTOFF_${todayStr}`;
-                if (!alertCooldowns.has(preCutoffKey)) {
-                    console.log("[SPX Power Hour Auto-Bot] 3:30-3:39 PM Pre-Broker Cutoff Breakout Window! Sending alert...");
+                if (!alertCooldowns.has(preCutoffKey) && (isCallBreakout || isPutBreakdown)) {
+                    console.log("[SPX Power Hour Auto-Bot] Genuine Breakout Verified! Sending alert...");
 
                     const targetStrike = favoredIsCall ? callStrike : putStrike;
                     const contractType = favoredIsCall ? 'CALL' : 'PUT';
