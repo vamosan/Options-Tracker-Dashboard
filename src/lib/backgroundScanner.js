@@ -235,6 +235,45 @@ async function checkAutomatedSPXPowerHour(io, yfInstance) {
 
             const todayStr = `${etDate.getFullYear()}-${etDate.getMonth() + 1}-${etDate.getDate()}`;
 
+            // ALERT 0: 3:00 PM POWER HOUR DESK ARMED & SHELF DEFINED (Sent once per day at start of Power Hour)
+            const armedKey = `SPX_POWER_HOUR_ARMED_${todayStr}`;
+            if (!alertCooldowns.has(armedKey)) {
+                console.log("[SPX Power Hour Auto-Bot] Dispatching Power Hour Desk Armed Briefing to Discord...");
+                const targetStrike = favoredIsCall ? callStrike : putStrike;
+                const contractType = favoredIsCall ? 'CALL' : 'PUT';
+                const contract = `SPX 0DTE ${targetStrike} ${contractType}`;
+                const entryAsk = favoredIsCall ? 0.65 : 0.70;
+
+                const armedPayload = {
+                    username: "Options Tracker AI • Real-Time Desk",
+                    embeds: [{
+                        title: "🎯 SPX POWER HOUR ACTIVATED: DESK ARMED",
+                        description: `**Institutional Power Hour Window (3:00 - 4:00 PM ET)**\nContinuous institutional order book monitoring active across the closing accumulation shelf.\n\n⚠️ **STANDBY NOTICE: ZERO TRADES INSIDE SHELF**\nSpot is consolidating inside the institutional shelf. Entering inside the shelf guarantees theta decay. Stand by for a confirmed breakout or the 3:30 PM pre-cutoff window.`,
+                        color: 0x3B82F6, // Blue
+                        fields: [
+                            { name: "⏱️ Session Time (ET)", value: `**${hours}:${String(minutes).padStart(2, '0')} PM ET**`, inline: true },
+                            { name: "📊 SPX Index Spot", value: `**${spxSpot.toFixed(2)}** (${isPositive ? '+' : ''}${dayChangePts.toFixed(1)} pts)`, inline: true },
+                            { name: "🧭 Morning Bias", value: `**${isPositive ? 'BULLISH ↗' : 'BEARISH ↘'}**`, inline: true },
+                            { name: "🧱 Accumulation Shelf", value: `**Low30: $${low30} | High30: $${high30}** (${(high30 - low30).toFixed(1)} pt range)`, inline: false },
+                            { name: "🎯 Armed Put Setup", value: `**SPX 0DTE ${putStrike} PUT** @ ~$0.70\nTrigger: Breakdown below **$${low30}**`, inline: true },
+                            { name: "🎯 Armed Call Setup", value: `**SPX 0DTE ${callStrike} CALL** @ ~$0.65\nTrigger: Breakout above **$${high30}**`, inline: true },
+                            { name: "⏰ Critical Execution Windows", value: `• **3:00 - 3:30 PM**: Shelf Accumulation (STANDBY)\n• **3:30 - 3:39 PM**: Pre-Broker Cutoff Breakout Window\n• **3:40 PM**: Retail 0DTE Liquidity Cutoff\n• **3:50 PM**: NYSE MOC Imbalance Auction Squeeze`, inline: false }
+                        ],
+                        footer: { text: "SPX 0DTE Power Hour Desk • Real-Time Bot Execution" },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                await fetch(DISCORD_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(armedPayload)
+                }).catch(err => console.warn("[Discord Webhook Error]", err.message));
+
+                alertCooldowns.set(armedKey, Date.now());
+                console.log("[SPX Power Hour Auto-Bot] Desk Armed briefing successfully dispatched to Discord!");
+            }
+
             // ALERT 1: PRE-15:40 BROKER CUTOFF BREAKOUT (Trigger window: 3:30 PM - 3:39 PM ET)
             // Retail brokers reject 0DTE orders after 15:40 ET, so this alert gives traders the crucial window to enter!
             if (timeVal >= 1530 && timeVal <= 1539) {
