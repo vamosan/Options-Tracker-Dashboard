@@ -4,6 +4,7 @@ const next = require("next");
 const { loadEnvConfig } = require("@next/env");
 const { Server } = require("socket.io");
 const { startBackgroundScanner } = require("./src/lib/backgroundScanner");
+const { startMomentumScanner } = require("./src/lib/momentumBot");
 
 // Load Next.js environment variables (like .env.local)
 const projectDir = process.cwd();
@@ -34,8 +35,11 @@ app.prepare().then(() => {
     const server3001 = createServer(requestHandler);
     io.attach(server3001);
 
-    // Start background options scanner
+    // Start background options scanner & SPX Power Hour
     startBackgroundScanner(io);
+
+    // Start real-time morning momentum & catalyst scanner
+    startMomentumScanner(io);
 
     io.on("connection", (socket) => {
         console.log("Client connected:", socket.id);

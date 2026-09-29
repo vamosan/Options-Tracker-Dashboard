@@ -424,7 +424,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   // Multi-Month Calendar State
   const [selectedMonth, setSelectedMonth] = useState<"2026-09" | "2026-08" | "2026-07">("2026-09");
   const [simContractQty, setSimContractQty] = useState<number>(3);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-09-28");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-09-30");
   const [showRulesInfo, setShowRulesInfo] = useState<boolean>(true);
   const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
   const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
@@ -971,6 +971,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           "2026-09-29": { trades: [
             { id: "s29_1", symbol: "ARM", name: "Arm Holdings", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "ARM $300C", entryAsk: 2.10, t1Target: 2.73, t2Target: 3.36, stopLoss: 1.55, peakPrice: 3.55, outcome: "TARGET_2", pnlPerContract: 125.0, percentGain: "+68.4%", catalyst: "Hyperscale AI Custom Silicon Demand Acceleration", rvol: "4.2x" },
             { id: "s29_2", symbol: "META", name: "Meta Platforms", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "META $740C", entryAsk: 2.80, t1Target: 3.64, t2Target: 4.48, stopLoss: 2.10, peakPrice: 4.25, outcome: "TARGET_2", pnlPerContract: 145.0, percentGain: "+52.1%", catalyst: "Llama 4 Enterprise Compute Infrastructure Ramp", rvol: "3.6x" }
+          ]},
+          "2026-09-30": { trades: [
+            { id: "s30_1", symbol: "TSLA", name: "Tesla", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:15 AM", duration: "40 min", session: "MORNING_ORB", contract: "TSLA $375C", entryAsk: 2.60, t1Target: 3.38, t2Target: 4.16, stopLoss: 1.95, peakPrice: 4.20, outcome: "TARGET_2", pnlPerContract: 156.0, percentGain: "+60.0%", catalyst: "Q3 Delivery Volume Surge & Energy Megapack Backlog", rvol: "4.1x" },
+            { id: "s30_2", symbol: "AMD", name: "AMD", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "10:05 AM", duration: "32 min", session: "MORNING_ORB", contract: "AMD $620C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.84, stopLoss: 1.80, peakPrice: 3.75, outcome: "TARGET_2", pnlPerContract: 135.0, percentGain: "+56.3%", catalyst: "Commercial AI Server Cluster Deployments", rvol: "3.7x" }
           ]}
         }
       },
@@ -2169,15 +2173,41 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 </div>
               </div>
 
+              {selectedDayData.date === "2026-09-30" && (
+                <div className="p-3 rounded-lg bg-indigo-950/40 border border-indigo-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-indigo-300">
+                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                    <span className="font-bold">UPCOMING TRADING DAY (Wednesday 09:30 AM ET):</span>
+                    <span className="text-slate-300">Morning ORB & SPY 0DTE Scanners Armed. Background server will dispatch real-time breakout alerts directly to Discord without manual dashboard monitoring.</span>
+                  </div>
+                  <span className="text-[10px] text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                    Focus Setups: TSLA $375C & AMD $620C
+                  </span>
+                </div>
+              )}
+
+              {selectedDayData.date === "2026-09-29" && (
+                <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-cyan-300">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <span className="font-bold">SESSION AUDIT (Tuesday):</span>
+                    <span className="text-slate-300">Morning ORB scalps closed. SPX Power Hour held institutional shelf ($7,669 - $7,680) without breakdown (capital strictly preserved).</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Archived Session
+                  </span>
+                </div>
+              )}
+
               {selectedDayData.date === "2026-09-28" && (
                 <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                   <div className="flex items-center gap-2 text-cyan-300">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                    <span className="font-bold">LIVE SESSION IN PROGRESS (Market Open):</span>
-                    <span className="text-slate-300">Morning ORB (09:30–10:15 AM ET) closed. Currently in Midday Consolidation regime.</span>
+                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <span className="font-bold">HISTORICAL SESSION:</span>
+                    <span className="text-slate-300">Morning ORB (09:30–10:15 AM ET) executed.</span>
                   </div>
                   <span className="text-[10px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                    Settled Morning Scalps • Watch Setups Radar for fresh breakout shelves
+                    Settled Morning Scalps
                   </span>
                 </div>
               )}

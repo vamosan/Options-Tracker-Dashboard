@@ -173,6 +173,40 @@ async function checkAutomatedSPXPowerHour(io, yfInstance) {
         const hours = etDate.getHours();
         const minutes = etDate.getMinutes();
         const timeVal = hours * 100 + minutes;
+        const todayStr = `${etDate.getFullYear()}-${etDate.getMonth() + 1}-${etDate.getDate()}`;
+
+        // ALERT: 9:30 AM OPENING BELL & ORB SCANNER DESK ARMED (Sent once per day at market open)
+        if (timeVal >= 930 && timeVal <= 935) {
+            const morningBellKey = `MORNING_BELL_ARMED_${todayStr}`;
+            if (!alertCooldowns.has(morningBellKey)) {
+                console.log("[Morning Desk Auto-Bot] Dispatching 9:30 AM Opening Bell briefing to Discord...");
+                const morningPayload = {
+                    username: "Options Tracker AI • Real-Time Desk",
+                    embeds: [{
+                        title: "🔔 US MARKET OPEN: MORNING MOMENTUM & ORB DESK ARMED",
+                        description: "**Opening Range Breakout (ORB) Engine Active (9:30 - 10:15 AM ET)**\nReal-time monitoring initiated across the focus watchlist. Looking for opening shelf expansions and institutional sweeps with Vol/OI > 2.5x.",
+                        color: 0x3B82F6,
+                        fields: [
+                            { name: "⏱️ Market Session", value: `**${hours}:${String(minutes).padStart(2, '0')} AM ET Opening Bell**`, inline: true },
+                            { name: "📊 Focus Tickers", value: "`TSLA`, `AMD`, `NVDA`, `META`, `AAPL`, `SPY`, `QQQ`", inline: true },
+                            { name: "🎯 Strategy Protocol", value: "• 5-min ORB High / Low Breakouts\n• Target 1: +30% | Target 2: +60% (Runner)\n• Stop Loss: Strict -20% to -25% on shelf invalidation", inline: false },
+                            { name: "🤖 Real-Time Automation", value: "Verified high-conviction breakout setups will be dispatched here immediately as volume confirms.", inline: false }
+                        ],
+                        footer: { text: "Options Tracker AI • Morning Execution Desk" },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                await fetch(DISCORD_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(morningPayload)
+                }).catch(err => console.warn("[Morning Bell Discord Error]", err.message));
+
+                alertCooldowns.set(morningBellKey, Date.now());
+                console.log("[Morning Desk Auto-Bot] Opening bell briefing dispatched to Discord!");
+            }
+        }
 
         // Active continuous monitoring during Power Hour (3:00 PM to 4:00 PM ET)
         if (timeVal >= 1500 && timeVal <= 1600) {
@@ -232,8 +266,6 @@ async function checkAutomatedSPXPowerHour(io, yfInstance) {
                     timeET: `${hours}:${String(minutes).padStart(2, '0')} ET`
                 });
             }
-
-            const todayStr = `${etDate.getFullYear()}-${etDate.getMonth() + 1}-${etDate.getDate()}`;
 
             // ALERT 0: 3:00 PM POWER HOUR DESK ARMED & SHELF DEFINED (Sent once per day at start of Power Hour)
             const armedKey = `SPX_POWER_HOUR_ARMED_${todayStr}`;

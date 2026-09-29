@@ -15,6 +15,13 @@ const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || 'https://discord.
 function sendDiscordAlert(alert) {
     if (!DISCORD_WEBHOOK_URL) return;
     try {
+        const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
+        const lastAlert = alertCooldowns.get(cooldownKey);
+        if (lastAlert && (Date.now() - lastAlert < COOLDOWN_MS)) {
+            return;
+        }
+        alertCooldowns.set(cooldownKey, Date.now());
+
         const isBull = (alert.type || '').toLowerCase().includes('call');
         const color = isBull ? 0x10B981 : 0xF43F5E;
         const embed = {
@@ -99,13 +106,13 @@ function determineSentimentLabel(score) {
 }
 
 function calculateConfidence(ratio, sentiment, volume, alignment) {
-    const sentimentFactor = Math.min(Math.abs(sentiment) / 0.5, 1.0) * 40;
-    const ratioFactor = Math.min((ratio - 2.5) / 7.5, 1.0) * 40;
-    const volumeFactor = Math.min(volume / 5000, 1.0) * 20;
+    const sentimentFactor = Math.min(Math.abs(sentiment) / 0.5, 1.0) * 30;
+    const ratioFactor = Math.min((ratio - 2.0) / 6.0, 1.0) * 45;
+    const volumeFactor = Math.min(volume / 3000, 1.0) * 25;
     
     let score = Math.round(sentimentFactor + ratioFactor + volumeFactor);
-    if (alignment.includes("UNALIGNED") || alignment.includes("Divergence")) {
-        score = Math.floor(score * 0.5); // 50% penalty for weak alignment
+    if (alignment.includes("Divergence")) {
+        score = Math.floor(score * 0.5); // 50% penalty for hostile news divergence
     }
     return Math.min(Math.max(score, 10), 99); // Bound between 10% and 99%
 }
@@ -182,7 +189,7 @@ async function scanTickerForMomentum(yf, symbol) {
 
             for (const setup of passingSetups) {
                 const { contract, ratio } = setup;
-                let alignment = "UNALIGNED (Speculative)";
+                let alignment = contract.type === 'Call' ? "⚡ INSTITUTIONAL CALL SWEEP" : "⚡ INSTITUTIONAL PUT SWEEP";
                 if (contract.type === 'Call' && score > 0.15) {
                     alignment = "🔥 BULLISH ALIGNMENT";
                 } else if (contract.type === 'Put' && score < -0.15) {
@@ -266,10 +273,10 @@ function startMomentumScanner(io) {
 
             for (const alert of allAlerts) {
                 console.log(`[MOMENTUM ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type} (Vol/OI: ${alert.volumeRatio.toFixed(2)}x)`);
-                io.emit("momentum_trade_alert", alert);
+                if (io) io.emit("momentum_trade_alert", alert);
                 
                 // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries)
-                if (alert.confidenceScore >= 50 && !alert.alignment.includes("UNALIGNED")) {
+                if (alert.confidenceScore >= 50 && !alert.alignment.includes("Divergence")) {
                     const action = `BUY ${alert.type.toUpperCase()}`;
                     const rationale = `${alert.alignment} | Vol/OI: ${alert.volumeRatio.toFixed(2)}x`;
                     logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
@@ -286,10 +293,10 @@ function startMomentumScanner(io) {
             const spyAlerts = await scanTickerForMomentum(yf, "SPY");
             for (const alert of spyAlerts) {
                 console.log(`[0DTE SPY ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type}`);
-                io.emit("momentum_trade_alert", alert);
+                if (io) io.emit("momentum_trade_alert", alert);
                 
                 // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries)
-                if (alert.confidenceScore >= 50 && !alert.alignment.includes("UNALIGNED")) {
+                if (alert.confidenceScore >= 50 && !alert.alignment.includes("Divergence")) {
                     const action = `BUY ${alert.type.toUpperCase()}`;
                     const rationale = `0DTE Scalp | ${alert.alignment}`;
                     logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
