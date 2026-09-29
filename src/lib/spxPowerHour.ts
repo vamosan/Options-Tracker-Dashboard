@@ -648,10 +648,13 @@ export async function getLiveSPXPowerHourData(options?: {
   const distanceToTriggerPts = favoredIsCall ? Math.round((high30 - finalSpot) * 10) / 10 : Math.round((finalSpot - low30) * 10) / 10;
 
   // Active vs Armed
-  const isTriggered = (favoredIsCall && isUpward) || (!favoredIsCall && isDownward);
+  const isPreCutoff = phaseInfo.phase === "PRE_CUTOFF_BREAKOUT";
+  const isTriggered = (favoredIsCall && isUpward) || (!favoredIsCall && isDownward) || isPreCutoff;
   const status: "ACTIVE_TRIGGERED" | "ARMED_WAITING_FOR_TRIGGER" = isTriggered ? "ACTIVE_TRIGGERED" : "ARMED_WAITING_FOR_TRIGGER";
   
-  const statusText = isTriggered
+  const statusText = isPreCutoff && !isUpward && !isDownward
+    ? `🚨 PRE-15:40 BROKER CUTOFF: ENTER TRADE NOW! Place ${signalDirection} order before 15:40 ET retail lockout.`
+    : isTriggered
     ? `🔥 ACTIVE TRADE: SPX ($${finalSpot.toFixed(1)}) crossed ${favoredIsCall ? "above" : "below"} $${triggerLevel.toFixed(1)} ${favoredIsCall ? "resistance" : "support"}`
     : `⏳ ARMED ON TRIGGER: Enter when SPX ${favoredIsCall ? "breaks above" : "breaks below"} $${triggerLevel.toFixed(1)} (Currently $${finalSpot.toFixed(1)} — ${Math.abs(distanceToTriggerPts).toFixed(1)} pts away)`;
 

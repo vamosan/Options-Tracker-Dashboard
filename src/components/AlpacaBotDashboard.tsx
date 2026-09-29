@@ -2376,7 +2376,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             } : null);
 
             const isCall = sig?.direction === "CALL";
-            const isArmed = spxPowerHourState?.recommendedSide === "STANDBY" && !spxSubPanelSimulate;
+            const isPreCutoff = spxPowerHourState?.phaseInfo?.phase === "PRE_CUTOFF_BREAKOUT";
+            const isTriggered = sig?.status === "ACTIVE_TRIGGERED" || isPreCutoff || spxSubPanelSimulate;
+            const isArmed = !isTriggered;
             const spot = spxPowerHourState?.spxSpot || 7678.50;
             const changePts = spxPowerHourState?.dayChangePts ?? -4.8;
             const changePct = spxPowerHourState?.dayChangePct ?? -0.06;
@@ -2477,11 +2479,19 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       }`}>
                         {isCall ? "BULLISH ↗ CALL SETUP" : "BEARISH ↘ PUT SETUP"}
                       </span>
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold ${
-                        isArmed ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse" : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50"
-                      }`}>
-                        {isArmed ? "⏳ ARMED ON TRIGGER (STANDBY)" : "⚡ LIVE CONFIRMED ENTRY"}
-                      </span>
+                      {isTriggered ? (
+                        <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider animate-pulse flex items-center gap-1.5 shadow-lg ${
+                          isCall
+                            ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30"
+                            : "bg-rose-500 text-white shadow-rose-500/30"
+                        }`}>
+                          <span>🚨 ENTER TRADE NOW</span>
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                          ⏳ ARMED ON TRIGGER (STANDBY)
+                        </span>
+                      )}
                     </div>
 
                     <div className="text-xs font-mono text-slate-300">
