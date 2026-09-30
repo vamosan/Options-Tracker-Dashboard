@@ -425,9 +425,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [filterSignal, setFilterSignal] = useState<"ALL" | "BREAKOUT">("ALL");
 
   // Multi-Month Calendar State
-  const [selectedMonth, setSelectedMonth] = useState<"2026-09" | "2026-08" | "2026-07">("2026-09");
+  const [selectedMonth, setSelectedMonth] = useState<"2026-10" | "2026-09" | "2026-08" | "2026-07">("2026-10");
   const [simContractQty, setSimContractQty] = useState<number>(3);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-09-30");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>("2026-10-01");
   const [showRulesInfo, setShowRulesInfo] = useState<boolean>(true);
   const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
   const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
@@ -904,6 +904,18 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   // -------------------------------------------------------------------------------------
   const multiMonthDatabase = useMemo(() => {
     return {
+      "2026-10": {
+        monthName: "October 2026",
+        startDayOffset: 3, // Oct 1 is Thursday -> 3 empty cells (Mon, Tue, Wed)
+        daysCount: 31,
+        days: {
+          "2026-10-01": {
+            isUpcoming: false,
+            sessionNote: "Live Session (Oct 1, 2026): Desk Armed. Awaiting 09:30 AM Opening Bell & 15:00 ET SPX Power Hour Breakout.",
+            trades: []
+          }
+        }
+      },
       "2026-09": {
         monthName: "September 2026",
         startDayOffset: 1, // Sept 1 was Tuesday -> 1 empty cell (Mon)
@@ -1168,14 +1180,44 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
       if (!isWeekend) {
         const item = (currentMonthData.days as any)[dateKey] || { trades: [] };
-        const isLiveToday = dateKey === "2026-09-30";
-        const isUpcoming = Boolean(item.isUpcoming && !isLiveToday);
+        const isLiveToday = dateKey === "2026-10-01";
+        const isUpcoming = Boolean((item.isUpcoming !== false && dateKey > "2026-10-01") || (item.isUpcoming && !isLiveToday));
         let dayTrades: DailyTradeRecord[] = item.trades || [];
 
-        // For the active trading session, strictly enforce the #1 Prime Setup rule
-        // The bot only promotes the single highest-conviction trade (QQQ), filtering out secondary noise
+        // For the active trading session, dynamically merge any live ledger signals logged today
+        if (isLiveToday && liveLedgerSignals && liveLedgerSignals.length > 0) {
+          const todaySignals = liveLedgerSignals.filter((s: any) => {
+            const ts = s.timestamp || "";
+            return ts.includes("2026-10-01") || ts.includes("10/1/2026") || ts.includes("Oct 1");
+          });
+          if (todaySignals.length > 0) {
+            const liveRecords: DailyTradeRecord[] = todaySignals.map((s: any, idx: number) => ({
+              id: `live_${s.id || idx}`,
+              symbol: s.symbol,
+              name: s.symbol,
+              time: s.timestamp ? s.timestamp.split(" ")[1] || "09:34 AM" : "09:34 AM",
+              entryTime: s.timestamp ? s.timestamp.split(" ")[1] || "09:34 AM" : "09:34 AM",
+              exitTime: "Active Position",
+              duration: "Live",
+              session: "MORNING_ORB" as const,
+              contract: `${s.symbol} ${s.action || 'CALL'}`,
+              entryAsk: s.price || 1.50,
+              t1Target: Math.round((s.price || 1.50) * 1.30 * 100) / 100,
+              t2Target: Math.round((s.price || 1.50) * 1.60 * 100) / 100,
+              stopLoss: Math.round((s.price || 1.50) * 0.80 * 100) / 100,
+              peakPrice: s.price || 1.50,
+              outcome: "OPEN_LIVE" as const,
+              pnlPerContract: 0,
+              percentGain: "0.0%",
+              catalyst: s.rationale || "Real-time Institutional Breakout",
+              rvol: "3.4x"
+            }));
+            dayTrades = [...liveRecords, ...dayTrades];
+          }
+        }
+
         if (isLiveToday) {
-          dayTrades = dayTrades.slice(0, 1);
+          dayTrades = dayTrades.slice(0, 2);
         }
 
         const evaluatedTrades = dayTrades.map(t => ({
@@ -1260,10 +1302,11 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     let julPnl = 0;
     let augPnl = 0;
     let sepPnl = 0;
+    let octPnl = 0;
     let avoidedLossesCount = 0;
     let avoidedLossDollars = 0;
 
-    const months: Array<"2026-09" | "2026-08" | "2026-07"> = ["2026-09", "2026-08", "2026-07"];
+    const months: Array<"2026-10" | "2026-09" | "2026-08" | "2026-07"> = ["2026-10", "2026-09", "2026-08", "2026-07"];
 
     for (const m of months) {
       const mData = multiMonthDatabase[m];
@@ -1301,6 +1344,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       if (m === "2026-07") julPnl = monthSum;
       if (m === "2026-08") augPnl = monthSum;
       if (m === "2026-09") sepPnl = monthSum;
+      if (m === "2026-10") octPnl = monthSum;
     }
 
     const winRate = combinedTrades > 0 ? Math.round((combinedWins / combinedTrades) * 100) : 0;
@@ -1959,13 +2003,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-slate-400 uppercase font-mono mr-1">Select Month:</span>
-              {(["2026-09", "2026-08", "2026-07"] as const).map(mKey => (
+              {(["2026-10", "2026-09", "2026-08", "2026-07"] as const).map(mKey => (
                 <button
                   key={mKey}
                   onClick={() => {
                     setSelectedMonth(mKey);
                     // Select first available trading day of that month
-                    setSelectedCalendarDate(mKey === "2026-09" ? "2026-09-30" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
+                    setSelectedCalendarDate(mKey === "2026-10" ? "2026-10-01" : mKey === "2026-09" ? "2026-09-30" : mKey === "2026-08" ? "2026-08-31" : "2026-07-31");
                   }}
                   className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
                     selectedMonth === mKey
@@ -1973,7 +2017,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  {mKey === "2026-09" ? "September 2026" : mKey === "2026-08" ? "August 2026" : "July 2026"}
+                  {mKey === "2026-10" ? "October 2026 (Live)" : mKey === "2026-09" ? "September 2026" : mKey === "2026-08" ? "August 2026" : "July 2026"}
                 </button>
               ))}
             </div>
