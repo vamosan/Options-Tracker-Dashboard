@@ -2043,13 +2043,16 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
               {calendarDays.map(day => {
                 const isSelected = day.date === selectedCalendarDate;
-                const hasTrades = day.trades.length > 0;
+                const allTradesList = day.allDayTrades || day.trades;
+                const hasAnyTrades = allTradesList.length > 0;
+                const hasPassedTrades = day.trades.length > 0;
                 const isGreen = day.dailyPnl > 0;
                 const isRed = day.dailyPnl < 0;
 
                 const isUpcoming = day.isUpcoming;
                 const isSep29 = day.date === "2026-09-29";
-                const isLiveDay = day.date === "2026-09-30";
+                const isLiveDay = day.date === "2026-10-01";
+                const isFilteredOnly = gatekeeperFilterEnabled && !hasPassedTrades && hasAnyTrades;
 
                 return (
                   <button
@@ -2064,6 +2067,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         ? 'bg-emerald-950/25 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.12)] hover:border-emerald-400'
                         : isUpcoming
                         ? 'bg-indigo-950/20 border-indigo-500/30 hover:border-indigo-400/60'
+                        : isFilteredOnly
+                        ? 'bg-amber-950/20 border-amber-500/30 hover:border-amber-400/60'
                         : isGreen
                         ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400/60'
                         : isRed
@@ -2080,11 +2085,15 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                           LIVE
                         </span>
-                      ) : hasTrades ? (
+                      ) : hasPassedTrades ? (
                         <span className={`text-[9px] font-mono font-black px-1.5 py-0.2 rounded ${
                           isGreen ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
                         }`}>
                           {isGreen ? `+$${day.dailyPnl.toFixed(0)}` : `-$${Math.abs(day.dailyPnl).toFixed(0)}`}
+                        </span>
+                      ) : isFilteredOnly ? (
+                        <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                          🛡️ $0
                         </span>
                       ) : isUpcoming ? (
                         <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -2102,22 +2111,27 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         <span className="text-[9px] text-slate-500 italic block leading-tight truncate">
                           {day.holidayName}
                         </span>
-                      ) : hasTrades ? (
+                      ) : hasAnyTrades ? (
                         <div className="flex flex-wrap gap-1">
-                          {day.trades.map(t => (
-                            <span 
-                              key={t.id} 
-                              className={`text-[8.5px] font-mono px-1 py-0.2 rounded font-bold ${
-                                t.outcome === "TARGET_2" 
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                                  : t.outcome === "TARGET_1"
-                                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                              }`}
-                            >
-                              {t.symbol}
-                            </span>
-                          ))}
+                          {allTradesList.map(t => {
+                            const isFiltered = gatekeeperFilterEnabled && !(t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed);
+                            return (
+                              <span 
+                                key={t.id} 
+                                className={`text-[8.5px] font-mono px-1 py-0.2 rounded font-bold ${
+                                  isFiltered
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                    : t.outcome === "TARGET_2" 
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                    : t.outcome === "TARGET_1"
+                                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                }`}
+                              >
+                                {isFiltered ? `🛡️ ${t.symbol}` : t.symbol}
+                              </span>
+                            );
+                          })}
                         </div>
                       ) : isLiveDay ? (
                         <span className="text-[8.5px] text-emerald-300 font-mono flex items-center gap-1">
@@ -2142,8 +2156,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       <span>
                         {isLiveDay
                           ? `${day.trades.length} Prime Setup (Live)`
-                          : hasTrades 
+                          : hasPassedTrades
                           ? `${day.winCount}W/${day.lossCount}L` 
+                          : isFilteredOnly
+                          ? "Filtered ($0 Loss)"
                           : isUpcoming 
                           ? "09:30 AM" 
                           : isSep29 
@@ -2168,21 +2184,32 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     Day Breakdown: {selectedDayData.dayName}, {selectedDayData.date}
                   </h3>
                   {!selectedDayData.isHoliday && (
-                    selectedDayData.date === "2026-09-30" ? (
-                      <span className="px-2 py-0.2 rounded text-xs font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                    selectedDayData.date === "2026-10-01" ? (
+                      <span className="px-2 py-0.5 rounded text-xs font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        LIVE ACTIVE SESSION • #1 PRIME SETUP
+                        LIVE SESSION • AWAITING 09:30 AM ET OPEN
                       </span>
+                    ) : selectedDayData.date === "2026-09-30" ? (
+                      gatekeeperFilterEnabled ? (
+                        <span className="px-2 py-0.5 rounded text-xs font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                          AUDITED SESSION • CAPITAL PRESERVED ($0 LOSS)
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-xs font-mono font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                          -$142.50 (-25.0%)
+                        </span>
+                      )
                     ) : selectedDayData.isUpcoming ? (
-                      <span className="px-2 py-0.2 rounded text-xs font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                      <span className="px-2 py-0.5 rounded text-xs font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                         AWAITING OPEN
                       </span>
                     ) : selectedDayData.date === "2026-09-29" ? (
-                      <span className="px-2 py-0.2 rounded text-xs font-mono font-black bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="px-2 py-0.5 rounded text-xs font-mono font-black bg-slate-800 text-slate-300 border border-slate-700">
                         STANDBY ($0 LOSS)
                       </span>
                     ) : (
-                      <span className={`px-2 py-0.2 rounded text-xs font-mono font-black ${
+                      <span className={`px-2 py-0.5 rounded text-xs font-mono font-black ${
                         selectedDayData.dailyPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
                       }`}>
                         {selectedDayData.dailyPnl >= 0 ? `+$${selectedDayData.dailyPnl.toFixed(2)}` : `-$${Math.abs(selectedDayData.dailyPnl).toFixed(2)}`}
@@ -2192,11 +2219,16 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  {selectedDayData.date === "2026-09-30" ? (
+                  {selectedDayData.date === "2026-10-01" ? (
+                    <span className="text-xs font-mono text-emerald-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Pre-Market Scan Activates at 08:00 AM ET
+                    </span>
+                  ) : selectedDayData.date === "2026-09-30" ? (
                     <>
-                      <span className="text-xs font-mono text-emerald-300 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Focus Execution Desk • #1 Prime High-Conviction Trade ({selectedDayData.trades[0]?.symbol || 'QQQ'})
+                      <span className="text-xs font-mono text-amber-300 flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                        1 Setup Analyzed • Counter-Trend Filtered by Gatekeeper (Rule 4)
                       </span>
                       <button
                         onClick={() => {
@@ -2245,7 +2277,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
               {(() => {
                 const allTrades = selectedDayData.allDayTrades || selectedDayData.trades;
                 if (!allTrades || allTrades.length === 0) {
-                  if (selectedDayData.isUpcoming && selectedDayData.date !== "2026-09-30") {
+                  if (selectedDayData.isUpcoming) {
                     return (
                       <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-3 flex-wrap">
                         <div className="flex items-center gap-2.5">
@@ -2285,182 +2317,288 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
                 const qualifiedTrades = allTrades.filter(t => (t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
                 const blockedTrades = allTrades.filter(t => !(t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
-                const displayTrades = gatekeeperFilterEnabled ? qualifiedTrades : allTrades;
 
                 return (
-                  <div className="space-y-2.5">
-                    {/* ELITE FOCUS BANNER FOR DAY 30 */}
+                  <div className="space-y-3">
+                    {/* AUDITED BANNER FOR DAY 30 */}
                     {selectedDayData.date === "2026-09-30" && (
-                      <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
+                      <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/30 flex items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                          <span className="font-bold text-emerald-300 font-mono">
-                            ACTIVE LIVE CALLOUT: {selectedDayData.trades[0]?.symbol || 'QQQ'} {selectedDayData.trades[0]?.contract || '$743P'}
+                          <ShieldCheck className="w-4 h-4 text-amber-400" />
+                          <span className="font-bold text-amber-300 font-mono">
+                            SESSION AUDIT: QQQ $743P Setup Disqualified by Gatekeeper (Rule 4)
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                          1 Single Prime Trade
+                        <span className="text-[10px] font-mono text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                          {gatekeeperFilterEnabled ? "Capital Saved: $142.50" : "Unfiltered Loss: -$142.50"}
                         </span>
                       </div>
                     )}
 
-                    {/* AVOIDED SIGNALS NOTICE IN GATEKEEPER MODE */}
-                    {gatekeeperFilterEnabled && blockedTrades.length > 0 && (
-                      <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                          <span className="font-bold text-emerald-300 font-mono">
-                            Gatekeeper Defense: {blockedTrades.length} False Signal(s) Filtered Out
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                          +${blockedTrades.reduce((acc, t) => acc + Math.abs(t.pnlPerContract), 0) * simContractQty} Saved
-                        </span>
-                      </div>
-                    )}
+                    {/* 1. QUALIFIED TRADES (WHEN GATEKEEPER IS ON, OR ALL TRADES WHEN OFF) */}
+                    {(gatekeeperFilterEnabled ? qualifiedTrades : allTrades).map(trade => {
+                      const tradeTotalPnl = trade.pnlPerContract * simContractQty;
+                      const isWin = tradeTotalPnl > 0;
+                      const gk = trade.gatekeeperRule || evaluateGatekeeperRule(trade);
 
-                    {displayTrades.length === 0 ? (
-                      <div className="p-6 text-center text-slate-400 text-xs font-mono bg-slate-950/40 rounded-lg border border-slate-800">
-                        🛡️ All {blockedTrades.length} setups on this day were low-conviction and safely filtered out by the Gatekeeper rules. Zero stop-outs incurred.
-                      </div>
-                    ) : (
-                      displayTrades.map(trade => {
-                        const tradeTotalPnl = trade.pnlPerContract * simContractQty;
-                        const isWin = tradeTotalPnl > 0;
-                        const gk = trade.gatekeeperRule || evaluateGatekeeperRule(trade);
-
-                        return (
-                          <div 
-                            key={trade.id} 
-                            className="p-3 rounded-lg bg-slate-950/70 border border-slate-800 space-y-2 hover:border-slate-700 transition-all text-xs"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-base font-black text-slate-100 font-mono">{trade.symbol}</span>
-                                <span className="text-[11px] text-slate-400">{trade.name}</span>
-                                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                                  {trade.contract}
+                      return (
+                        <div 
+                          key={trade.id} 
+                          className="p-3 rounded-lg bg-slate-950/70 border border-slate-800 space-y-2 hover:border-slate-700 transition-all text-xs"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-base font-black text-slate-100 font-mono">{trade.symbol}</span>
+                              <span className="text-[11px] text-slate-400">{trade.name}</span>
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                                {trade.contract}
+                              </span>
+                              <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold uppercase ${
+                                trade.session === "MIDDAY_VWAP" ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' :
+                                trade.session === "POWER_HOUR" ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                                'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                              }`}>
+                                {trade.session === "MIDDAY_VWAP" ? "Midday VWAP" : trade.session === "POWER_HOUR" ? "Power Hour" : "Morning ORB"}
+                              </span>
+                              {trade.isRecoverySetup && (
+                                <span className="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+                                  ⚡ ALL-DAY RECOVERY
                                 </span>
-                                <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold uppercase ${
-                                  trade.session === "MIDDAY_VWAP" ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' :
-                                  trade.session === "POWER_HOUR" ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-                                  'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                                }`}>
-                                  {trade.session === "MIDDAY_VWAP" ? "Midday VWAP" : trade.session === "POWER_HOUR" ? "Power Hour" : "Morning ORB"}
-                                </span>
-                                {trade.isRecoverySetup && (
-                                  <span className="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
-                                    ⚡ ALL-DAY RECOVERY
-                                  </span>
+                              )}
+                              <div className="flex items-center gap-1.5 text-[11px] font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-slate-300">
+                                <Clock className="w-3 h-3 text-cyan-400" />
+                                <span>Entry: <b className="text-cyan-300">{trade.entryTime || trade.time}</b></span>
+                                {trade.outcome === "OPEN_LIVE" ? (
+                                  <span className="text-emerald-300 font-bold ml-1">• Open (Tracking Live)</span>
+                                ) : (
+                                  <>
+                                    <span>&rarr;</span>
+                                    <span>Exit: <b className="text-amber-300">{trade.exitTime || "--"}</b></span>
+                                    <span className="text-slate-400">({trade.duration || "--"})</span>
+                                  </>
                                 )}
-                                <div className="flex items-center gap-1.5 text-[11px] font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-slate-300">
-                                  <Clock className="w-3 h-3 text-cyan-400" />
-                                  <span>Entry: <b className="text-cyan-300">{trade.entryTime || trade.time}</b></span>
-                                  {trade.outcome === "OPEN_LIVE" ? (
-                                    <span className="text-emerald-300 font-bold ml-1">• Open (Tracking Live)</span>
-                                  ) : (
-                                    <>
-                                      <span>&rarr;</span>
-                                      <span>Exit: <b className="text-amber-300">{trade.exitTime || "--"}</b></span>
-                                      <span className="text-slate-400">({trade.duration || "--"})</span>
-                                    </>
-                                  )}
-                                </div>
-                                <span className="text-[11px] font-mono text-fuchsia-400">RVOL: {trade.rvol}</span>
                               </div>
-
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-black border ${
-                                  trade.outcome === "OPEN_LIVE"
-                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse'
-                                    : isWin 
-                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                                    : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                                }`}>
-                                  {trade.outcome === "OPEN_LIVE" 
-                                    ? "🟢 LIVE IN PLAY" 
-                                    : isWin 
-                                    ? `+$${tradeTotalPnl.toFixed(2)} (${trade.percentGain})` 
-                                    : `-$${Math.abs(tradeTotalPnl).toFixed(2)} (${trade.percentGain})`}
-                                </span>
-                                <button
-                                  onClick={() => triggerDiscordSingleTrade(trade)}
-                                  disabled={isSendingDiscord}
-                                  className="px-2 py-0.5 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/25 border border-[#5865F2]/40 text-indigo-300 text-[10px] font-mono font-bold transition-all flex items-center gap-1 disabled:opacity-50"
-                                  title="Send this call-out to Discord"
-                                >
-                                  <DiscordIcon className="w-3 h-3 text-[#5865F2]" />
-                                  <span>To Discord</span>
-                                </button>
-                              </div>
+                              <span className="text-[11px] font-mono text-fuchsia-400">RVOL: {trade.rvol}</span>
                             </div>
 
-                            {/* GATEKEEPER DEFENSE EVALUATION BADGE */}
-                            {gk.passed ? (
-                              <div className="text-[11px] text-emerald-300 flex items-center gap-1.5 bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-900/60 font-sans">
-                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                                <span className="font-bold text-emerald-300 font-mono">GATEKEEPER QUALIFIED:</span>
-                                <span className="text-slate-300">Institutional RVOL {trade.rvol} &ge; 2.8x • Confirmed 09:35 Bar • Positive Delta</span>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-black border ${
+                                trade.outcome === "OPEN_LIVE"
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse'
+                                  : isWin 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                                  : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                              }`}>
+                                {trade.outcome === "OPEN_LIVE" 
+                                  ? "🟢 LIVE IN PLAY" 
+                                  : isWin 
+                                  ? `+$${tradeTotalPnl.toFixed(2)} (${trade.percentGain})` 
+                                  : `-$${Math.abs(tradeTotalPnl).toFixed(2)} (${trade.percentGain})`}
+                              </span>
+                              <button
+                                onClick={() => triggerDiscordSingleTrade(trade)}
+                                disabled={isSendingDiscord}
+                                className="px-2 py-0.5 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/25 border border-[#5865F2]/40 text-indigo-300 text-[10px] font-mono font-bold transition-all flex items-center gap-1 disabled:opacity-50"
+                                title="Send this call-out to Discord"
+                              >
+                                <DiscordIcon className="w-3 h-3 text-[#5865F2]" />
+                                <span>To Discord</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* GATEKEEPER DEFENSE EVALUATION BADGE */}
+                          {gk.passed ? (
+                            <div className="text-[11px] text-emerald-300 flex items-center gap-1.5 bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-900/60 font-sans">
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                              <span className="font-bold text-emerald-300 font-mono">GATEKEEPER QUALIFIED:</span>
+                              <span className="text-slate-300">Institutional RVOL {trade.rvol} &ge; 2.8x • Confirmed 09:35 Bar • Positive Delta</span>
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-amber-300 flex items-start gap-1.5 bg-amber-950/40 px-2.5 py-1.5 rounded border border-amber-900/60 font-sans">
+                              <ShieldCheck className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <span className="font-bold text-amber-300 font-mono">GATEKEEPER FILTERED: </span>
+                                <span className="text-slate-300">{gk.reason}</span>
+                                <span className="ml-2 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-500/20 text-amber-200 border border-amber-500/30 font-mono">
+                                  Capital Saved: ${Math.abs(tradeTotalPnl).toFixed(0)}
+                                </span>
                               </div>
-                            ) : (
+                            </div>
+                          )}
+
+                          {/* CATALYST SNIPPET */}
+                          <div className="text-[11px] text-slate-300 italic flex items-center gap-1.5 bg-slate-900/60 px-2.5 py-1 rounded border border-slate-800/80">
+                            <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                            <span className="font-semibold text-slate-200">Catalyst:</span>
+                            <span className="truncate">{trade.catalyst}</span>
+                          </div>
+
+                          {/* TECHNICAL INVALIDATION NOTE IF STOPPED */}
+                          {trade.invalidationNote && (
+                            <div className="text-[11px] text-rose-300 flex items-start gap-1.5 bg-rose-950/40 px-2.5 py-1.5 rounded border border-rose-900/60 font-sans">
+                              <AlertOctagon className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <span className="font-bold text-rose-300">Technical Stop / Invalidation Reason: </span>
+                                <span className="text-slate-300">{trade.invalidationNote}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* NUMBERS ROW */}
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-[11px] p-2 rounded bg-slate-900/40">
+                            <div>
+                              <span className="text-[9px] text-slate-500 block uppercase">Entry Fill</span>
+                              <span className="text-slate-200 font-bold">${trade.entryAsk.toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-500 block uppercase">Stop Shelf</span>
+                              <span className="text-rose-400 font-bold">${trade.stopLoss.toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-500 block uppercase">Target 1 (+30%)</span>
+                              <span className="text-emerald-400 font-bold">${trade.t1Target.toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-500 block uppercase">{trade.outcome === "OPEN_LIVE" ? "Target 2 (+60%)" : "Peak Price"}</span>
+                              <span className="text-cyan-400 font-bold">${trade.outcome === "OPEN_LIVE" ? trade.t2Target.toFixed(2) : trade.peakPrice.toFixed(2)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-500 block uppercase">Status / Outcome</span>
+                              <span className={`font-bold ${trade.outcome === "OPEN_LIVE" ? 'text-emerald-400' : trade.outcome === "TARGET_2" ? 'text-emerald-400' : trade.outcome === "TARGET_1" ? 'text-cyan-400' : 'text-rose-400'}`}>
+                                {trade.outcome === "OPEN_LIVE" ? "🟢 In Play (Live)" : trade.outcome === "TARGET_2" ? "Scaled T1 + Runner T2" : trade.outcome === "TARGET_1" ? "Scaled T1 + BE Exit" : "Strict Stop Hit"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* 2. GATEKEEPER DEFENSE INTERCEPTED SECTION (WHEN GATEKEEPER IS ON AND BLOCKED TRADES EXIST) */}
+                    {gatekeeperFilterEnabled && blockedTrades.length > 0 && (
+                      <div className="space-y-2.5 pt-2 border-t border-slate-800/80">
+                        <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/30 flex items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                            <div>
+                              <span className="font-bold text-amber-300 font-mono block">
+                                Gatekeeper Defense: {blockedTrades.length} False Signal(s) Filtered Out
+                              </span>
+                              <span className="text-[11px] text-slate-400 font-sans">
+                                Zero capital risked. The setup below triggered standard scanner criteria but was intercepted & disqualified by Gatekeeper before execution.
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20 whitespace-nowrap">
+                            +${blockedTrades.reduce((acc, t) => acc + Math.abs(t.pnlPerContract), 0) * simContractQty} Preserved
+                          </span>
+                        </div>
+
+                        {blockedTrades.map(trade => {
+                          const tradeTotalPnl = trade.pnlPerContract * simContractQty;
+                          const gk = trade.gatekeeperRule || evaluateGatekeeperRule(trade);
+
+                          return (
+                            <div 
+                              key={`blocked_${trade.id}`}
+                              className="p-3.5 rounded-lg bg-amber-950/15 border border-amber-500/30 space-y-2.5 transition-all text-xs"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-base font-black text-slate-100 font-mono">{trade.symbol}</span>
+                                  <span className="text-[11px] text-slate-400">{trade.name}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                    {trade.contract}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                    {trade.session === "MIDDAY_VWAP" ? "Midday VWAP" : trade.session === "POWER_HOUR" ? "Power Hour" : "Morning ORB"}
+                                  </span>
+                                  <div className="flex items-center gap-1.5 text-[11px] font-mono bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 text-slate-300">
+                                    <Clock className="w-3 h-3 text-amber-400" />
+                                    <span>Scan Trigger: <b className="text-amber-300">{trade.entryTime || trade.time}</b></span>
+                                    <span>&rarr;</span>
+                                    <span>Sim Cutoff: <b className="text-slate-300">{trade.exitTime || "--"}</b></span>
+                                    <span className="text-slate-400">({trade.duration || "--"})</span>
+                                  </div>
+                                  <span className="text-[11px] font-mono text-fuchsia-400">RVOL: {trade.rvol}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <span className="px-2.5 py-0.5 rounded text-xs font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                                    🛡️ $0.00 (Saved +${Math.abs(tradeTotalPnl).toFixed(2)})
+                                  </span>
+                                  <button
+                                    onClick={() => triggerDiscordSingleTrade(trade)}
+                                    disabled={isSendingDiscord}
+                                    className="px-2 py-0.5 rounded bg-[#5865F2]/15 hover:bg-[#5865F2]/25 border border-[#5865F2]/40 text-indigo-300 text-[10px] font-mono font-bold transition-all flex items-center gap-1 disabled:opacity-50"
+                                    title="Send this call-out to Discord"
+                                  >
+                                    <DiscordIcon className="w-3 h-3 text-[#5865F2]" />
+                                    <span>To Discord</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* GATEKEEPER INTERCEPTION BREAKDOWN */}
                               <div className="text-[11px] text-amber-300 flex items-start gap-1.5 bg-amber-950/40 px-2.5 py-1.5 rounded border border-amber-900/60 font-sans">
                                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
                                 <div>
-                                  <span className="font-bold text-amber-300 font-mono">GATEKEEPER FILTERED: </span>
+                                  <span className="font-bold text-amber-300 font-mono">GATEKEEPER INTERCEPT ({gk.rule}): </span>
                                   <span className="text-slate-300">{gk.reason}</span>
                                   <span className="ml-2 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-500/20 text-amber-200 border border-amber-500/30 font-mono">
                                     Capital Saved: ${Math.abs(tradeTotalPnl).toFixed(0)}
                                   </span>
                                 </div>
                               </div>
-                            )}
 
-                            {/* CATALYST SNIPPET */}
-                            <div className="text-[11px] text-slate-300 italic flex items-center gap-1.5 bg-slate-900/60 px-2.5 py-1 rounded border border-slate-800/80">
-                              <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
-                              <span className="font-semibold text-slate-200">Catalyst:</span>
-                              <span className="truncate">{trade.catalyst}</span>
-                            </div>
+                              {/* CATALYST SNIPPET */}
+                              <div className="text-[11px] text-slate-300 italic flex items-center gap-1.5 bg-slate-900/60 px-2.5 py-1 rounded border border-slate-800/80">
+                                <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                                <span className="font-semibold text-slate-200">Catalyst:</span>
+                                <span className="truncate">{trade.catalyst}</span>
+                              </div>
 
-                            {/* TECHNICAL INVALIDATION NOTE IF STOPPED */}
-                            {trade.invalidationNote && (
-                              <div className="text-[11px] text-rose-300 flex items-start gap-1.5 bg-rose-950/40 px-2.5 py-1.5 rounded border border-rose-900/60 font-sans">
-                                <AlertOctagon className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+                              {/* TECHNICAL INVALIDATION NOTE */}
+                              {trade.invalidationNote && (
+                                <div className="text-[11px] text-rose-300 flex items-start gap-1.5 bg-rose-950/40 px-2.5 py-1.5 rounded border border-rose-900/60 font-sans">
+                                  <AlertOctagon className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="font-bold text-rose-300">Technical Stop / Invalidation Reason: </span>
+                                    <span className="text-slate-300">{trade.invalidationNote}</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* NUMBERS ROW */}
+                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-[11px] p-2 rounded bg-slate-900/40">
                                 <div>
-                                  <span className="font-bold text-rose-300">Technical Stop / Invalidation Reason: </span>
-                                  <span className="text-slate-300">{trade.invalidationNote}</span>
+                                  <span className="text-[9px] text-slate-500 block uppercase">Simulated Entry</span>
+                                  <span className="text-slate-200 font-bold">${trade.entryAsk.toFixed(2)}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] text-slate-500 block uppercase">Stop Shelf</span>
+                                  <span className="text-rose-400 font-bold">${trade.stopLoss.toFixed(2)}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] text-slate-500 block uppercase">Target 1 (+30%)</span>
+                                  <span className="text-emerald-400 font-bold">${trade.t1Target.toFixed(2)}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] text-slate-500 block uppercase">Peak Price</span>
+                                  <span className="text-cyan-400 font-bold">${trade.peakPrice.toFixed(2)}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] text-slate-500 block uppercase">Gatekeeper Action</span>
+                                  <span className="font-bold text-amber-400 flex items-center gap-1">
+                                    <ShieldCheck className="w-3 h-3 text-amber-400 inline" /> Disqualified ($0 Loss)
+                                  </span>
                                 </div>
                               </div>
-                            )}
-
-                            {/* NUMBERS ROW */}
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-[11px] p-2 rounded bg-slate-900/40">
-                              <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">Entry Fill</span>
-                                <span className="text-slate-200 font-bold">${trade.entryAsk.toFixed(2)}</span>
-                              </div>
-                              <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">Stop Shelf</span>
-                                <span className="text-rose-400 font-bold">${trade.stopLoss.toFixed(2)}</span>
-                              </div>
-                              <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">Target 1 (+30%)</span>
-                                <span className="text-emerald-400 font-bold">${trade.t1Target.toFixed(2)}</span>
-                              </div>
-                              <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">{trade.outcome === "OPEN_LIVE" ? "Target 2 (+60%)" : "Peak Price"}</span>
-                                <span className="text-cyan-400 font-bold">${trade.outcome === "OPEN_LIVE" ? trade.t2Target.toFixed(2) : trade.peakPrice.toFixed(2)}</span>
-                              </div>
-                              <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">Status / Outcome</span>
-                                <span className={`font-bold ${trade.outcome === "OPEN_LIVE" ? 'text-emerald-400' : trade.outcome === "TARGET_2" ? 'text-emerald-400' : trade.outcome === "TARGET_1" ? 'text-cyan-400' : 'text-rose-400'}`}>
-                                  {trade.outcome === "OPEN_LIVE" ? "🟢 In Play (Live)" : trade.outcome === "TARGET_2" ? "Scaled T1 + Runner T2" : trade.outcome === "TARGET_1" ? "Scaled T1 + BE Exit" : "Strict Stop Hit"}
-                                </span>
-                              </div>
                             </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 );
