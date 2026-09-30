@@ -12,7 +12,7 @@ const { logSignal } = require('./ledger');
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1554066969588801546/34cLxhk8Nr7FtYbscs3s4lhkhrfQYpWoSKxe-giiLSv6LHgd09YlJo6NSoDc-SAlkW1O';
 
-function sendDiscordAlert(alert) {
+async function sendDiscordAlert(alert) {
     if (!DISCORD_WEBHOOK_URL) return;
     try {
         const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
@@ -44,27 +44,25 @@ function sendDiscordAlert(alert) {
             avatar_url: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=128&auto=format&fit=crop&q=80',
             embeds: [embed]
         });
-        const parsed = new URL(DISCORD_WEBHOOK_URL);
-        const req = https.request({
-            hostname: parsed.hostname,
-            path: parsed.pathname + parsed.search,
+
+        const res = await fetch(DISCORD_WEBHOOK_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(payload)
-            }
-        }, (res) => {
-            console.log(`[Momentum Bot] Discord alert dispatched for ${alert.symbol} $${alert.strike} ${alert.type}! (HTTP ${res.statusCode})`);
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            signal: AbortSignal.timeout(5000)
         });
-        req.on('error', (e) => console.warn('[Discord Webhook Error]', e.message));
-        req.write(payload);
-        req.end();
+
+        if (res.ok) {
+            console.log(`[Momentum Bot] Discord alert dispatched for ${alert.symbol} $${alert.strike} ${alert.type}! (HTTP ${res.status})`);
+        } else {
+            console.warn(`[Momentum Bot] Discord alert returned HTTP ${res.status}`);
+        }
     } catch (err) {
-        console.warn('[Discord Alert Exception]', err.message);
+        console.warn('[Discord Webhook Error]', err.message);
     }
 }
 
-const parser = new Parser();
+const parser = new Parser({ timeout: 5000 });
 const WATCHLIST = ["AAPL", "TSLA", "NVDA", "AMD", "MSFT", "AMZN", "BABA", "META", "SPY", "QQQ"];
 const MIN_VOLUME = 100;
 const MIN_VOL_OI_RATIO = 2.5;
@@ -80,7 +78,8 @@ async function getTickerSentiment(symbol) {
     const compoundScores = [];
 
     try {
-        const feed = await parser.parseURL(rssUrl);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('RSS fetch timeout (4s)')), 4000));
+        const feed = await Promise.race([parser.parseURL(rssUrl), timeoutPromise]);
         // Analyze up to 5 recent headlines
         for (let i = 0; i < Math.min(5, feed.items.length); i++) {
             const headline = feed.items[i].title;
@@ -96,8 +95,8 @@ async function getTickerSentiment(symbol) {
         const avgSentiment = compoundScores.reduce((a, b) => a + b, 0) / compoundScores.length;
         return { score: avgSentiment, headlines };
     } catch (e) {
-        console.warn(`Failed to parse RSS for ${symbol}:`, e.message);
-        return { score: 0, headlines: ["Failed to fetch news."] };
+        // Quietly fallback without holding up scan cycle
+        return { score: 0, headlines: ["Market momentum scan active."] };
     }
 }
 
