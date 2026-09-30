@@ -12,9 +12,25 @@ const { logSignal } = require('./ledger');
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1554066969588801546/34cLxhk8Nr7FtYbscs3s4lhkhrfQYpWoSKxe-giiLSv6LHgd09YlJo6NSoDc-SAlkW1O';
 
+// Daily alert throttle to ensure ONLY the top 1-2 prime setups alert to Discord
+let dailyDiscordAlertCount = 0;
+let lastAlertDayStr = '';
+const MAX_DAILY_DISCORD_ALERTS = 2;
+
 async function sendDiscordAlert(alert) {
     if (!DISCORD_WEBHOOK_URL) return;
     try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (todayStr !== lastAlertDayStr) {
+            lastAlertDayStr = todayStr;
+            dailyDiscordAlertCount = 0;
+        }
+
+        if (dailyDiscordAlertCount >= MAX_DAILY_DISCORD_ALERTS) {
+            console.log(`[Momentum Bot] Daily Discord alert limit (${MAX_DAILY_DISCORD_ALERTS}) reached for today. Suppressing additional alerts to keep channel focused.`);
+            return;
+        }
+
         const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
         const lastAlert = alertCooldowns.get(cooldownKey);
         if (lastAlert && (Date.now() - lastAlert < COOLDOWN_MS)) {
@@ -25,8 +41,8 @@ async function sendDiscordAlert(alert) {
         const isBull = (alert.type || '').toLowerCase().includes('call');
         const color = isBull ? 0x10B981 : 0xF43F5E;
         const embed = {
-            title: `🚨 MOMENTUM CALL-OUT: ${alert.symbol} $${alert.strike} ${(alert.type || '').toUpperCase()}`,
-            description: `**${alert.alignment}**\nVol/OI: **${alert.volumeRatio ? alert.volumeRatio.toFixed(2) : '3.0'}x** • Confidence: **${alert.confidenceScore}%**`,
+            title: `🚨 PRIME SETUP OF THE DAY: ${alert.symbol} $${alert.strike} ${(alert.type || '').toUpperCase()}`,
+            description: `**${alert.alignment}**\nVol/OI: **${alert.volumeRatio ? alert.volumeRatio.toFixed(2) : '3.0'}x** • Conviction: **${alert.confidenceScore}% (ELITE)**`,
             color,
             fields: [
                 { name: '⏱️ Entry Time', value: `\`${alert.timestamp || 'Live'}\``, inline: true },
@@ -36,7 +52,7 @@ async function sendDiscordAlert(alert) {
                 { name: '📊 Flow Volume', value: `${alert.volume || 0} contracts (OI: ${alert.openInterest || 0})`, inline: true },
                 { name: '💡 Scalp Plan', value: alert.tradeSuggestion || 'Fast scalp setup.', inline: false }
             ],
-            footer: { text: 'Options Tracker AI • Real-Time Momentum Bot' },
+            footer: { text: `Options Tracker AI • Prime Trade 1 of ${MAX_DAILY_DISCORD_ALERTS} Max` },
             timestamp: new Date().toISOString()
         };
         const payload = JSON.stringify({
@@ -53,7 +69,8 @@ async function sendDiscordAlert(alert) {
         });
 
         if (res.ok) {
-            console.log(`[Momentum Bot] Discord alert dispatched for ${alert.symbol} $${alert.strike} ${alert.type}! (HTTP ${res.status})`);
+            dailyDiscordAlertCount++;
+            console.log(`[Momentum Bot] Discord alert dispatched for ${alert.symbol} $${alert.strike} ${alert.type}! (HTTP ${res.status}) [Alert ${dailyDiscordAlertCount}/${MAX_DAILY_DISCORD_ALERTS} today]`);
         } else {
             console.warn(`[Momentum Bot] Discord alert returned HTTP ${res.status}`);
         }
@@ -276,8 +293,8 @@ function startMomentumScanner(io) {
                 console.log(`[MOMENTUM ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type} (Vol/OI: ${alert.volumeRatio.toFixed(2)}x)`);
                 if (io) io.emit("momentum_trade_alert", alert);
                 
-                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries with cooldown)
-                if (alert.confidenceScore >= 50 && !alert.alignment.includes("Divergence")) {
+                // Log to SQLite Ledger & Dispatch to Discord (Only elite-conviction entries >= 80% with high volume)
+                if (alert.confidenceScore >= 80 && alert.volumeRatio >= 3.0 && !alert.alignment.includes("Divergence")) {
                     const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
                     const lastAlert = alertCooldowns.get(cooldownKey);
                     if (!lastAlert || (Date.now() - lastAlert >= COOLDOWN_MS)) {
@@ -297,18 +314,17 @@ function startMomentumScanner(io) {
         try {
             const spyAlerts = await scanTickerForMomentum(yf, "SPY");
             for (const alert of spyAlerts) {
-                console.log(`[0DTE SPY ALERT] ${alert.alignment} Found: ${alert.symbol} $${alert.strike} ${alert.type}`);
+                // Emit to UI live charts
                 if (io) io.emit("momentum_trade_alert", alert);
                 
-                // Log to SQLite Ledger & Dispatch to Discord (Only high quality entries with cooldown)
-                if (alert.confidenceScore >= 50 && !alert.alignment.includes("Divergence")) {
+                // Only log to ledger if high quality; do NOT spam Discord on 30s interval
+                if (alert.confidenceScore >= 75 && !alert.alignment.includes("Divergence")) {
                     const cooldownKey = `${alert.contractSymbol || (alert.symbol + '_' + alert.strike + '_' + alert.type)}`;
                     const lastAlert = alertCooldowns.get(cooldownKey);
                     if (!lastAlert || (Date.now() - lastAlert >= COOLDOWN_MS)) {
                         const action = `BUY ${alert.type.toUpperCase()}`;
                         const rationale = `0DTE Scalp | ${alert.alignment}`;
                         logSignal(alert.symbol, action, rationale, alert.marketPrice, alert.confidenceScore).catch(e => console.error("Ledger Error:", e));
-                        sendDiscordAlert(alert);
                     }
                 }
             }
