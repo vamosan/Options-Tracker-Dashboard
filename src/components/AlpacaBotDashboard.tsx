@@ -260,17 +260,18 @@ export function evaluateGatekeeperRule(trade: DailyTradeRecord) {
     }
   }
 
-  // Rule 4: Bar Anatomy & Delta Validation (Waterfall dump / wick trap)
+  // Rule 4: Bar Anatomy & Delta Validation (Waterfall dump / wick trap / counter-trend)
   if (trade.invalidationNote && (
     trade.invalidationNote.toLowerCase().includes("waterfall") ||
     trade.invalidationNote.toLowerCase().includes("bull trap") ||
     trade.invalidationNote.toLowerCase().includes("selloff") ||
-    trade.invalidationNote.toLowerCase().includes("fakeout")
+    trade.invalidationNote.toLowerCase().includes("fakeout") ||
+    trade.invalidationNote.toLowerCase().includes("counter-trend")
   )) {
     return {
       passed: false,
-      rule: "Rule 4: Delta / Bar Anatomy",
-      reason: "Net selling delta / waterfall liquidation (Close < Open)."
+      rule: "Rule 4: Tape & Delta Divergence",
+      reason: "Counter-trend trade against green tape (QQQ rallied from $740.19 to $745.08, +0.72%)."
     };
   }
 
@@ -999,7 +1000,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           "2026-09-29": { trades: [], sessionNote: "SPX Power Hour consolidated inside shelf ($7,669.10 - $7,680.60) without breakdown; capital strictly preserved. Morning scanner was offline." },
           "2026-09-30": { 
             isUpcoming: false, 
-            sessionNote: "Live Active Trading Session — #1 Prime Institutional Put Sweep Qualified (QQQ)",
+            sessionNote: "Audited Real-World Session: QQQ counter-trend Put trap stopped out at -25% boundary. Gatekeeper Filter eliminates trade ($0 loss).",
             trades: [
               { 
                 id: "s30_qqq", 
@@ -1007,20 +1008,21 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 name: "Invesco QQQ", 
                 time: "10:44 AM", 
                 entryTime: "10:44 AM", 
-                exitTime: "OPEN (Live)", 
-                duration: "Active In Play", 
+                exitTime: "11:03 AM", 
+                duration: "19 min (Stop)", 
                 session: "MORNING_ORB", 
                 contract: "QQQ $743P", 
                 entryAsk: 1.90, 
                 t1Target: 2.47, 
                 t2Target: 3.04, 
                 stopLoss: 1.42, 
-                peakPrice: 2.15, 
-                outcome: "OPEN_LIVE", 
-                pnlPerContract: 0.0, 
-                percentGain: "Tracking Live", 
-                catalyst: "💥 BEARISH ALIGNMENT | #1 Institutional Put Sweep (Vol/OI: 56.09x • 80% Conviction)", 
-                rvol: "5.6x" 
+                peakPrice: 1.95, 
+                outcome: "STOPPED", 
+                pnlPerContract: -47.50, 
+                percentGain: "-25.0%", 
+                catalyst: "💥 Bearish news divergence with high put sweeper flow (Vol/OI: 56.1x)", 
+                rvol: "5.6x",
+                invalidationNote: "Counter-trend Put trap: QQQ opened at $740.19 and rallied to $745.08 (+0.72%). Buying puts against an expanding green tape failed and hit the -25% stop shelf at $1.42."
               }
             ]
           }
@@ -1198,9 +1200,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           sessionNote: item.sessionNote,
           trades: isUpcoming ? [] : activeTrades,
           allDayTrades: isUpcoming ? [] : evaluatedTrades,
-          dailyPnl: (isUpcoming || isLiveToday) ? 0 : Math.round(totalPnlPerCt * simContractQty * 100) / 100,
-          winCount: (isUpcoming || isLiveToday) ? 0 : wins,
-          lossCount: (isUpcoming || isLiveToday) ? 0 : losses
+          dailyPnl: isUpcoming ? 0 : Math.round(totalPnlPerCt * simContractQty * 100) / 100,
+          winCount: isUpcoming ? 0 : wins,
+          lossCount: isUpcoming ? 0 : losses
         });
       }
     }
