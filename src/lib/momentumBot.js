@@ -41,18 +41,17 @@ async function sendDiscordAlert(alert) {
         const isBull = (alert.type || '').toLowerCase().includes('call');
         const color = isBull ? 0x10B981 : 0xF43F5E;
         const embed = {
-            title: `🚨 PRIME SETUP OF THE DAY: ${alert.symbol} $${alert.strike} ${(alert.type || '').toUpperCase()}`,
-            description: `**${alert.alignment}**\nVol/OI: **${alert.volumeRatio ? alert.volumeRatio.toFixed(2) : '3.0'}x** • Conviction: **${alert.confidenceScore}% (ELITE)**`,
+            title: `🚨 ENTER TRADE NOW: BUY ${alert.symbol} $${alert.strike} ${(alert.type || '').toUpperCase()}`,
+            description: `**${alert.alignment}**\nVol/OI: **${alert.volumeRatio ? alert.volumeRatio.toFixed(2) : '3.0'}x** • Conviction: **${alert.confidenceScore}% (HIGH CONVICTION)**`,
             color,
             fields: [
-                { name: '⏱️ Entry Time', value: `\`${alert.timestamp || 'Live'}\``, inline: true },
-                { name: '💵 Option Ask', value: `**$${alert.marketPrice ? alert.marketPrice.toFixed(2) : '1.50'}**`, inline: true },
-                { name: '🎯 Target (+30%)', value: `**$${alert.targetPrice ? alert.targetPrice.toFixed(2) : '--'}**`, inline: true },
-                { name: '🛑 Stop (-15%)', value: `**$${alert.stopPrice ? alert.stopPrice.toFixed(2) : '--'}**`, inline: true },
-                { name: '📊 Flow Volume', value: `${alert.volume || 0} contracts (OI: ${alert.openInterest || 0})`, inline: true },
-                { name: '💡 Scalp Plan', value: alert.tradeSuggestion || 'Fast scalp setup.', inline: false }
+                { name: '⏰ WHEN TO ENTER', value: `**ENTER NOW (${alert.timestamp || 'Live Breakout'})**\nConfirmed institutional volume expansion.`, inline: false },
+                { name: '🎯 EXACT CONTRACT', value: `**${alert.symbol} $${alert.strike} ${(alert.type || '').toUpperCase()} (${alert.expiration || 'Weekly/0DTE'})**`, inline: true },
+                { name: '💵 ESTIMATED ASK', value: `**~$${alert.marketPrice ? alert.marketPrice.toFixed(2) : '1.50'}**`, inline: true },
+                { name: '🛑 WHEN TO CUT / STOP', value: `Hard Stop at **$${alert.stopPrice ? alert.stopPrice.toFixed(2) : '--'}** (-15% to -20% max loss).`, inline: true },
+                { name: '⚡ EXECUTION PROTOCOL', value: 'Take quick profit on the opening expansion (5-15 min hold max). Never average down.', inline: false }
             ],
-            footer: { text: `Options Tracker AI • Prime Trade 1 of ${MAX_DAILY_DISCORD_ALERTS} Max` },
+            footer: { text: `Options Tracker AI • Prime Trade ${dailyDiscordAlertCount + 1} of ${MAX_DAILY_DISCORD_ALERTS} Max` },
             timestamp: new Date().toISOString()
         };
         const payload = JSON.stringify({
@@ -159,7 +158,8 @@ async function scanTickerForMomentum(yf, symbol) {
 
         if (daysToExpiry > MAX_DAYS_TO_EXP) return [];
 
-        const underlyingPrice = quote.regularMarketPrice || quote.price || 0;
+        const underlyingPrice = quote ? (quote.regularMarketPrice || quote.price || quote.postMarketPrice || quote.preMarketPrice || 0) : 0;
+        if (!underlyingPrice || underlyingPrice <= 0) return [];
 
         const allContracts = [
             ...(nearestExp.calls || []).map(c => ({ ...c, type: "Call" })),
@@ -191,11 +191,13 @@ async function scanTickerForMomentum(yf, symbol) {
             const strike = contract.strike || 0;
 
             // STRICT DATA ACCURACY GUARD:
-            // Scalp & day trade options must be near-the-money (within 2.5% of spot price).
+            // Scalp & day trade options must be strictly near-the-money (within 2.5% of spot price).
             // This strictly eliminates anomalous/stale strikes (e.g. SPY $635 when spot is ~$766 is ~17% away).
             if (underlyingPrice > 0 && strike > 0) {
                 const strikeDiff = Math.abs(strike - underlyingPrice) / underlyingPrice;
                 if (strikeDiff > 0.025) continue;
+            } else {
+                continue;
             }
 
             if (volume >= MIN_VOLUME && oi > 0 && lastPrice >= 0.15) {

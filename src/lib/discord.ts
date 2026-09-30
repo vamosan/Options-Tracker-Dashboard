@@ -93,50 +93,40 @@ export async function sendTradeEntryCallout(trade: {
   const rewardT2 = Math.round((trade.target2 - trade.entryPrice) * 100);
 
   const embed: DiscordEmbed = {
-    title: `🚨 LIVE CALL-OUT: ${trade.symbol} ${trade.contract}`,
+    title: `🚨 ENTER TRADE NOW: BUY ${trade.symbol} ${trade.contract}`,
     description: `💎 **${trade.gatekeeperBadge || "GATEKEEPER QUALIFIED (96.6% WIN RATE)"}**\n${
-      trade.catalyst || "Institutional breakout above morning resistance shelf with expanding delta."
+      trade.catalyst || "Institutional breakout above morning resistance shelf with expanding volume."
     }`,
     color: 0x10B981, // Emerald Green
     fields: [
       {
-        name: "⏱️ Entry Time",
-        value: `\`${trade.entryTime}\``,
+        name: "⏰ WHEN TO ENTER",
+        value: `**ENTER NOW (${trade.entryTime})**\nImmediate execution on opening breakout.`,
+        inline: false,
+      },
+      {
+        name: "🎯 EXACT CONTRACT",
+        value: `**${trade.symbol} ${trade.contract}**`,
         inline: true,
       },
       {
-        name: "💵 Entry Premium",
-        value: `**$${trade.entryPrice.toFixed(2)}** ($${Math.round(trade.entryPrice * 100)}/ct)`,
+        name: "💵 ESTIMATED ASK",
+        value: `**$${trade.entryPrice.toFixed(2)}** ($${Math.round(trade.entryPrice * 100)}/contract max risk)`,
         inline: true,
       },
       {
-        name: "📊 Institutional RVOL",
-        value: `\`${rvolDisplay}\``,
+        name: "🛑 WHEN TO CUT / STOP",
+        value: `**$${trade.stopLoss.toFixed(2)}** (-25% strict stop loss)`,
         inline: true,
       },
       {
-        name: "🛑 Stop Loss (-25%)",
-        value: `**$${trade.stopLoss.toFixed(2)}** (-$${riskDollars}/ct)`,
-        inline: true,
-      },
-      {
-        name: "🎯 Target 1 (+30%)",
-        value: `**$${trade.target1.toFixed(2)}** (+$${rewardT1}/ct)`,
-        inline: true,
-      },
-      {
-        name: "🚀 Target 2 (+65%)",
-        value: `**$${trade.target2.toFixed(2)}** (+$${rewardT2}/ct)`,
-        inline: true,
-      },
-      {
-        name: "🛡️ Gatekeeper Rationale",
-        value: trade.gatekeeperReason || "RVOL >= 2.8x floor met • Confirmed 5m candle close • Positive delta",
+        name: "⚡ EXECUTION PROTOCOL",
+        value: "Quick scalp hold (5-15 mins max). Take profit on momentum expansion; never average down.",
         inline: false,
       },
     ],
     footer: {
-      text: "Options Tracker AI Bot • Real-Time Institutional Dispatch",
+      text: "Options Tracker AI • Real-Time Execution Desk",
     },
     timestamp: new Date().toISOString(),
   };
@@ -537,96 +527,54 @@ export interface SPXPowerHourDiscordPayload {
  * Send real-time SPX 0DTE Power Hour Call-Out to Discord
  */
 export async function sendSPXPowerHourAlert(payload: SPXPowerHourDiscordPayload) {
-  const isPin = payload.setupType === "GAMMA_PIN_BUTTERFLY";
   const isCall = payload.setupType === "MOC_GAMMA_CALL" || payload.setupType === "PRE_CUTOFF_BREAKOUT_CALL";
   const isPreCutoff = payload.setupType === "PRE_CUTOFF_BREAKOUT_CALL" || payload.setupType === "PRE_CUTOFF_BREAKOUT_PUT";
 
-  const title = isPin
-    ? `🎯 SPX POWER HOUR: 0DTE GAMMA PIN BUTTERFLY`
-    : isPreCutoff
+  const title = isPreCutoff
     ? isCall
-      ? `🚨 SPX POWER HOUR: PRE-15:40 CALL BREAKOUT (>H30)`
-      : `🚨 SPX POWER HOUR: PRE-15:40 PUT BREAKDOWN (<L30)`
+      ? `🚨 ENTER TRADE NOW: BUY SPX 0DTE ${payload.strike} CALL`
+      : `🚨 ENTER TRADE NOW: BUY SPX 0DTE ${payload.strike} PUT`
     : isCall
-    ? `⚡ SPX POWER HOUR: MOC GAMMA SQUEEZE (CALL)`
-    : `⚡ SPX POWER HOUR: MOC WATERFALL FLUSH (PUT)`;
+    ? `⚡ ENTER MOC TRADE NOW: BUY SPX 0DTE ${payload.strike} CALL`
+    : `⚡ ENTER MOC TRADE NOW: BUY SPX 0DTE ${payload.strike} PUT`;
 
-  const color = isPin ? 0xF59E0B : isCall ? 0x10B981 : 0xEF4444; // Amber, Emerald, Crimson
-  const reward1Pct = Math.round(((payload.target1 - payload.entryAsk) / payload.entryAsk) * 100);
-  const reward2Pct = Math.round(((payload.target2 - payload.entryAsk) / payload.entryAsk) * 100);
+  const color = isCall ? 0x10B981 : 0xEF4444; // Emerald, Crimson
 
   const fields: DiscordField[] = [
     {
-      name: "⏱️ Trigger Time (ET)",
-      value: `**${payload.triggerTime}**`,
-      inline: true,
+      name: "⏰ WHEN TO ENTER",
+      value: `**ENTER NOW (${payload.triggerTime})**\n${payload.brokerCutoffWarning ? `Warning: ${payload.brokerCutoffWarning}` : "Place order immediately on confirmed shelf breach."}`,
+      inline: false,
     },
     {
-      name: "📊 SPX Index Spot",
-      value: `**${payload.spxSpot.toFixed(2)}**`,
-      inline: true,
-    },
-    {
-      name: "🎯 Target 0DTE Contract",
+      name: "🎯 EXACT CONTRACT",
       value: `**${payload.contract}**`,
       inline: true,
     },
     {
-      name: "💵 Entry Ask Price",
+      name: "💵 ESTIMATED ASK",
       value: `**$${payload.entryAsk.toFixed(2)}** ($${payload.maxRiskPerContract} max risk)`,
       inline: true,
     },
     {
-      name: "🚀 Target 1 (+Scale 50%)",
-      value: `**$${payload.target1.toFixed(2)} (+${reward1Pct}%)**`,
+      name: "📊 SPX SPOT",
+      value: `**$${payload.spxSpot.toFixed(2)}**`,
       inline: true,
     },
     {
-      name: "🚀 Target 2 (+Scale 25%)",
-      value: `**$${payload.target2.toFixed(2)} (+${reward2Pct}%)**`,
-      inline: true,
-    },
-    {
-      name: "🛑 Hard Stop / Trailing",
-      value: `$${payload.stopLoss.toFixed(2)} (or timeout cutoff)`,
-      inline: true,
-    },
-    {
-      name: "⚠️ Mandatory Exit Cutoff",
-      value: `**${payload.exitCutoff}**`,
-      inline: true,
+      name: "🛑 WHEN TO CUT / EXIT",
+      value: `Cut if SPX drops back inside shelf, or mandatory close by **${payload.exitCutoff}** (Do NOT hold into 4:00 PM cash settlement).`,
+      inline: false,
     },
   ];
 
-  if (payload.alternateSetup) {
-    fields.push({
-      name: "🔄 Alternate Direction Setup",
-      value: payload.alternateSetup,
-      inline: false,
-    });
-  }
-
-  if (payload.brokerCutoffWarning) {
-    fields.push({
-      name: "⚠️ Broker 15:40 ET Cutoff Notice",
-      value: `**${payload.brokerCutoffWarning}**`,
-      inline: false,
-    });
-  }
-
-  fields.push({
-    name: "🛡️ Institutional Risk Rule",
-    value: "Fixed 1% capital allocation. Never average down on expiring 0DTE contracts. Cash-settled European style.",
-    inline: false,
-  });
-
   const embed: DiscordEmbed = {
     title,
-    description: `**Shelf Status:** \`${payload.shelfBreak}\`\n**Morning Bias (JFE Indicator):** \`${payload.morningBias}\`\n**MOC Flow:** ${payload.mocImbalance}${payload.confluenceConviction ? `\n**Institutional Confluence:** \`${payload.confluenceConviction}\`` : ''}`,
+    description: `**Trigger Status:** \`${payload.shelfBreak}\`\n**Morning Bias (JFE):** \`${payload.morningBias}\`\n**MOC Flow:** ${payload.mocImbalance}`,
     color,
     fields,
     footer: {
-      text: "SPX 0DTE Power Hour Desk • Options Tracker AI",
+      text: "SPX 0DTE Execution Desk • Options Tracker AI",
     },
     timestamp: new Date().toISOString(),
   };
