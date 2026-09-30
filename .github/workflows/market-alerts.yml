@@ -1,0 +1,18 @@
+name: Market Hours Cloud Autonomous Monitor
+
+on:
+  schedule:
+    # Run every 5 minutes during US market hours (13:30 to 20:05 UTC, Monday to Friday)
+    - cron: '*/5 13-20 * * 1-5'
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+
+jobs:
+  run-market-scan:
+    runs-into-timeout-after: 5
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloud Market Scanner & Discord Alerts
+        run: |
+          echo "Triggering Options Tracker AI Cloud Monitor..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://options-tracker-iota.vercel.app/api/cloud-cron")
+          echo "$RESPONSE"
