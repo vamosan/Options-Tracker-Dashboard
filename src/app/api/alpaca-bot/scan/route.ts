@@ -29,6 +29,10 @@ const CORE_UNIVERSE = [
     { symbol: 'XOM', name: 'ExxonMobil', defaultCap: 465.0, defaultPrice: 116.80, catalyst: 'Pioneer Natural Resources Permian Synergies Acceleration' }
 ];
 
+export async function GET() {
+    return POST();
+}
+
 export async function POST() {
     try {
         const logs: string[] = [];
