@@ -192,7 +192,7 @@ interface DailyTradeRecord {
   t2Target: number;
   stopLoss: number;
   peakPrice: number;
-  outcome: "TARGET_2" | "TARGET_1" | "STOPPED";
+  outcome: "TARGET_2" | "TARGET_1" | "STOPPED" | "OPEN_LIVE";
   pnlPerContract: number;
   percentGain: string;
   catalyst: string;
@@ -1001,7 +1001,27 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             isUpcoming: false, 
             sessionNote: "Live Active Trading Session — #1 Prime Institutional Put Sweep Qualified (QQQ)",
             trades: [
-              { id: "s30_qqq", symbol: "QQQ", name: "Invesco QQQ", time: "10:44 AM", entryTime: "10:44 AM", exitTime: "11:15 AM", duration: "31 min", session: "MORNING_ORB", contract: "QQQ $743P", entryAsk: 1.90, t1Target: 2.47, t2Target: 3.04, stopLoss: 1.42, peakPrice: 2.85, outcome: "TARGET_2", pnlPerContract: 85.0, percentGain: "+44.7%", catalyst: "💥 BEARISH ALIGNMENT | #1 Institutional Put Sweep (Vol/OI: 56.09x • 80% Conviction)", rvol: "5.6x" }
+              { 
+                id: "s30_qqq", 
+                symbol: "QQQ", 
+                name: "Invesco QQQ", 
+                time: "10:44 AM", 
+                entryTime: "10:44 AM", 
+                exitTime: "OPEN (Live)", 
+                duration: "Active In Play", 
+                session: "MORNING_ORB", 
+                contract: "QQQ $743P", 
+                entryAsk: 1.90, 
+                t1Target: 2.47, 
+                t2Target: 3.04, 
+                stopLoss: 1.42, 
+                peakPrice: 2.15, 
+                outcome: "OPEN_LIVE", 
+                pnlPerContract: 0.0, 
+                percentGain: "Tracking Live", 
+                catalyst: "💥 BEARISH ALIGNMENT | #1 Institutional Put Sweep (Vol/OI: 56.09x • 80% Conviction)", 
+                rvol: "5.6x" 
+              }
             ]
           }
         }
@@ -1178,9 +1198,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           sessionNote: item.sessionNote,
           trades: isUpcoming ? [] : activeTrades,
           allDayTrades: isUpcoming ? [] : evaluatedTrades,
-          dailyPnl: isUpcoming ? 0 : Math.round(totalPnlPerCt * simContractQty * 100) / 100,
-          winCount: isUpcoming ? 0 : wins,
-          lossCount: isUpcoming ? 0 : losses
+          dailyPnl: (isUpcoming || isLiveToday) ? 0 : Math.round(totalPnlPerCt * simContractQty * 100) / 100,
+          winCount: (isUpcoming || isLiveToday) ? 0 : wins,
+          lossCount: (isUpcoming || isLiveToday) ? 0 : losses
         });
       }
     }
@@ -1900,163 +1920,35 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             )}
           </div>
 
-          {/* STRICT PROFIT-TAKING & STOP LOSS CRITERIA EXPLANATION */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                Current Criteria for Profit Taking & Stop Loss (Institutional Scaling Model)
-              </span>
-              <button 
-                onClick={() => setShowRulesInfo(!showRulesInfo)}
-                className="text-[11px] font-mono text-cyan-400 hover:underline"
-              >
-                {showRulesInfo ? "Collapse Rules" : "Expand Rules"}
-              </button>
-            </div>
-
-            {/* AUDITED DATA ACCURACY & INVALIDATION NOTICE */}
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200/90 font-sans">
-              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="font-bold text-amber-300">Audited Data Accuracy & Real-World Invalidation Policy:</span>
-                <p className="text-[10.5px] leading-relaxed text-slate-300">
-                  Breakout trades are strictly validated against underlying price movement. If a breakout fails to reach the strike or loses the 9:30–9:35 AM ORB Low shelf (such as <b>CVS on Sep 22</b>, which topped at $88.34, never touched $90, and dumped through the $87.40 ORB Low to $86.70), it is <b>strictly recorded as a Stop-Loss Exit (-25.0% loss)</b>. The ~50% win rate reflects genuine false breakout frequency, proving how positive expectancy is generated strictly through disciplined 2:1 risk/reward payoff.
-                </p>
+          {/* COMPACT EXECUTION RULES & RISK CONTROLS */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 flex-shrink-0">
+                <TrendingDown className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">Strict Stop Shelf</span>
+                <span className="text-xs font-bold text-rose-300 font-mono">-20% to -25% (ORB Low Invalidation)</span>
               </div>
             </div>
 
-            {showRulesInfo && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
-                {/* Rule 1: Entry & Stop */}
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1">
-                  <div className="flex items-center gap-1.5 text-rose-400 font-bold">
-                    <TrendingDown className="w-3.5 h-3.5" />
-                    <span>Stop-Loss Shelf Rule</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                    • <b>ORB Low Shelf:</b> Mapped strictly to 9:30–9:35 AM opening candle low.
-                    <br />
-                    • <b>Contract Stop:</b> Hard exit triggered if contract drops <b>-20% to -25%</b> from entry Ask. Never hold past the shelf.
-                  </p>
-                </div>
-
-                {/* Rule 2: Target 1 Scaling */}
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1">
-                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                    <Target className="w-3.5 h-3.5" />
-                    <span>Target 1 Scale (+30%)</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                    • <b>Scale 50%:</b> When contract reaches <b>+30%</b>, sell half of position immediately.
-                    <br />
-                    • <b>Breakeven Stop:</b> Simultaneously move stop on remaining runner to <b>Breakeven ($0 risk)</b>.
-                  </p>
-                </div>
-
-                {/* Rule 3: Target 2 Runner Exit */}
-                <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1">
-                  <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Target 2 Runner (+60%)</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                    • <b>Runner Exit:</b> Remaining 50% closed at <b>+60% to +65%</b> gain.
-                    <br />
-                    • <b>Blended Winner Return:</b> Produces a strict <b>+45.0% net gain</b> on the entire trade with asymmetric 2.25:1 R:R.
-                  </p>
-                </div>
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
+                <Target className="w-4 h-4" />
               </div>
-            )}
-          </div>
-
-          {/* ALL-DAY MULTI-SESSION INTELLIGENCE PLAYBOOK */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-amber-400" />
-                All-Day Multi-Session Intelligence: How to Find Setups Beyond Market Open
-              </span>
-              <span className="text-[10px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
-                3 Trading Windows
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
-              {/* Window 1: Morning ORB */}
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-400 font-black flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> Session 1: 09:30 - 10:00 AM
-                  </span>
-                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-bold">ORB Breakouts</span>
-                </div>
-                <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                  • <b>Mechanics:</b> Fast volatility expansion on morning catalyst &amp; RVOL &gt; 2.5x.
-                  <br />
-                  • <b>Vulnerability:</b> ~50% false-breakout rate due to opening noise and institutional trap moves.
-                  <br />
-                  • <b>Execution:</b> Hard stop at 5-min ORB Low (-20% to -25%). Never hold into midday.
-                </p>
-              </div>
-
-              {/* Window 2: Midday VWAP Pullback */}
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-purple-400 font-black flex items-center gap-1">
-                    <TrendingUp className="w-3.5 h-3.5" /> Session 2: 10:15 - 11:45 AM
-                  </span>
-                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">VWAP Continuations</span>
-                </div>
-                <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                  • <b>Mechanics:</b> True institutional trend emerges. Stock pulls back to rising VWAP on low volume and prints an absorption bounce.
-                  <br />
-                  • <b>The Edge:</b> Extremely tight stop shelf (just below VWAP, often only $0.30–$0.50 on the stock or 10-15% on the option).
-                  <br />
-                  • <b>Target:</b> Return to morning High-of-Day (HOD) or new breakout (+45% T2).
-                </p>
-              </div>
-
-              {/* Window 3: Power Hour Squeeze */}
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-amber-400 font-black flex items-center gap-1">
-                    <Zap className="w-3.5 h-3.5" /> Session 3: 01:30 - 03:15 PM
-                  </span>
-                  <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">Power Hour Flags</span>
-                </div>
-                <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                  • <b>Mechanics:</b> 2+ hour tight midday flag/pennant consolidation with ATR compression (&lt;0.5% range).
-                  <br />
-                  • <b>Catalyst:</b> Aggressive above-Ask call sweeper flow into the close triggers a gamma ramp.
-                  <br />
-                  • <b>Advantage:</b> Midday theta has already discounted premiums; fast +50% to +80% explosion in 45 min.
-                </p>
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">Target 1 (Scale 50%)</span>
+                <span className="text-xs font-bold text-emerald-300 font-mono">+30% Gain &amp; Stop to Breakeven</span>
               </div>
             </div>
 
-            {/* THE 4 SCANNER CRITERIA TO FIND ALL-DAY WINNERS */}
-            <div className="p-3 rounded-lg bg-cyan-950/20 border border-cyan-500/30 text-xs font-sans text-slate-300 space-y-1.5">
-              <span className="font-bold text-cyan-300 font-mono text-[11px] block uppercase tracking-wide">
-                How the Bot Scans and Identifies These All-Day Setups:
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[10.5px]">
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <b className="text-cyan-400 block font-mono">1. Institutional VWAP</b>
-                  Price &gt; Rising VWAP &gt; Prev Close. Never buy calls below intraday VWAP.
-                </div>
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <b className="text-purple-400 block font-mono">2. Multi-Hour Compression</b>
-                  15-min Bollinger squeeze with declining volume indicating imminent expansion.
-                </div>
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <b className="text-emerald-400 block font-mono">3. Sweeper Flow Surge</b>
-                  Call/Put ratio &gt; 3.5x with repeated block sweeps hitting the Ask on weekly strikes.
-                </div>
-                <div className="p-2 rounded bg-slate-950/60 border border-slate-800">
-                  <b className="text-amber-400 block font-mono">4. Relative Strength (RS)</b>
-                  Underlying holding or making new highs while SPY / QQQ is pulling back or consolidating.
-                </div>
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex-shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">Target 2 (Runner Exit)</span>
+                <span className="text-xs font-bold text-cyan-300 font-mono">+60% Runner (+45% Blended Gain)</span>
               </div>
             </div>
           </div>
@@ -2309,46 +2201,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 if (!allTrades || allTrades.length === 0) {
                   if (selectedDayData.isUpcoming && selectedDayData.date !== "2026-09-30") {
                     return (
-                      <div className="p-6 rounded-xl bg-slate-950/60 border border-indigo-500/30 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></span>
-                            <span className="font-bold text-sm text-indigo-300">Awaiting Pre-Market Gaps & 09:30 AM ET Open</span>
-                          </div>
-                          <span className="px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-mono">
-                            Session Opens Tomorrow
-                          </span>
-                        </div>
-
-                        <div className="text-xs text-slate-300 leading-relaxed space-y-2">
-                          <p className="font-semibold text-slate-200">
-                            🛡️ Strict Zero-Hindsight Guarantee:
-                          </p>
-                          <p className="text-slate-400">
-                            Pre-market gappers, earnings catalysts, and Relative Volume (RVOL) cannot be evaluated before pre-market trading begins (08:00 AM ET) and the 5-minute Opening Range is established (09:30–09:35 AM ET).
-                          </p>
-                          <p className="text-slate-400">
-                            No speculative or fabricated trades are ever populated in advance. Once the market opens, real-time qualified breakout setups will stream here dynamically and route directly to Discord in real time.
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-                          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
-                            <span className="text-[10px] text-cyan-400 font-bold block uppercase tracking-wider">Step 1 • 08:00 AM ET</span>
-                            <span className="text-xs font-bold text-slate-200 block">Pre-Market Gappers</span>
-                            <span className="text-[11px] text-slate-400 block">Scans overnight volume and news catalysts across high-beta tickers.</span>
-                          </div>
-                          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
-                            <span className="text-[10px] text-emerald-400 font-bold block uppercase tracking-wider">Step 2 • 09:30 AM ET</span>
-                            <span className="text-xs font-bold text-slate-200 block">Opening Bell Briefing</span>
-                            <span className="text-[11px] text-slate-400 block">Dispatches live focus watchlist & opening trigger levels to Discord.</span>
-                          </div>
-                          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
-                            <span className="text-[10px] text-purple-400 font-bold block uppercase tracking-wider">Step 3 • 09:35 AM ET</span>
-                            <span className="text-xs font-bold text-slate-200 block">ORB Range Breakout</span>
-                            <span className="text-[11px] text-slate-400 block">Monitors 5-min candle breaks with Gatekeeper RVOL &ge; 2.8x filter.</span>
+                      <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse"></span>
+                          <div>
+                            <span className="font-bold text-xs text-indigo-300 block">Session Awaiting 09:30 AM ET Open</span>
+                            <span className="text-[11px] text-slate-400 font-mono">Real-time ORB breakout setups stream dynamically once the opening 5-min range confirms.</span>
                           </div>
                         </div>
+                        <span className="px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-xs font-mono font-bold">
+                          Session Standby
+                        </span>
                       </div>
                     );
                   }
@@ -2382,36 +2245,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   <div className="space-y-2.5">
                     {/* ELITE FOCUS BANNER FOR DAY 30 */}
                     {selectedDayData.date === "2026-09-30" && (
-                      <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                          <span className="font-bold text-cyan-300">
-                            Elite Conviction Filter: #1 Prime Setup Isolated (QQQ $743 Put • 80% Conviction)
-                          </span>
-                          <span className="text-slate-300 font-mono text-[11px]">
-                            (Filtered out 6 secondary/divergent sweeps to eliminate noise and preserve capital)
+                      <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          <span className="font-bold text-emerald-300 font-mono">
+                            ACTIVE LIVE CALLOUT: {selectedDayData.trades[0]?.symbol || 'QQQ'} {selectedDayData.trades[0]?.contract || '$743P'}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-cyan-300 font-bold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                          1 Single Best Trade
+                        <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                          1 Single Prime Trade
                         </span>
                       </div>
                     )}
 
                     {/* AVOIDED SIGNALS NOTICE IN GATEKEEPER MODE */}
                     {gatekeeperFilterEnabled && blockedTrades.length > 0 && (
-                      <div className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                          <span className="font-bold text-emerald-300">
-                            Gatekeeper Capital Defense: {blockedTrades.length} False Signal(s) Eliminated on this Day
-                          </span>
-                          <span className="text-slate-300 font-mono text-[11px]">
-                            (Avoided ${blockedTrades.reduce((acc, t) => acc + Math.abs(t.pnlPerContract), 0) * simContractQty} in drawdown)
+                          <span className="font-bold text-emerald-300 font-mono">
+                            Gatekeeper Defense: {blockedTrades.length} False Signal(s) Filtered Out
                           </span>
                         </div>
                         <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                          100% Quality Execution
+                          +${blockedTrades.reduce((acc, t) => acc + Math.abs(t.pnlPerContract), 0) * simContractQty} Saved
                         </span>
                       </div>
                     )}
@@ -2453,20 +2310,32 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                                 <div className="flex items-center gap-1.5 text-[11px] font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-slate-300">
                                   <Clock className="w-3 h-3 text-cyan-400" />
                                   <span>Entry: <b className="text-cyan-300">{trade.entryTime || trade.time}</b></span>
-                                  <span>&rarr;</span>
-                                  <span>Exit: <b className="text-amber-300">{trade.exitTime || "--"}</b></span>
-                                  <span className="text-slate-400">({trade.duration || "--"})</span>
+                                  {trade.outcome === "OPEN_LIVE" ? (
+                                    <span className="text-emerald-300 font-bold ml-1">• Open (Tracking Live)</span>
+                                  ) : (
+                                    <>
+                                      <span>&rarr;</span>
+                                      <span>Exit: <b className="text-amber-300">{trade.exitTime || "--"}</b></span>
+                                      <span className="text-slate-400">({trade.duration || "--"})</span>
+                                    </>
+                                  )}
                                 </div>
                                 <span className="text-[11px] font-mono text-fuchsia-400">RVOL: {trade.rvol}</span>
                               </div>
 
                               <div className="flex items-center gap-2">
                                 <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-black border ${
-                                  isWin 
+                                  trade.outcome === "OPEN_LIVE"
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse'
+                                    : isWin 
                                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
                                     : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                                 }`}>
-                                  {isWin ? `+$${tradeTotalPnl.toFixed(2)} (${trade.percentGain})` : `-$${Math.abs(tradeTotalPnl).toFixed(2)} (${trade.percentGain})`}
+                                  {trade.outcome === "OPEN_LIVE" 
+                                    ? "🟢 LIVE IN PLAY" 
+                                    : isWin 
+                                    ? `+$${tradeTotalPnl.toFixed(2)} (${trade.percentGain})` 
+                                    : `-$${Math.abs(tradeTotalPnl).toFixed(2)} (${trade.percentGain})`}
                                 </span>
                                 <button
                                   onClick={() => triggerDiscordSingleTrade(trade)}
@@ -2533,13 +2402,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                                 <span className="text-emerald-400 font-bold">${trade.t1Target.toFixed(2)}</span>
                               </div>
                               <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">Peak Price</span>
-                                <span className="text-cyan-400 font-bold">${trade.peakPrice.toFixed(2)}</span>
+                                <span className="text-[9px] text-slate-500 block uppercase">{trade.outcome === "OPEN_LIVE" ? "Target 2 (+60%)" : "Peak Price"}</span>
+                                <span className="text-cyan-400 font-bold">${trade.outcome === "OPEN_LIVE" ? trade.t2Target.toFixed(2) : trade.peakPrice.toFixed(2)}</span>
                               </div>
                               <div>
-                                <span className="text-[9px] text-slate-500 block uppercase">Rule Executed</span>
-                                <span className={`font-bold ${trade.outcome === "TARGET_2" ? 'text-emerald-400' : trade.outcome === "TARGET_1" ? 'text-cyan-400' : 'text-rose-400'}`}>
-                                  {trade.outcome === "TARGET_2" ? "Scaled T1 + Runner T2" : trade.outcome === "TARGET_1" ? "Scaled T1 + BE Exit" : "Strict Stop Hit"}
+                                <span className="text-[9px] text-slate-500 block uppercase">Status / Outcome</span>
+                                <span className={`font-bold ${trade.outcome === "OPEN_LIVE" ? 'text-emerald-400' : trade.outcome === "TARGET_2" ? 'text-emerald-400' : trade.outcome === "TARGET_1" ? 'text-cyan-400' : 'text-rose-400'}`}>
+                                  {trade.outcome === "OPEN_LIVE" ? "🟢 In Play (Live)" : trade.outcome === "TARGET_2" ? "Scaled T1 + Runner T2" : trade.outcome === "TARGET_1" ? "Scaled T1 + BE Exit" : "Strict Stop Hit"}
                                 </span>
                               </div>
                             </div>

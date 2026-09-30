@@ -188,6 +188,15 @@ async function scanTickerForMomentum(yf, symbol) {
             const volume = contract.volume || 0;
             const oi = contract.openInterest || 0;
             const lastPrice = contract.lastPrice || 0;
+            const strike = contract.strike || 0;
+
+            // STRICT DATA ACCURACY GUARD:
+            // Scalp & day trade options must be near-the-money (within 2.5% of spot price).
+            // This strictly eliminates anomalous/stale strikes (e.g. SPY $635 when spot is ~$766 is ~17% away).
+            if (underlyingPrice > 0 && strike > 0) {
+                const strikeDiff = Math.abs(strike - underlyingPrice) / underlyingPrice;
+                if (strikeDiff > 0.025) continue;
+            }
 
             if (volume >= MIN_VOLUME && oi > 0 && lastPrice >= 0.15) {
                 const ratio = volume / oi;

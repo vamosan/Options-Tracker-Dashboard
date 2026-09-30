@@ -116,9 +116,9 @@ async function scanTickerForAlerts(yf, symbol) {
                 if (marketPrice <= 0.05 || IV <= 0) continue;
                 if ((contract.volume || 0) < 10) continue; // higher volume baseline for active alerts
 
-                // Strike must be within 8% of underlying
+                // Strike must be within 2.5% of underlying to ensure near-the-money high delta & accuracy
                 const strikeDiff = Math.abs(K - S) / S;
-                if (strikeDiff > 0.08) continue;
+                if (strikeDiff > 0.025) continue;
 
                 const theoreticalPrice = blackScholes(S, K, T, r, HV, contract.type);
 

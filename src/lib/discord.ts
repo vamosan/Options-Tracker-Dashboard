@@ -249,22 +249,32 @@ export async function sendDailyCalloutsSummary(data: {
   const embedColor = isGreen ? 0x10B981 : 0xF43F5E;
 
   const tradeFields: DiscordField[] = trades.map((t, idx) => {
+    const isLive = t.status === "ACTIVE IN PLAY" || (t.exitTime || "").includes("Live") || (t.exitTime || "").includes("OPEN");
     const isTradeWin = (t.pnlPerContract ?? 0) > 0;
     const pnlSign = (t.pnlPerContract ?? 0) >= 0 ? "+" : "";
     const pnlStr = t.pnlPerContract !== undefined ? `${pnlSign}$${t.pnlPerContract.toFixed(0)}/ct` : "";
     const returnStr = t.pnlPercent || "";
-    const badge = isTradeWin ? "🟢" : "🔴";
+    const badge = isLive ? "🟢" : isTradeWin ? "🟢" : "🔴";
 
     return {
       name: `${badge} #${idx + 1}: ${t.symbol} ${t.contract || ""}`,
-      value: [
-        `• **Entry Time:** \`${t.entryTime}\` @ $${t.entryPrice.toFixed(2)}`,
-        `• **Exit Time:** \`${t.exitTime || "EOD"}\` @ $${(t.exitPrice ?? t.entryPrice).toFixed(2)}`,
-        `• **Result:** **${t.status || "CLOSED"}** (${returnStr} • ${pnlStr})`,
-        t.lessons ? `• *Note:* ${t.lessons}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      value: isLive
+        ? [
+            `• **Entry Time:** \`${t.entryTime}\` @ $${t.entryPrice.toFixed(2)}`,
+            `• **Live State:** 🟢 **OPEN / IN PLAY** (Tracking Real-Time Targets)`,
+            `• **Targets:** T1: +30% | T2: +60% | Stop Loss: -25%`,
+            t.lessons ? `• *Catalyst:* ${t.lessons}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : [
+            `• **Entry Time:** \`${t.entryTime}\` @ $${t.entryPrice.toFixed(2)}`,
+            `• **Exit Time:** \`${t.exitTime || "EOD"}\` @ $${(t.exitPrice ?? t.entryPrice).toFixed(2)}`,
+            `• **Result:** **${t.status || "CLOSED"}** (${returnStr} • ${pnlStr})`,
+            t.lessons ? `• *Note:* ${t.lessons}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
       inline: false,
     };
   });
