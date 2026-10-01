@@ -7,7 +7,7 @@
     "crons": [
         {
             "path": "/api/cloud-cron",
-            "schedule": "*/10 13-21 * * 1-5"
+            "schedule": "35 13 * * 1-5"
         }
     ]
 }
