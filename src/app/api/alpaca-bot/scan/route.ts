@@ -400,43 +400,8 @@ export async function POST() {
             }
         ];
 
-        // 8. Verified Historical Trades & Post-Mortem Reviews for Today
-        const historicalTrades = [
-            {
-                id: 'tr_28_01',
-                symbol: 'NVDA $230C',
-                underlying: 'NVDA',
-                type: 'CALL',
-                entryTime: '09:35 AM',
-                exitTime: '10:15 AM',
-                entryPrice: 2.30,
-                exitPrice: 3.55,
-                qty: 3,
-                stopLoss: 1.72,
-                pnl: 375.00,
-                pnlPercent: '+54.3%',
-                status: 'TARGET 2 HIT',
-                lessons: 'Confirmed 09:35 AM candle close with massive 3.6x paced RVOL on Blackwell volume surge. Clean directional trend into day high $233.21.',
-                tags: ['#ORBBreakout', '#RVOLQualified', '#BlackwellDelivery']
-            },
-            {
-                id: 'tr_28_02',
-                symbol: 'PLTR $187.5C',
-                underlying: 'PLTR',
-                type: 'CALL',
-                entryTime: '09:33 AM',
-                exitTime: '10:05 AM',
-                entryPrice: 1.65,
-                exitPrice: 2.40,
-                qty: 3,
-                stopLoss: 1.24,
-                pnl: 225.00,
-                pnlPercent: '+45.5%',
-                status: 'TARGET 2 HIT',
-                lessons: 'DoD AIP enterprise expansion catalyst. Pushed straight above 09:35 opening shelf to $189.60. Full target 2 captured.',
-                tags: ['#DoDContract', '#GatekeeperPassed', '#CleanTrend']
-            }
-        ];
+        // 8. Session Trades & Live Post-Mortem Reviews
+        const historicalTrades: any[] = [];
 
         // 9. Analytics Suite Calculations
         const totalTrades = historicalTrades.length;
@@ -452,7 +417,7 @@ export async function POST() {
         
         const avgWin = winCount > 0 ? Math.round(grossWins / winCount) : 0;
         const avgLoss = lossTrades.length > 0 ? Math.round(grossLosses / lossTrades.length) : 0;
-        const expectancy = Math.round((winRate / 100 * avgWin) - ((100 - winRate) / 100 * avgLoss));
+        const expectancy = totalTrades > 0 ? Math.round((winRate / 100 * avgWin) - ((100 - winRate) / 100 * avgLoss)) : 0;
 
         return NextResponse.json({
             success: true,

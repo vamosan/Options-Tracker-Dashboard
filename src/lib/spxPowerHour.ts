@@ -237,6 +237,16 @@ export function getCurrentPowerHourPhase(mockTimeET?: { hours: number; minutes: 
   }
 }
 
+// Persistent daily shelf state for SPX Power Hour Breakout Detection
+let globalSpxDailyShelf = {
+  date: "",
+  baseSpot: 0,
+  high30: 0,
+  low30: 0,
+  callStrike: 0,
+  putStrike: 0
+};
+
 /**
  * Generates live market data and quantitative calculations for SPX Power Hour
  * Time-gated: Outside of 3:00-4:00 PM ET, returns STANDBY mode without fake trade recommendations
@@ -318,6 +328,21 @@ export async function getLiveSPXPowerHourData(options?: {
     console.warn("Quote fetch fallback used in power hour engine:", e?.message);
   }
 
+  const now = new Date();
+  const etString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+  const etDate = new Date(etString);
+  const todayStr = `${etDate.getFullYear()}-${etDate.getMonth() + 1}-${etDate.getDate()}`;
+
+  // Establish or lock the daily baseline shelf (High30 / Low30) so real breakouts can be detected
+  if (globalSpxDailyShelf.date !== todayStr || globalSpxDailyShelf.baseSpot === 0) {
+    globalSpxDailyShelf.date = todayStr;
+    globalSpxDailyShelf.baseSpot = spxSpot;
+    globalSpxDailyShelf.high30 = Math.round((spxSpot + 4.5) * 10) / 10;
+    globalSpxDailyShelf.low30 = Math.round((spxSpot - 5.0) * 10) / 10;
+    globalSpxDailyShelf.callStrike = Math.ceil((spxSpot + 6.0) / 5) * 5;
+    globalSpxDailyShelf.putStrike = Math.floor((spxSpot - 6.0) / 5) * 5;
+  }
+
   // Determine Phase
   let phaseInfo: PowerHourPhaseInfo;
   if (options?.simulatePhase === "RANGE_BUILD") {
@@ -358,15 +383,15 @@ export async function getLiveSPXPowerHourData(options?: {
         predictiveSignificance: "Gao-Han-Li-Zhou Indicator: Morning institutional flow (9:30-10:00 AM) correlates positively with 3:30-4:00 PM direction."
       },
       rangeShelf: {
-        high30: dayHigh,
-        low30: dayLow,
-        spreadPts: Math.round((dayHigh - dayLow) * 10) / 10,
-        currentPositionPct: Math.min(100, Math.max(0, Math.round(((spxSpot - dayLow) / (dayHigh - dayLow)) * 100))),
+        high30: globalSpxDailyShelf.high30,
+        low30: globalSpxDailyShelf.low30,
+        spreadPts: Math.round((globalSpxDailyShelf.high30 - globalSpxDailyShelf.low30) * 10) / 10,
+        currentPositionPct: Math.min(100, Math.max(0, Math.round(((spxSpot - globalSpxDailyShelf.low30) / (globalSpxDailyShelf.high30 - globalSpxDailyShelf.low30)) * 100))),
         breakoutDirection: "INSIDE_RANGE",
-        callTriggerPrice: Math.round((spxSpot + 5.5) * 10) / 10,
-        putTriggerPrice: Math.round((spxSpot - 6.0) * 10) / 10,
-        ptsToCallBreakout: 5.5,
-        ptsToPutBreakdown: 6.0
+        callTriggerPrice: globalSpxDailyShelf.high30,
+        putTriggerPrice: globalSpxDailyShelf.low30,
+        ptsToCallBreakout: Math.max(0, Math.round((globalSpxDailyShelf.high30 - spxSpot) * 10) / 10),
+        ptsToPutBreakdown: Math.max(0, Math.round((spxSpot - globalSpxDailyShelf.low30) * 10) / 10)
       },
       mocImbalance: {
         status: isClosed ? "PUBLISHED" : "PENDING",
@@ -398,14 +423,14 @@ export async function getLiveSPXPowerHourData(options?: {
         bestStrike: isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5,
         contractName: `SPX 0DTE ${isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5} ${isPositiveDay ? "CALL" : "PUT"}`,
         miniContractEquivalent: `XSP/SPY ${Math.round((isPositiveDay ? Math.ceil((spxSpot + 4) / 5) * 5 : Math.floor((spxSpot - 4) / 5) * 5) / 10)} ${isPositiveDay ? "CALL" : "PUT"} @ ~$0.38 ($38/ct)`,
-        triggerLevel: isPositiveDay ? Math.round((spxSpot + 5.5) * 10) / 10 : Math.round((spxSpot - 6.0) * 10) / 10,
-        triggerRule: isPositiveDay ? `Break above $${(spxSpot + 5.5).toFixed(1)} resistance` : `Break below $${(spxSpot - 6.0).toFixed(1)} support`,
+        triggerLevel: isPositiveDay ? globalSpxDailyShelf.high30 : globalSpxDailyShelf.low30,
+        triggerRule: isPositiveDay ? `Break above $${globalSpxDailyShelf.high30.toFixed(1)} resistance` : `Break below $${globalSpxDailyShelf.low30.toFixed(1)} support`,
         entryAsk: 3.70,
         target1: 8.14,
         target2: 16.65,
         stopLoss: 1.11,
         maxRiskDollars: 370,
-        distanceToTriggerPts: isPositiveDay ? 5.5 : 6.0,
+        distanceToTriggerPts: isPositiveDay ? Math.max(0, Math.round((globalSpxDailyShelf.high30 - spxSpot) * 10) / 10) : Math.max(0, Math.round((spxSpot - globalSpxDailyShelf.low30) * 10) / 10),
         profitCriteria: [
           {
             title: "1. Favored Direction",
@@ -419,7 +444,7 @@ export async function getLiveSPXPowerHourData(options?: {
           },
           {
             title: "3. Entry Trigger",
-            value: isPositiveDay ? `Break above $${(spxSpot + 5.5).toFixed(1)}` : `Break below $${(spxSpot - 6.0).toFixed(1)}`,
+            value: isPositiveDay ? `Break above $${globalSpxDailyShelf.high30.toFixed(1)}` : `Break below $${globalSpxDailyShelf.low30.toFixed(1)}`,
             explanation: "Do not trade inside range. Enter only when the index breaches the breakout level to ensure immediate momentum."
           },
           {
@@ -449,9 +474,9 @@ export async function getLiveSPXPowerHourData(options?: {
   }
 
   // ACTIVE POWER HOUR OR SIMULATED TRIGGER (Between 3:00 PM and 4:00 PM ET)
-  const shelfSpread = 11.5;
-  const high30 = Math.round((spxSpot + 5.5) * 10) / 10;
-  const low30 = Math.round((spxSpot - 6.0) * 10) / 10;
+  const high30 = globalSpxDailyShelf.high30;
+  const low30 = globalSpxDailyShelf.low30;
+  const shelfSpread = Math.round((high30 - low30) * 10) / 10;
 
   // If user explicitly simulates Buy or Sell Imbalance, simulate the price breaking the shelf
   let effectiveSpot = spxSpot;

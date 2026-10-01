@@ -13,12 +13,12 @@
       "marketValue": 1436,
       "pl": 1091,
       "status": "OPEN",
-      "lastUpdated": "4:18:11 PM",
+      "lastUpdated": "21:44:22",
       "greeks": {
-        "delta": -0.1402,
-        "gamma": 0.0472,
-        "theta": -1.4277,
-        "vega": 0.0526,
+        "delta": 0,
+        "gamma": 0,
+        "theta": 0,
+        "vega": 0,
         "iv": 0.2
       },
       "recommendation": {
@@ -39,13 +39,13 @@
       "marketValue": 465.00000000000006,
       "pl": 222.00000000000003,
       "status": "OPEN",
-      "lastUpdated": "4:18:12 PM",
+      "lastUpdated": "21:44:23",
       "greeks": {
         "delta": -1,
         "gamma": 0,
-        "theta": 0.0469,
+        "theta": 0.0468,
         "vega": 0,
-        "iv": 0.2
+        "iv": 0.2814251327727388
       },
       "recommendation": {
         "signal": "MAX PROFIT",
@@ -61,21 +61,21 @@
       "premium": 3.77,
       "quantity": 1,
       "notes": "🤖 Bot Suggested (32% Conf, ⚠️ BULLISH NEWS / BEARISH FLOW (Divergence))",
-      "currentPrice": 7.8,
-      "marketValue": 780,
-      "pl": 402.99999999999994,
+      "currentPrice": 2,
+      "marketValue": 200,
+      "pl": -177,
       "status": "OPEN",
-      "lastUpdated": "4:18:12 PM",
+      "lastUpdated": "21:44:24",
       "greeks": {
-        "delta": -0.9522,
-        "gamma": 0.021,
-        "theta": -0.545,
-        "vega": 0.0235,
+        "delta": -0.0121,
+        "gamma": 0.0065,
+        "theta": -0.208,
+        "vega": 0.0076,
         "iv": 0.2
       },
       "recommendation": {
-        "signal": "MAX PROFIT",
-        "color": "green"
+        "signal": "TIME EXIT",
+        "color": "red"
       }
     }
   ],
