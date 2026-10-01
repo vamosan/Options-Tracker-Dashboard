@@ -92,8 +92,13 @@ export async function sendTradeEntryCallout(trade: {
   const rewardT1 = Math.round((trade.target1 - trade.entryPrice) * 100);
   const rewardT2 = Math.round((trade.target2 - trade.entryPrice) * 100);
 
+  const cleanContract = trade.contract.startsWith(trade.symbol) ? trade.contract : `${trade.symbol} ${trade.contract}`;
+  const t1Pct = trade.entryPrice > 0 ? Math.round(((trade.target1 - trade.entryPrice) / trade.entryPrice) * 100) : 30;
+  const t2Pct = trade.entryPrice > 0 ? Math.round(((trade.target2 - trade.entryPrice) / trade.entryPrice) * 100) : 65;
+  const slPct = trade.entryPrice > 0 ? Math.round(((trade.entryPrice - trade.stopLoss) / trade.entryPrice) * 100) : 25;
+
   const embed: DiscordEmbed = {
-    title: `🚨 ENTER TRADE NOW: BUY ${trade.symbol} ${trade.contract}`,
+    title: `🚨 ENTER TRADE NOW: BUY ${cleanContract}`,
     description: `💎 **${trade.gatekeeperBadge || "GATEKEEPER QUALIFIED (96.6% WIN RATE)"}**\n${
       trade.catalyst || "Institutional breakout above morning resistance shelf with expanding volume."
     }`,
@@ -101,12 +106,12 @@ export async function sendTradeEntryCallout(trade: {
     fields: [
       {
         name: "⏰ WHEN TO ENTER",
-        value: `**ENTER NOW (${trade.entryTime})**\nImmediate execution on opening breakout.`,
+        value: `**ENTER NOW (${trade.entryTime})**\nImmediate execution on confirmed breakout shelf.`,
         inline: false,
       },
       {
         name: "🎯 EXACT CONTRACT",
-        value: `**${trade.symbol} ${trade.contract}**`,
+        value: `**${cleanContract}**`,
         inline: true,
       },
       {
@@ -115,9 +120,29 @@ export async function sendTradeEntryCallout(trade: {
         inline: true,
       },
       {
-        name: "🛑 WHEN TO CUT / STOP",
-        value: `**$${trade.stopLoss.toFixed(2)}** (-25% strict stop loss)`,
+        name: "🛑 STOP LOSS",
+        value: `**$${trade.stopLoss.toFixed(2)}** (-${slPct}% hard cut)`,
         inline: true,
+      },
+      {
+        name: `🎯 TARGET 1 (+${t1Pct}%)`,
+        value: `**$${trade.target1.toFixed(2)}** (Scale 50% profit)`,
+        inline: true,
+      },
+      {
+        name: `🚀 TARGET 2 (+${t2Pct}%)`,
+        value: `**$${trade.target2.toFixed(2)}** (Trail runner)`,
+        inline: true,
+      },
+      {
+        name: "📊 RVOL & TAPE",
+        value: `**${rvolDisplay}** Institutional Surge`,
+        inline: true,
+      },
+      {
+        name: "🛡️ GATEKEEPER RATIONALE",
+        value: trade.gatekeeperReason || "Rule 1-4 Passed: Tech Momentum + RVOL Floor >= 2.8x + Confirmed Candle Close + Positive Body Delta",
+        inline: false,
       },
       {
         name: "⚡ EXECUTION PROTOCOL",

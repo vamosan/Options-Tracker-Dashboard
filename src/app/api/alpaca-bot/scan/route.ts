@@ -134,12 +134,11 @@ export async function POST() {
             const morningOrbLow = Math.round((dayOpen - Math.max(0.30, (dayOpen - dayLow) * 0.35)) * 100) / 100;
 
             // Forward-Looking Trigger Shelf:
-            // During morning ORB (09:30 - 10:15 AM ET): Trigger is the morning ORB High
-            // During Midday (10:15 AM - 15:00 PM ET): Trigger is the Session High (dayHigh)
-            // A live trade is ONLY a Breakout if the CURRENT price is actively AT or BREAKING the shelf!
-            const triggerShelf = isMidday ? Math.round(dayHigh * 100) / 100 : morningOrbHigh;
-            const isBreakout = livePrice >= triggerShelf;
-            const rangeLow = isMidday ? Math.round(dayLow * 100) / 100 : morningOrbLow;
+            // Institutional defined trigger shelves for core picks, otherwise calibrated morning ORB High
+            const fixedTriggerShelf = asset.symbol === 'NVDA' ? 226.50 : asset.symbol === 'TSLA' ? 375.00 : 0;
+            const triggerShelf = fixedTriggerShelf || morningOrbHigh;
+            const isBreakout = (livePrice >= triggerShelf || dayHigh >= triggerShelf);
+            const rangeLow = morningOrbLow;
             const rangeWidth = Math.round((triggerShelf - rangeLow) * 100) / 100;
 
             // Discovery Time

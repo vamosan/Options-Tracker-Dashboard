@@ -88,11 +88,11 @@ async function handleCron(request: Request) {
     const actionsTriggered: string[] = [];
 
     // ==============================================================
-    // 1. MORNING ORB SESSION (9:35 AM - 10:15 AM ET)
+    // 1. EQUITIES BREAKOUT SESSION (9:35 AM - 3:55 PM ET)
     // DISCORD RULE: ONLY ALERT ON VALID CONFIRMED BREAKOUT ENTRIES
-    // NO SPAM OR GENERIC BRIEFINGS
+    // NO SPAM OR GENERIC BRIEFINGS (Max 1 alert per symbol per day)
     // ==============================================================
-    if ((timeVal >= 935 && timeVal <= 1015) || forceTest) {
+    if ((timeVal >= 935 && timeVal <= 1555) || forceTest) {
         try {
             const yf = new (YahooFinance as any)({ suppressNotices: ['yahooSurvey'] });
             
@@ -102,7 +102,9 @@ async function handleCron(request: Request) {
                 try {
                     const qNvda = await yf.quote('NVDA');
                     const nvdaPrice = qNvda?.regularMarketPrice || 0;
-                    if (nvdaPrice >= 226.50 || forceTest) {
+                    const nvdaHigh = qNvda?.regularMarketDayHigh || nvdaPrice;
+                    const nvdaTrigger = 226.50;
+                    if (nvdaPrice >= nvdaTrigger || nvdaHigh >= nvdaTrigger || forceTest) {
                         await sendTradeEntryCallout({
                             symbol: "NVDA",
                             contract: "NVDA $230C",
@@ -120,7 +122,7 @@ async function handleCron(request: Request) {
                         });
                         setCache(nvdaKey);
                         actionsTriggered.push("ORB_ENTRY_NVDA");
-                        logs.push(`[Morning ORB] Confirmed Breakout Entry dispatched for NVDA @ $${nvdaPrice}`);
+                        logs.push(`[Breakout Entry] Confirmed Breakout Entry dispatched for NVDA @ $${nvdaPrice} (Day High $${nvdaHigh})`);
                     }
                 } catch (e: any) {
                     logs.push(`[NVDA Quote Error] ${e.message}`);
@@ -133,7 +135,9 @@ async function handleCron(request: Request) {
                 try {
                     const qTsla = await yf.quote('TSLA');
                     const tslaPrice = qTsla?.regularMarketPrice || 0;
-                    if (tslaPrice >= 375.00) {
+                    const tslaHigh = qTsla?.regularMarketDayHigh || tslaPrice;
+                    const tslaTrigger = 375.00;
+                    if (tslaPrice >= tslaTrigger || tslaHigh >= tslaTrigger || forceTest) {
                         await sendTradeEntryCallout({
                             symbol: "TSLA",
                             contract: "TSLA $375C",
@@ -151,14 +155,14 @@ async function handleCron(request: Request) {
                         });
                         setCache(tslaKey);
                         actionsTriggered.push("ORB_ENTRY_TSLA");
-                        logs.push(`[Morning ORB] Confirmed Breakout Entry dispatched for TSLA @ $${tslaPrice}`);
+                        logs.push(`[Breakout Entry] Confirmed Breakout Entry dispatched for TSLA @ $${tslaPrice} (Day High $${tslaHigh})`);
                     }
                 } catch (e: any) {
                     logs.push(`[TSLA Quote Error] ${e.message}`);
                 }
             }
         } catch (orbErr: any) {
-            logs.push(`[Morning ORB Check Error] ${orbErr?.message}`);
+            logs.push(`[Breakout Check Error] ${orbErr?.message}`);
         }
     }
 
