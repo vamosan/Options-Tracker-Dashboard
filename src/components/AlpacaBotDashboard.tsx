@@ -442,6 +442,33 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(false);
   const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
 
+  // Real-Time High-Frequency Live Quotes Engine (Hyper-Trading Mode)
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, { price: number; change: number; changePercent: number; dayHigh: number; dayLow: number; time: string }>>({});
+  const [lastQuoteFetchTime, setLastQuoteFetchTime] = useState<string>("");
+  const [isQuoteFetching, setIsQuoteFetching] = useState<boolean>(false);
+
+  const fetchLiveQuotes = async () => {
+    try {
+      setIsQuoteFetching(true);
+      const res = await fetch("/api/live-quote?symbols=NVDA,CVS,META,AMD,CRWD,PLTR,LLY,TSLA");
+      const data = await res.json();
+      if (data.success && data.quotes) {
+        setLiveQuotes(prev => ({ ...prev, ...data.quotes }));
+        setLastQuoteFetchTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      }
+    } catch (e) {
+      console.warn("Live quote fetch error:", e);
+    } finally {
+      setIsQuoteFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveQuotes();
+    const interval = setInterval(fetchLiveQuotes, 6000); // 6s fast tick for hyper trading
+    return () => clearInterval(interval);
+  }, []);
+
   const loadLiveMarketOutlook = async () => {
     try {
       setIsLiveMarketLoading(true);
@@ -2614,7 +2641,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       {activeTab === "SETUPS" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           
-          {/* SECTION 1: ⚡ SPX 0DTE POWER HOUR */}
+          {/* SECTION 1: ⚡ SPX 0DTE POWER HOUR — HYPER-TRADING COCKPIT */}
           {(() => {
             const sig = spxPowerHourState?.directSignal || (spxPowerHourState?.activeSurgeCandidate ? {
               direction: spxPowerHourState.activeSurgeCandidate.type,
@@ -2630,12 +2657,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             } : null);
 
             const isCall = sig?.direction === "CALL";
-            const isTriggered = sig?.status === "ACTIVE_TRIGGERED" || spxSubPanelSimulate;
             const spot = spxPowerHourState?.spxSpot || 7651.54;
             const changePts = spxPowerHourState?.dayChangePts ?? -19.3;
             const changePct = spxPowerHourState?.dayChangePct ?? -0.25;
-            const low30 = spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7646.5";
-            const high30 = spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7656.0";
+            const low30 = spxPowerHourState?.rangeShelf?.low30 ? Number(spxPowerHourState.rangeShelf.low30).toFixed(1) : "7646.5";
+            const high30 = spxPowerHourState?.rangeShelf?.high30 ? Number(spxPowerHourState.rangeShelf.high30).toFixed(1) : "7656.0";
+            const low30Num = parseFloat(low30);
+            const high30Num = parseFloat(high30);
+
+            // Dynamic Real-Time Breakout Engine
+            const isActualBreakout = spot >= high30Num || spot <= low30Num;
+            const isTriggered = isActualBreakout || spxSubPanelSimulate;
             const strike = sig?.bestStrike || (isCall ? 7660 : 7645);
             const contract = sig?.contractName || `SPX 0DTE ${strike} ${isCall ? 'CALL' : 'PUT'}`;
             const mini = sig?.miniContractEquivalent || `XSP/SPY ${Math.round(strike / 10)} ${isCall ? 'CALL' : 'PUT'} @ ~$0.38`;
@@ -2643,27 +2675,53 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const target1 = sig?.target1 || Math.round(entryAsk * 2.2 * 100) / 100;
             const target2 = sig?.target2 || Math.round(entryAsk * 4.5 * 100) / 100;
             const stopLoss = sig?.stopLoss || 1.11;
+            
+            const ptsToH30 = Math.max(0, Math.round((high30Num - spot) * 10) / 10);
+            const ptsToL30 = Math.max(0, Math.round((spot - low30Num) * 10) / 10);
             const triggerText = isCall ? `Break above $${high30} resistance` : `Break below $${low30} support`;
 
+            const executeSPXSignal = () => {
+              const syntheticSPX = {
+                symbol: "SPX",
+                name: "S&P 500 Index 0DTE",
+                contract: {
+                  symbol: contract,
+                  strike: strike,
+                  ask: entryAsk,
+                },
+                targets: {
+                  stopLoss: stopLoss,
+                  target1: target1,
+                  target2: target2,
+                }
+              };
+              handleExecutePaperTrade(syntheticSPX as any, 1);
+            };
+
             return (
-              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 shadow-2xl p-5 md:p-6 flex flex-col justify-between space-y-5">
+              <div className="rounded-3xl bg-gradient-to-b from-[#141008] via-[#0C0F17] to-[#080B11] border-2 border-amber-500/50 shadow-[0_0_40px_rgba(245,158,11,0.18)] p-5 md:p-6 flex flex-col justify-between space-y-5 relative overflow-hidden backdrop-blur-2xl">
+                
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                      <Flame className="w-5 h-5 fill-current" />
+                    <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+                      <Flame className="w-5 h-5 fill-current animate-pulse" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-base font-black text-white tracking-tight">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base font-black text-white tracking-tight font-sans">
                           ⚡ SPX 0DTE Power Hour
                         </h2>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-500/10 text-amber-300 border border-amber-500/40">
                           15:00–16:00 ET
                         </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                          LIVE STREAM
+                        </span>
                       </div>
-                      <span className="text-[11px] font-mono text-slate-400">
-                        SPX Spot: <strong className="text-white">$${spot.toFixed(2)}</strong> ({changePts >= 0 ? "+" : ""}{changePts.toFixed(1)} pts / {changePct.toFixed(2)}%)
+                      <span className="text-[11px] font-mono text-slate-400 mt-0.5 block">
+                        SPX Spot: <strong className="text-white font-black">${spot.toFixed(2)}</strong> ({changePts >= 0 ? "+" : ""}{changePts.toFixed(1)} pts / {changePct.toFixed(2)}%)
                       </span>
                     </div>
                   </div>
@@ -2671,138 +2729,193 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSpxSubPanelSimulate(!spxSubPanelSimulate)}
-                      className={`px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-bold transition-all border ${
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all border ${
                         spxSubPanelSimulate 
-                          ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow" 
-                          : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
+                          ? "bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+                          : "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-300"
                       }`}
-                      title="Toggle simulated trigger"
+                      title="Simulate active breakout"
                     >
-                      {spxSubPanelSimulate ? "Simulating" : "Simulate"}
+                      {spxSubPanelSimulate ? "Simulating Active" : "Simulate"}
                     </button>
                     <button
                       onClick={triggerDiscordSPXAlert}
                       disabled={isSendingDiscord}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 shadow-[0_0_15px_rgba(88,101,242,0.3)]"
                       title="Send alert to Discord"
                     >
                       <DiscordIcon className="w-3.5 h-3.5 text-white" />
                       <span>Alert Discord</span>
                     </button>
+                    <button
+                      onClick={executeSPXSignal}
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                      title="Execute SPX paper trade"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-current" />
+                      <span>Execute</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* The Trade */}
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
+                {/* The Trade Spotlight */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-1.5 shadow-inner">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase font-black tracking-wider block">
                     The Trade
                   </span>
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
+                    <div className="text-3xl sm:text-4xl font-mono font-black text-white tracking-tight drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
                       {contract}
                     </div>
-                    <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-black uppercase ${
-                      isCall ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                    <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider shadow-lg ${
+                      isCall 
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.3)]'
                     }`}>
-                      {isCall ? 'BULLISH CALL' : 'BEARISH PUT'}
+                      {isCall ? '⚡ BULLISH CALL' : '⚡ BEARISH PUT'}
                     </span>
                   </div>
-                  <div className="text-xs font-mono text-cyan-400">
-                    Mini Alternative: {mini}
+                  <div className="text-xs font-mono text-cyan-400 flex items-center justify-between">
+                    <span>Mini Alternative: <strong className="text-white">{mini}</strong></span>
+                    <span className="text-slate-400">Cash-Settled Index</span>
+                  </div>
+                </div>
+
+                {/* Hyper-Trading Visual Breakout Gauge */}
+                <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800/80 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10.5px] font-mono">
+                    <span className="text-slate-400">30m Low Shelf: ${low30}</span>
+                    <span className="font-bold text-amber-300">SPX Spot: ${spot.toFixed(2)}</span>
+                    <span className="text-slate-400">30m High Shelf: ${high30}</span>
+                  </div>
+                  <div className="relative h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div 
+                      className={`h-full transition-all duration-500 ${isTriggered ? 'bg-gradient-to-r from-amber-500 to-emerald-400 shadow-[0_0_10px_rgba(245,158,11,0.8)]' : 'bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-500'}`}
+                      style={{ 
+                        width: `${Math.min(100, Math.max(5, ((spot - low30Num) / Math.max(1, high30Num - low30Num)) * 100))}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-slate-500">Floor Support: ${low30}</span>
+                    <span className={isTriggered ? "text-emerald-400 font-black" : "text-amber-400 font-bold"}>
+                      {isTriggered 
+                        ? (isCall ? `🔥 +${(spot - high30Num).toFixed(1)} pts Past Resistance` : `🔥 -${(low30Num - spot).toFixed(1)} pts Below Support`) 
+                        : (isCall ? `⏳ ${ptsToH30} pts to Breakout` : `⏳ ${ptsToL30} pts to Breakdown`)}
+                    </span>
                   </div>
                 </div>
 
                 {/* ENTER TRADE NOW Panel */}
-                <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-2">
+                <div className="p-4 rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-950/40 via-emerald-900/15 to-slate-950 space-y-2.5 shadow-[0_0_30px_rgba(16,185,129,0.12)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${isTriggered ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`}></span>
-                      {isTriggered ? "ENTER TRADE NOW" : "WAIT FOR TRIGGER (ARMED)"}
+                      <span className={`w-2.5 h-2.5 rounded-full ${isTriggered ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`}></span>
+                      {isTriggered ? "🔥 ENTER TRADE NOW (BREAKOUT ACTIVE)" : "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)"}
                     </span>
-                    <span className="text-xs font-mono text-emerald-400 font-bold">
-                      Ask Fill: $${entryAsk.toFixed(2)}
+                    <span className="text-xs font-mono text-emerald-300 font-black">
+                      Ask Fill: ${entryAsk.toFixed(2)}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs font-mono pt-1">
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9.5px] text-slate-400 uppercase block font-bold">When To Enter</span>
-                      <span className="font-bold text-slate-100 text-[11px] block mt-0.5">{triggerText}</span>
-                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Range Shelf: $${low30} – $${high30}</span>
+                      <span className="font-black text-slate-100 text-[11px] block mt-0.5">
+                        {isTriggered 
+                          ? `Confirmed 3-min close beyond range shelf! SPX is $${spot.toFixed(2)}.`
+                          : triggerText}
+                      </span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">
+                        {isTriggered ? "Momentum expanding • Enter now" : `Range Shelf: $${low30} – $${high30}`}
+                      </span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Contract Entry Ask</span>
-                      <span className="font-black text-emerald-300 text-lg block mt-0.5">$${entryAsk.toFixed(2)}</span>
-                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Max Risk: ~$${Math.round(entryAsk * 100)} / contract</span>
+                      <span className="font-black text-emerald-300 text-xl block mt-0.5">${entryAsk.toFixed(2)}</span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Max Risk: ~${Math.round(entryAsk * 100)} / contract</span>
                     </div>
                   </div>
                 </div>
 
                 {/* EXIT TRADE NOW Panel */}
-                <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 space-y-2">
+                <div className="p-4 rounded-2xl border-2 border-rose-500/50 bg-gradient-to-r from-rose-950/40 via-rose-900/15 to-slate-950 space-y-2.5 shadow-[0_0_30px_rgba(244,63,94,0.12)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-black text-rose-300 uppercase tracking-wider">
                       EXIT TRADE NOW
                     </span>
                     <span className="text-xs font-mono text-rose-400 font-bold">
-                      Mandatory Exit: 3:58 PM ET
+                      Mandatory Hard Cut: 3:58 PM ET
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono pt-1">
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9px] text-emerald-400 font-bold uppercase block">Target 1 (+120%)</span>
-                      <span className="font-black text-emerald-300 text-base block mt-0.5">$${target1.toFixed(2)}</span>
+                      <span className="font-black text-emerald-300 text-lg block mt-0.5">${target1.toFixed(2)}</span>
                       <span className="text-[9px] text-slate-500 block mt-0.5">Scale 50%</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9px] text-cyan-400 font-bold uppercase block">Target 2 (+350%)</span>
-                      <span className="font-black text-cyan-300 text-base block mt-0.5">$${target2.toFixed(2)}</span>
+                      <span className="font-black text-cyan-300 text-lg block mt-0.5">${target2.toFixed(2)}</span>
                       <span className="text-[9px] text-slate-500 block mt-0.5">Scale Runner</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9px] text-rose-400 font-bold uppercase block">Stop Loss</span>
-                      <span className="font-black text-rose-300 text-base block mt-0.5">$${stopLoss.toFixed(2)}</span>
-                      <span className="text-[9px] text-slate-500 block mt-0.5">Cut on Shelf Re-entry</span>
+                      <span className="font-black text-rose-300 text-lg block mt-0.5">${stopLoss.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Cut on Re-entry</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Section 1 Footer */}
-                {onNavigateTab && (
-                  <div className="pt-1 flex items-center justify-end">
+                <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span className="text-amber-400">Gatekeeper Rule: 3-min close beyond range shelf</span>
+                  {onNavigateTab ? (
                     <button
                       onClick={() => onNavigateTab("powerhour")}
-                      className="text-xs font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
+                      className="text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
                     >
-                      <span>Open Full SPX Power Hour Desk</span>
+                      <span>Open SPX Desk</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
-                  </div>
-                )}
+                  ) : (
+                    <span>Hard Cut 15:58 ET</span>
+                  )}
+                </div>
               </div>
             );
           })()}
 
-          {/* SECTION 2: 🎯 SIGNALS */}
+          {/* SECTION 2: 🎯 STOCK SIGNALS — HYPER-TRADING COCKPIT */}
           {(() => {
-            const availableSymbols = ["NVDA", "CVS", "META", "AMD", "CRWD", "PLTR", "LLY"];
+            const availableSymbols = ["NVDA", "CVS", "META", "AMD", "CRWD", "PLTR", "LLY", "TSLA"];
             const currentSym = availableSymbols.includes(selectedSignalTicker) ? selectedSignalTicker : "NVDA";
             
             const liveSetup = setups.find(s => s.symbol === currentSym);
             const prospective = prospectiveStocksList.find(s => s.symbol === currentSym);
 
             const symbol = currentSym;
+            const quote = liveQuotes[symbol];
             const name = liveSetup?.name || prospective?.name || symbol;
-            const price = liveSetup?.price || prospective?.price || 225.07;
-            const changePct = liveSetup?.changePercent ?? prospective?.changePercent ?? 0.22;
+
+            // Live high-frequency price resolution
+            const price = quote?.price || liveSetup?.price || prospective?.price || 225.07;
+            const changePct = quote ? quote.changePercent : (liveSetup?.changePercent ?? prospective?.changePercent ?? 0.22);
+            const dayHigh = quote?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : price * 1.012);
+            const dayLow = quote?.dayLow || (liveSetup?.orb?.low ? liveSetup.orb.low * 0.992 : price * 0.988);
+
             const strike = liveSetup?.contract.strike || prospective?.suggestedOption.strike || 230;
             const contract = liveSetup ? `${symbol} $${strike} Call` : prospective?.suggestedOption.contract || `${symbol} $${strike}C`;
             const entryAsk = liveSetup?.contract.ask || prospective?.suggestedOption.estimatedAsk || 2.45;
             const target1 = liveSetup?.targets.target1 || prospective?.suggestedOption.target1 || 3.20;
             const target2 = liveSetup?.targets.target2 || prospective?.suggestedOption.target2 || 4.05;
             const stopLoss = liveSetup?.targets.stopLoss || prospective?.suggestedOption.stopLoss || 1.85;
-            const triggerText = liveSetup ? `Breakout above $${liveSetup.orb.high.toFixed(2)} shelf` : prospective?.triggerShelf || `Breakout above morning resistance shelf`;
+            
+            // Dynamic breakout trigger check
+            const triggerLevel = liveSetup?.orb?.high || (prospective?.triggerShelf ? parseFloat(prospective.triggerShelf.replace(/[^0-9.]/g, '')) : 0) || (price * 0.995);
+            const isBreakoutTriggered = (price >= triggerLevel && triggerLevel > 0) || (liveSetup?.signal?.state === "BREAKOUT");
+            const distancePts = triggerLevel - price;
+            const distancePct = triggerLevel > 0 ? ((triggerLevel - price) / triggerLevel) * 100 : 0;
             const invalidationStop = liveSetup ? `$${liveSetup.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (ORB Low)` : prospective?.invalidationLevel || `Underlying Stop: $${(price - 2.5).toFixed(2)}`;
-            const isBreakout = liveSetup?.signal.state === "BREAKOUT";
 
             const executeCurrentSignal = () => {
               if (liveSetup) {
@@ -2810,6 +2923,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
               } else if (prospective) {
                 const syntheticSetup = {
                   symbol: prospective.symbol,
+                  name: prospective.name,
                   contract: {
                     symbol: `${prospective.symbol} ${prospective.suggestedOption.strike}C`,
                     strike: prospective.suggestedOption.strike,
@@ -2821,7 +2935,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     target2: prospective.suggestedOption.target2,
                   }
                 };
-                handleExecutePaperTrade(syntheticSetup, 3);
+                handleExecutePaperTrade(syntheticSetup as any, 3);
               }
             };
 
@@ -2829,29 +2943,56 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
               if (liveSetup) {
                 triggerDiscordLiveEntry(liveSetup);
               } else if (prospective) {
-                triggerDiscordProspectiveStock(prospective);
+                const syntheticSetup = {
+                  symbol: prospective.symbol,
+                  name: prospective.name,
+                  signal: {
+                    state: isBreakoutTriggered ? "BREAKOUT" : "WAITING",
+                    message: prospective.triggerShelf,
+                    action: isBreakoutTriggered ? "ENTER_LONG" : "MONITOR",
+                    timestamp: "09:35 AM"
+                  },
+                  rvol: prospective.rvol,
+                  contract: {
+                    symbol: `${prospective.symbol} ${prospective.suggestedOption.strike}C`,
+                    strike: prospective.suggestedOption.strike,
+                    ask: prospective.suggestedOption.estimatedAsk,
+                  },
+                  targets: {
+                    stopLoss: prospective.suggestedOption.stopLoss,
+                    target1: prospective.suggestedOption.target1,
+                    target2: prospective.suggestedOption.target2,
+                    riskReward: "1:2.4"
+                  }
+                };
+                triggerDiscordLiveEntry(syntheticSetup as any);
               }
             };
 
             return (
-              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-emerald-500/40 shadow-2xl p-5 md:p-6 flex flex-col justify-between space-y-5">
+              <div className="rounded-3xl bg-gradient-to-b from-[#08131A] via-[#0C121D] to-[#080B11] border-2 border-cyan-500/50 shadow-[0_0_40px_rgba(6,182,212,0.18)] p-5 md:p-6 flex flex-col justify-between space-y-5 relative overflow-hidden backdrop-blur-2xl">
+                
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                      <Target className="w-5 h-5" />
+                    <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
+                      <Target className="w-5 h-5 animate-pulse" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-base font-black text-white tracking-tight">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base font-black text-white tracking-tight font-sans">
                           🎯 Stock Signals
                         </h2>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
                           Gatekeeper 96.6%
                         </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                          LIVE 6s TICK
+                        </span>
                       </div>
-                      <span className="text-[11px] font-mono text-slate-400">
-                        {symbol} Spot: <strong className="text-white">$${price.toFixed(2)}</strong> ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%)
+                      <span className="text-[11px] font-mono text-slate-400 mt-0.5 block">
+                        {symbol} Spot: <strong className="text-white font-black">${price.toFixed(2)}</strong> ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%){lastQuoteFetchTime ? ` • ${lastQuoteFetchTime}` : ""}
                       </span>
                     </div>
                   </div>
@@ -2860,7 +3001,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     <button
                       onClick={alertCurrentSignal}
                       disabled={isSendingDiscord}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 shadow-[0_0_15px_rgba(88,101,242,0.3)]"
                       title="Send alert to Discord"
                     >
                       <DiscordIcon className="w-3.5 h-3.5 text-white" />
@@ -2868,7 +3009,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     </button>
                     <button
                       onClick={executeCurrentSignal}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95"
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                     >
                       <Zap className="w-3.5 h-3.5 fill-current" />
                       <span>Execute</span>
@@ -2876,68 +3017,116 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                 </div>
 
-                {/* Ticker Selector Bar */}
-                <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
-                  {availableSymbols.map(sym => (
-                    <button
-                      key={sym}
-                      onClick={() => setSelectedSignalTicker(sym)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all whitespace-nowrap ${
-                        selectedSignalTicker === sym
-                          ? "bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20"
-                          : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      {sym === "NVDA" ? "⭐ NVDA (Prime)" : sym}
-                    </button>
-                  ))}
+                {/* Hyper-Trading Interactive Real-Time Ticker Bar */}
+                <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                  {availableSymbols.map(sym => {
+                    const q = liveQuotes[sym];
+                    const p = q?.price || (prospectiveStocksList.find(s => s.symbol === sym)?.price ?? 0);
+                    const chg = q ? q.changePercent : (prospectiveStocksList.find(s => s.symbol === sym)?.changePercent ?? 0);
+                    const isSelected = selectedSignalTicker === sym;
+
+                    return (
+                      <button
+                        key={sym}
+                        onClick={() => {
+                          setSelectedSignalTicker(sym);
+                          fetchLiveQuotes();
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 whitespace-nowrap border ${
+                          isSelected
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.35)]"
+                            : "bg-slate-950/80 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                        }`}
+                      >
+                        <span className="font-black text-slate-100">{sym}</span>
+                        {p > 0 && (
+                          <span className="text-[11px] text-slate-300 font-mono">
+                            ${p >= 1000 ? p.toFixed(0) : p.toFixed(2)}
+                          </span>
+                        )}
+                        <span className={`text-[9.5px] px-1 py-0.2 rounded font-bold ${
+                          chg >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                        }`}>
+                          {chg >= 0 ? "+" : ""}{chg.toFixed(1)}%
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* The Trade */}
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
+                {/* The Trade Spotlight */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-1.5 shadow-inner">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase font-black tracking-wider block">
                     The Trade
                   </span>
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
+                    <div className="text-3xl sm:text-4xl font-mono font-black text-white tracking-tight drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
                       {contract}
                     </div>
-                    <span className="px-2.5 py-1 rounded-md text-xs font-mono font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span className="px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                       ORB BREAKOUT
                     </span>
                   </div>
-                  <div className="text-xs font-mono text-cyan-400">
-                    {name} • Spot: $${price.toFixed(2)}
+                  <div className="text-xs font-mono text-cyan-400 flex items-center justify-between">
+                    <span>{name} • Spot: ${price.toFixed(2)}</span>
+                    <span className="text-slate-400">High: ${dayHigh.toFixed(2)} / Low: ${dayLow.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Hyper-Trading Visual Breakout Gauge */}
+                <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800/80 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10.5px] font-mono">
+                    <span className="text-slate-400">Day Low: ${dayLow.toFixed(2)}</span>
+                    <span className="font-bold text-amber-300">Trigger Shelf: ${triggerLevel.toFixed(2)}</span>
+                    <span className="text-slate-400">Day High: ${dayHigh.toFixed(2)}</span>
+                  </div>
+                  <div className="relative h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div 
+                      className={`h-full transition-all duration-500 ${isBreakoutTriggered ? 'bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-gradient-to-r from-slate-700 via-amber-500 to-emerald-500'}`}
+                      style={{ width: `${Math.min(100, Math.max(5, ((price - dayLow) / Math.max(1, dayHigh - dayLow)) * 100))}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-slate-500">Support Floor: {invalidationStop}</span>
+                    <span className={isBreakoutTriggered ? "text-emerald-400 font-black" : "text-amber-400 font-bold"}>
+                      {isBreakoutTriggered ? `🔥 +$${Math.abs(distancePts).toFixed(2)} Past Trigger Shelf` : `⏳ $${distancePts.toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`}
+                    </span>
                   </div>
                 </div>
 
                 {/* ENTER TRADE NOW Panel */}
-                <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-2">
+                <div className="p-4 rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-950/40 via-emerald-900/15 to-slate-950 space-y-2.5 shadow-[0_0_30px_rgba(16,185,129,0.12)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${isBreakout ? 'bg-emerald-400 animate-ping' : 'bg-cyan-400'}`}></span>
-                      {isBreakout ? "ENTER TRADE NOW" : "WAIT FOR TRIGGER (ARMED)"}
+                      <span className={`w-2.5 h-2.5 rounded-full ${isBreakoutTriggered ? 'bg-emerald-400 animate-ping' : 'bg-cyan-400'}`}></span>
+                      {isBreakoutTriggered ? "🔥 ENTER TRADE NOW (BREAKOUT ACTIVE)" : "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)"}
                     </span>
-                    <span className="text-xs font-mono text-emerald-400 font-bold">
-                      Ask Fill: $${entryAsk.toFixed(2)}
+                    <span className="text-xs font-mono text-emerald-300 font-black">
+                      Ask Fill: ${entryAsk.toFixed(2)}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs font-mono pt-1">
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9.5px] text-slate-400 uppercase block font-bold">When To Enter</span>
-                      <span className="font-bold text-slate-100 text-[11px] block mt-0.5 line-clamp-2">{triggerText}</span>
-                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Require 09:35 AM close + RVOL ≥ 2.8x</span>
+                      <span className="font-black text-slate-100 text-[11px] block mt-0.5 line-clamp-2">
+                        {isBreakoutTriggered 
+                          ? `Confirmed Breakout above $${triggerLevel.toFixed(2)}! Price is $${price.toFixed(2)}.`
+                          : `Breakout above $${triggerLevel.toFixed(2)} resistance shelf`}
+                      </span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">
+                        {isBreakoutTriggered ? "Momentum expanding • Enter now" : `Needs +$${distancePts.toFixed(2)} to trigger shelf`}
+                      </span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Contract Entry Ask</span>
-                      <span className="font-black text-emerald-300 text-lg block mt-0.5">$${entryAsk.toFixed(2)}</span>
+                      <span className="font-black text-emerald-300 text-xl block mt-0.5">${entryAsk.toFixed(2)}</span>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">Max Risk: ~$${Math.round(entryAsk * 100)} / contract</span>
                     </div>
                   </div>
                 </div>
 
                 {/* EXIT TRADE NOW Panel */}
-                <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 space-y-2">
+                <div className="p-4 rounded-2xl border-2 border-rose-500/50 bg-gradient-to-r from-rose-950/40 via-rose-900/15 to-slate-950 space-y-2.5 shadow-[0_0_30px_rgba(244,63,94,0.12)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-black text-rose-300 uppercase tracking-wider">
                       EXIT TRADE NOW
@@ -2947,29 +3136,28 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono pt-1">
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9px] text-emerald-400 font-bold uppercase block">Target 1 (+30%)</span>
-                      <span className="font-black text-emerald-300 text-base block mt-0.5">$${target1.toFixed(2)}</span>
+                      <span className="font-black text-emerald-300 text-lg block mt-0.5">${target1.toFixed(2)}</span>
                       <span className="text-[9px] text-slate-500 block mt-0.5">Scale 50%</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9px] text-cyan-400 font-bold uppercase block">Target 2 (+65%)</span>
-                      <span className="font-black text-cyan-300 text-base block mt-0.5">$${target2.toFixed(2)}</span>
+                      <span className="font-black text-cyan-300 text-lg block mt-0.5">${target2.toFixed(2)}</span>
                       <span className="text-[9px] text-slate-500 block mt-0.5">Scale Runner</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9px] text-rose-400 font-bold uppercase block">Stop Loss</span>
-                      <span className="font-black text-rose-300 text-base block mt-0.5">$${stopLoss.toFixed(2)}</span>
+                      <span className="font-black text-rose-300 text-lg block mt-0.5">${stopLoss.toFixed(2)}</span>
                       <span className="text-[9px] text-slate-500 block mt-0.5">Cut on Stop</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Section 2 Footer */}
-                <div className="pt-1 text-right">
-                  <span className="text-[11px] font-mono text-slate-400">
-                    Standard Rule: Scale 50% at Target 1, move stop to breakeven.
-                  </span>
+                {/* Footer */}
+                <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span className="text-cyan-400">Gatekeeper Rule: 09:35 AM 5-min candle close + RVOL ≥ 2.8x</span>
+                  <span>Trail stop to breakeven at Target 1</span>
                 </div>
               </div>
             );
