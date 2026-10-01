@@ -464,7 +464,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
 
   // Simple 1-Contract Trade Fill & Profit Tracker Engine
-  const [simpleTradeFills, setSimpleTradeFills] = useState<Record<string, { entry: string; exit: string; discordSent?: boolean }>>(() => {
+  const [simpleTradeFills, setSimpleTradeFills] = useState<Record<string, { entry: string; exit: string; recorded?: boolean; recordedPnl?: number; recordedPct?: string; discordSent?: boolean }>>(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("options_tracker_simple_fills_v1");
@@ -1142,6 +1142,83 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   // -------------------------------------------------------------------------------------
   // SIMPLE 1-CONTRACT TRADE FILL & DISCORD POSTER
   // -------------------------------------------------------------------------------------
+  const handleAcceptTrade = (symbolKey: string, contract: string) => {
+    const current = simpleTradeFills[symbolKey] || { entry: "", exit: "" };
+    const entryNum = parseFloat(current.entry);
+    const exitNum = parseFloat(current.exit);
+    if (isNaN(entryNum) || entryNum <= 0) return;
+
+    const hasExit = !isNaN(exitNum) && exitNum > 0;
+    const pnl = hasExit ? Math.round((exitNum - entryNum) * 100 * 100) / 100 : 0;
+    const pnlPct = hasExit && entryNum > 0 ? `${((exitNum - entryNum) / entryNum * 100).toFixed(1)}%` : "0.0%";
+    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    setSimpleTradeFills(prev => ({
+      ...prev,
+      [symbolKey]: {
+        ...prev[symbolKey],
+        recorded: true,
+        recordedPnl: pnl,
+        recordedPct: pnl >= 0 ? `+${pnlPct}` : pnlPct
+      }
+    }));
+
+    if (hasExit) {
+      setActivePositions(prev => prev.filter(p => !(p.underlying === symbolKey && p.qty === 1)));
+      const closedItem: ClosedTrade = {
+        id: `record_${symbolKey}_${Date.now()}`,
+        symbol: contract,
+        underlying: symbolKey,
+        type: "CALL",
+        entryTime: "Trigger",
+        exitTime: timeStr,
+        entryPrice: entryNum,
+        exitPrice: exitNum,
+        qty: 1,
+        stopLoss: entryNum * 0.75,
+        pnl,
+        pnlPercent: pnl >= 0 ? `+${pnlPct}` : pnlPct,
+        status: pnl >= 0 ? "TARGET HIT" : "STOPPED OUT",
+        lessons: `Recorded 1-contract trade: Bought @ $${entryNum.toFixed(2)}, Sold @ $${exitNum.toFixed(2)}. Net P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}.`,
+        tags: ["#RecordedFill", "#1Contract"]
+      };
+      setClosedTrades(prev => [closedItem, ...prev]);
+      setDiscordNotice({
+        message: `✓ Trade Recorded! ${contract}: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct})`,
+        type: "success"
+      });
+    } else {
+      const activeItem: ActiveTrade = {
+        id: `active_${symbolKey}_${Date.now()}`,
+        underlying: symbolKey,
+        type: "CALL",
+        strike: parseFloat(contract.match(/\$([0-9]+)/)?.[1] || "0"),
+        entryTime: timeStr,
+        entryPrice: entryNum,
+        currentPrice: entryNum,
+        qty: 1,
+        stopLoss: Math.round(entryNum * 0.75 * 100) / 100,
+        target1: Math.round(entryNum * 1.30 * 100) / 100,
+        target2: Math.round(entryNum * 1.65 * 100) / 100,
+        status: "ACTIVE"
+      };
+      setActivePositions(prev => [activeItem, ...prev]);
+      setDiscordNotice({
+        message: `✓ Entry Recorded: ${contract} @ $${entryNum.toFixed(2)} (1 contract)`,
+        type: "success"
+      });
+    }
+  };
+
+  const handleResetTrade = (symbolKey: string) => {
+    setActivePositions(prev => prev.filter(p => !(p.underlying === symbolKey && p.qty === 1)));
+    setSimpleTradeFills(prev => {
+      const next = { ...prev };
+      delete next[symbolKey];
+      return next;
+    });
+  };
+
   const handlePostSimpleTradeToDiscord = async (symbolKey: string, contract: string, entryNum: number, exitNum: number) => {
     try {
       setIsSendingDiscord(true);
@@ -3187,7 +3264,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                 </div>
 
-                {/* SIMPLE ENTRY & EXIT BOX (1 CONTRACT) */}
+                {/* COMPACT 1-CONTRACT TRADE FILL & ACCEPT DOCK */}
                 {(() => {
                   const symbolKey = "SPX";
                   const currentFill = simpleTradeFills[symbolKey] || { entry: "", exit: "" };
@@ -3196,106 +3273,110 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   const hasEntry = !isNaN(entryNum) && entryNum > 0;
                   const hasExit = !isNaN(exitNum) && exitNum > 0;
                   const hasBoth = hasEntry && hasExit;
+                  const isFullyRecorded = Boolean(currentFill.recorded && hasExit);
+                  const isEntryRecorded = Boolean(currentFill.recorded && !hasExit);
                   const pnl = hasBoth ? Math.round((exitNum - entryNum) * 100 * 100) / 100 : null;
                   const pnlPct = hasBoth && entryNum > 0 ? ((exitNum - entryNum) / entryNum) * 100 : 0;
 
                   return (
-                    <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 font-bold text-slate-200">
                           <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                          Trade Fill (1 Contract)
-                        </span>
-                        {pnl !== null && (
-                          <span className={`font-black text-sm ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} ({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)
+                          <span>1-Contract Fill</span>
+                        </div>
+                        {isFullyRecorded ? (
+                          <span className="px-2 py-0.5 rounded text-[10.5px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            ✓ Recorded: {currentFill.recordedPnl! >= 0 ? "+" : ""}${currentFill.recordedPnl?.toFixed(2)} ({currentFill.recordedPct})
                           </span>
-                        )}
+                        ) : isEntryRecorded ? (
+                          <span className="px-2 py-0.5 rounded text-[10.5px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            ✓ Entry Logged @ ${entryNum.toFixed(2)}
+                          </span>
+                        ) : pnl !== null ? (
+                          <span className={`font-black ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            Est: {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} ({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)
+                          </span>
+                        ) : null}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <div>
-                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
-                            Entry Price ($)
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              placeholder={entryAsk.toFixed(2)}
-                              value={currentFill.entry}
-                              onChange={(e) => setSimpleTradeFills(prev => ({
-                                ...prev,
-                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: e.target.value, discordSent: false }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
-                            Exit Price ($)
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              placeholder="0.00"
-                              value={currentFill.exit}
-                              onChange={(e) => setSimpleTradeFills(prev => ({
-                                ...prev,
-                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), exit: e.target.value, discordSent: false }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2 pt-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSimpleTradeFills(prev => ({
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder={entryAsk > 0 ? entryAsk.toFixed(2) : "Entry"}
+                            disabled={Boolean(currentFill.recorded)}
+                            value={currentFill.entry}
+                            onChange={(e) => setSimpleTradeFills(prev => ({
                               ...prev,
-                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: entryAsk.toFixed(2), discordSent: false }
+                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: e.target.value, recorded: false, discordSent: false }
                             }))}
-                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
-                          >
-                            Ask: ${entryAsk.toFixed(2)}
-                          </button>
-                          {(currentFill.entry || currentFill.exit) && (
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-lg pl-6 pr-2 py-1 text-xs font-mono font-bold text-white focus:outline-none disabled:opacity-60"
+                          />
+                        </div>
+
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="Exit"
+                            disabled={isFullyRecorded}
+                            value={currentFill.exit}
+                            onChange={(e) => setSimpleTradeFills(prev => ({
+                              ...prev,
+                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), exit: e.target.value, recorded: false, discordSent: false }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-lg pl-6 pr-2 py-1 text-xs font-mono font-bold text-white focus:outline-none disabled:opacity-60"
+                          />
+                        </div>
+
+                        {!isFullyRecorded ? (
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => setSimpleTradeFills(prev => {
-                                const next = { ...prev };
-                                delete next[symbolKey];
-                                return next;
-                              })}
-                              className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
+                              onClick={() => handleAcceptTrade(symbolKey, contract)}
+                              disabled={!hasEntry}
+                              className="px-3.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-slate-950 font-mono text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 cursor-pointer whitespace-nowrap"
                             >
-                              Clear
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>{isEntryRecorded && hasExit ? "Accept Exit" : "Accept"}</span>
                             </button>
-                          )}
-                        </div>
-
-                        {pnl !== null && (
-                          <button
-                            type="button"
-                            onClick={() => handlePostSimpleTradeToDiscord(symbolKey, contract, entryNum, exitNum)}
-                            disabled={currentFill.discordSent || isSendingDiscord}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
-                              currentFill.discordSent
-                                ? "bg-slate-800 text-slate-400 border border-slate-700"
-                                : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-sm"
-                            }`}
-                          >
-                            <DiscordIcon className="w-3 h-3 text-white" />
-                            <span>{currentFill.discordSent ? "Sent to Discord" : "Post to Discord"}</span>
-                          </button>
+                            {(currentFill.entry || currentFill.exit) && (
+                              <button
+                                type="button"
+                                onClick={() => handleResetTrade(symbolKey)}
+                                className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-xs font-mono transition-all cursor-pointer"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handlePostSimpleTradeToDiscord(symbolKey, contract, entryNum, exitNum)}
+                              disabled={currentFill.discordSent || isSendingDiscord}
+                              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${
+                                currentFill.discordSent
+                                  ? "bg-slate-800 text-slate-400 border border-slate-700"
+                                  : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-sm"
+                              }`}
+                            >
+                              <DiscordIcon className="w-3 h-3 text-white" />
+                              <span>{currentFill.discordSent ? "Sent" : "Discord"}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleResetTrade(symbolKey)}
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                            >
+                              Reset
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -3758,7 +3839,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                 </div>
 
-                {/* SIMPLE ENTRY & EXIT BOX (1 CONTRACT) */}
+                {/* COMPACT 1-CONTRACT TRADE FILL & ACCEPT DOCK */}
                 {(() => {
                   const symbolKey = currentSym;
                   const currentFill = simpleTradeFills[symbolKey] || { entry: "", exit: "" };
@@ -3767,106 +3848,110 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   const hasEntry = !isNaN(entryNum) && entryNum > 0;
                   const hasExit = !isNaN(exitNum) && exitNum > 0;
                   const hasBoth = hasEntry && hasExit;
+                  const isFullyRecorded = Boolean(currentFill.recorded && hasExit);
+                  const isEntryRecorded = Boolean(currentFill.recorded && !hasExit);
                   const pnl = hasBoth ? Math.round((exitNum - entryNum) * 100 * 100) / 100 : null;
                   const pnlPct = hasBoth && entryNum > 0 ? ((exitNum - entryNum) / entryNum) * 100 : 0;
 
                   return (
-                    <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 font-bold text-slate-200">
                           <Zap className="w-3.5 h-3.5 text-cyan-400 fill-current" />
-                          Trade Fill (1 Contract)
-                        </span>
-                        {pnl !== null && (
-                          <span className={`font-black text-sm ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} ({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)
+                          <span>1-Contract Fill</span>
+                        </div>
+                        {isFullyRecorded ? (
+                          <span className="px-2 py-0.5 rounded text-[10.5px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            ✓ Recorded: {currentFill.recordedPnl! >= 0 ? "+" : ""}${currentFill.recordedPnl?.toFixed(2)} ({currentFill.recordedPct})
                           </span>
-                        )}
+                        ) : isEntryRecorded ? (
+                          <span className="px-2 py-0.5 rounded text-[10.5px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            ✓ Entry Logged @ ${entryNum.toFixed(2)}
+                          </span>
+                        ) : pnl !== null ? (
+                          <span className={`font-black ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            Est: {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} ({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)
+                          </span>
+                        ) : null}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <div>
-                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
-                            Entry Price ($)
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              placeholder={entryAsk.toFixed(2)}
-                              value={currentFill.entry}
-                              onChange={(e) => setSimpleTradeFills(prev => ({
-                                ...prev,
-                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: e.target.value, discordSent: false }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
-                            Exit Price ($)
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              placeholder="0.00"
-                              value={currentFill.exit}
-                              onChange={(e) => setSimpleTradeFills(prev => ({
-                                ...prev,
-                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), exit: e.target.value, discordSent: false }
-                              }))}
-                              className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2 pt-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSimpleTradeFills(prev => ({
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder={entryAsk > 0 ? entryAsk.toFixed(2) : "Entry"}
+                            disabled={Boolean(currentFill.recorded)}
+                            value={currentFill.entry}
+                            onChange={(e) => setSimpleTradeFills(prev => ({
                               ...prev,
-                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: entryAsk.toFixed(2), discordSent: false }
+                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: e.target.value, recorded: false, discordSent: false }
                             }))}
-                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
-                          >
-                            Ask: ${entryAsk.toFixed(2)}
-                          </button>
-                          {(currentFill.entry || currentFill.exit) && (
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-lg pl-6 pr-2 py-1 text-xs font-mono font-bold text-white focus:outline-none disabled:opacity-60"
+                          />
+                        </div>
+
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="Exit"
+                            disabled={isFullyRecorded}
+                            value={currentFill.exit}
+                            onChange={(e) => setSimpleTradeFills(prev => ({
+                              ...prev,
+                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), exit: e.target.value, recorded: false, discordSent: false }
+                            }))}
+                            className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-lg pl-6 pr-2 py-1 text-xs font-mono font-bold text-white focus:outline-none disabled:opacity-60"
+                          />
+                        </div>
+
+                        {!isFullyRecorded ? (
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => setSimpleTradeFills(prev => {
-                                const next = { ...prev };
-                                delete next[symbolKey];
-                                return next;
-                              })}
-                              className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
+                              onClick={() => handleAcceptTrade(symbolKey, contract)}
+                              disabled={!hasEntry}
+                              className="px-3.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-slate-950 font-mono text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 cursor-pointer whitespace-nowrap"
                             >
-                              Clear
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>{isEntryRecorded && hasExit ? "Accept Exit" : "Accept"}</span>
                             </button>
-                          )}
-                        </div>
-
-                        {pnl !== null && (
-                          <button
-                            type="button"
-                            onClick={() => handlePostSimpleTradeToDiscord(symbolKey, contract, entryNum, exitNum)}
-                            disabled={currentFill.discordSent || isSendingDiscord}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
-                              currentFill.discordSent
-                                ? "bg-slate-800 text-slate-400 border border-slate-700"
-                                : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-sm"
-                            }`}
-                          >
-                            <DiscordIcon className="w-3 h-3 text-white" />
-                            <span>{currentFill.discordSent ? "Sent to Discord" : "Post to Discord"}</span>
-                          </button>
+                            {(currentFill.entry || currentFill.exit) && (
+                              <button
+                                type="button"
+                                onClick={() => handleResetTrade(symbolKey)}
+                                className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-xs font-mono transition-all cursor-pointer"
+                              >
+                                Clear
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handlePostSimpleTradeToDiscord(symbolKey, contract, entryNum, exitNum)}
+                              disabled={currentFill.discordSent || isSendingDiscord}
+                              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1 transition-all active:scale-95 cursor-pointer whitespace-nowrap ${
+                                currentFill.discordSent
+                                  ? "bg-slate-800 text-slate-400 border border-slate-700"
+                                  : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-sm"
+                              }`}
+                            >
+                              <DiscordIcon className="w-3 h-3 text-white" />
+                              <span>{currentFill.discordSent ? "Sent" : "Discord"}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleResetTrade(symbolKey)}
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                            >
+                              Reset
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
