@@ -8,7 +8,7 @@ import {
   Briefcase, FileText, Terminal, Filter, Flame, ChevronRight,
   Calendar as CalendarIcon, ChevronLeft, ArrowDownRight,
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
-  TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp
+  TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp, Trash2
 } from "lucide-react";
 import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock, MarketOutlookData } from "@/lib/prospectiveStocks";
 
@@ -429,8 +429,24 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
   const [setups, setSetups] = useState<DiscoveredSetup[]>([]);
   const [signalsHistory, setSignalsHistory] = useState<SignalEvent[]>([]);
-  const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>([]);
-  const [activePositions, setActivePositions] = useState<ActiveTrade[]>([]);
+  const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("options_tracker_closed_trades_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [];
+  });
+  const [activePositions, setActivePositions] = useState<ActiveTrade[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("options_tracker_active_positions_v1");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [];
+  });
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [liveLog, setLiveLog] = useState<string[]>([]);
   const [connected, setConnected] = useState(false);
@@ -480,6 +496,87 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
         localStorage.setItem("options_tracker_simple_fills_v1", JSON.stringify(simpleTradeFills));
       } catch (e) {}
     }
+  }, [simpleTradeFills]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("options_tracker_closed_trades_v1", JSON.stringify(closedTrades));
+      } catch (e) {}
+    }
+  }, [closedTrades]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("options_tracker_active_positions_v1", JSON.stringify(activePositions));
+      } catch (e) {}
+    }
+  }, [activePositions]);
+
+  // Sync simpleTradeFills into closedTrades / activePositions so past entries are never missed
+  useEffect(() => {
+    Object.entries(simpleTradeFills).forEach(([symKey, fill]) => {
+      if (fill.recorded && fill.entry) {
+        const entryNum = parseFloat(fill.entry);
+        const exitNum = parseFloat(fill.exit);
+        const hasExit = !isNaN(exitNum) && exitNum > 0;
+        
+        if (hasExit) {
+          setClosedTrades(prev => {
+            const alreadyInClosed = prev.some(t => t.underlying === symKey && Math.abs(t.entryPrice - entryNum) < 0.001 && Math.abs(t.exitPrice - exitNum) < 0.001);
+            if (alreadyInClosed) return prev;
+            const pnl = Math.round((exitNum - entryNum) * 100 * 100) / 100;
+            const pnlPct = `${((exitNum - entryNum) / entryNum * 100).toFixed(1)}%`;
+            const contractStr = symKey === "SPX" ? "SPX 0DTE Call" : `${symKey} Call`;
+            return [
+              {
+                id: `sync_${symKey}_${Date.now()}`,
+                symbol: contractStr,
+                underlying: symKey,
+                type: "CALL",
+                entryTime: "Trigger Point",
+                exitTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                entryPrice: entryNum,
+                exitPrice: exitNum,
+                qty: 1,
+                stopLoss: entryNum * 0.75,
+                pnl,
+                pnlPercent: pnl >= 0 ? `+${pnlPct}` : pnlPct,
+                status: pnl >= 0 ? "TARGET HIT" : "STOPPED OUT",
+                lessons: `Recorded 1-contract fill: Bought @ $${entryNum.toFixed(2)}, Sold @ $${exitNum.toFixed(2)}. Net P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}.`,
+                tags: ["#RecordedFill", "#1Contract"]
+              },
+              ...prev
+            ];
+          });
+        } else {
+          setActivePositions(prev => {
+            const alreadyInActive = prev.some(p => p.underlying === symKey && Math.abs(p.entryPrice - entryNum) < 0.001);
+            if (alreadyInActive) return prev;
+            const contractStr = symKey === "SPX" ? "SPX 0DTE Call" : `${symKey} Call`;
+            return [
+              {
+                id: `sync_act_${symKey}_${Date.now()}`,
+                symbol: contractStr,
+                underlying: symKey,
+                type: "CALL",
+                strike: 0,
+                entryTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                entryPrice: entryNum,
+                currentPrice: entryNum,
+                qty: 1,
+                stopLoss: Math.round(entryNum * 0.75 * 100) / 100,
+                target1: Math.round(entryNum * 1.30 * 100) / 100,
+                target2: Math.round(entryNum * 1.65 * 100) / 100,
+                status: "ACTIVE"
+              },
+              ...prev
+            ];
+          });
+        }
+      }
+    });
   }, [simpleTradeFills]);
 
   // Real-Time High-Frequency Live Quotes Engine (Hyper-Trading Mode)
@@ -1190,6 +1287,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     } else {
       const activeItem: ActiveTrade = {
         id: `active_${symbolKey}_${Date.now()}`,
+        symbol: contract,
         underlying: symbolKey,
         type: "CALL",
         strike: parseFloat(contract.match(/\$([0-9]+)/)?.[1] || "0"),
@@ -1274,7 +1372,179 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   };
 
   // -------------------------------------------------------------------------------------
-  // 3-MONTH AUDITED HISTORICAL DATABASE (JULY, AUGUST, SEPTEMBER 2026)
+  // RECORDED POSITIONS DOCK (RENDERED DIRECTLY BENEATH 1-CONTRACT FILL BOX)
+  // -------------------------------------------------------------------------------------
+  const [positionsDockScope, setPositionsDockScope] = useState<"SYMBOL" | "ALL">("SYMBOL");
+
+  const renderRecordedPositionsDock = (symbolKey: string) => {
+    const isAll = positionsDockScope === "ALL";
+    const activeForThis = activePositions.filter(p => isAll || p.underlying === symbolKey || (p.symbol && p.symbol.includes(symbolKey)));
+    const closedForThis = closedTrades.filter(t => isAll || t.underlying === symbolKey || (t.symbol && t.symbol.includes(symbolKey)));
+    const totalCount = activeForThis.length + closedForThis.length;
+    const totalRealizedPnl = closedForThis.reduce((acc, t) => acc + t.pnl, 0);
+    const hasOtherTrades = !isAll && (activePositions.length + closedTrades.length > totalCount);
+
+    return (
+      <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+        <div className="flex items-center justify-between text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-200 flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Recorded Positions ({totalCount})</span>
+            </span>
+            {(hasOtherTrades || isAll) && (
+              <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setPositionsDockScope("SYMBOL")}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-all ${!isAll ? "bg-slate-800 text-cyan-300 font-bold" : "text-slate-400 hover:text-slate-200"}`}
+                >
+                  {symbolKey}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPositionsDockScope("ALL")}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-all ${isAll ? "bg-slate-800 text-cyan-300 font-bold" : "text-slate-400 hover:text-slate-200"}`}
+                >
+                  All ({activePositions.length + closedTrades.length})
+                </button>
+              </div>
+            )}
+          </div>
+
+          {closedForThis.length > 0 && (
+            <span className="text-[11px] font-mono">
+              Realized: <strong className={totalRealizedPnl >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                {totalRealizedPnl >= 0 ? "+" : ""}${totalRealizedPnl.toFixed(2)}
+              </strong>
+            </span>
+          )}
+        </div>
+
+        {totalCount === 0 ? (
+          <div className="py-2.5 px-3 rounded-lg bg-slate-900/40 border border-dashed border-slate-800 text-center">
+            <p className="text-[11px] font-mono text-slate-400">
+              No positions recorded for <strong className="text-white">{symbolKey}</strong> yet. Enter your fill in the box above and click <span className="text-emerald-400 font-bold">Accept</span> to see it recorded here.
+            </p>
+            {hasOtherTrades && (
+              <button
+                type="button"
+                onClick={() => setPositionsDockScope("ALL")}
+                className="mt-1 text-[10.5px] font-mono text-cyan-400 hover:underline cursor-pointer"
+              >
+                View {activePositions.length + closedTrades.length} trade(s) recorded on other tickers &rarr;
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
+            {/* Active / Open Positions */}
+            {activeForThis.map(pos => (
+              <div key={pos.id} className="p-2.5 rounded-lg bg-slate-900/90 border border-amber-500/40 flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 rounded text-[9.5px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                      ACTIVE (1-CT)
+                    </span>
+                    <span className="font-bold text-white">{pos.symbol || `${pos.underlying} Call`}</span>
+                  </div>
+                  <div className="text-[10.5px] text-slate-400 flex items-center gap-2">
+                    <span>Entry: <strong className="text-slate-100">${pos.entryPrice.toFixed(2)}</strong></span>
+                    <span>•</span>
+                    <span>Stop: <strong className="text-rose-400">${pos.stopLoss.toFixed(2)}</strong></span>
+                    <span>•</span>
+                    <span>Target: <strong className="text-emerald-400">${pos.target1.toFixed(2)}</strong></span>
+                    <span className="text-slate-500">• {pos.entryTime}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSimpleTradeFills(prev => ({
+                        ...prev,
+                        [pos.underlying]: { ...(prev[pos.underlying] || { entry: pos.entryPrice.toString(), exit: "" }), entry: pos.entryPrice.toString() }
+                      }));
+                    }}
+                    className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+                    title="Load entry into fill box above to record exit"
+                  >
+                    Log Exit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleClosePosition(pos.id)}
+                    className="px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    Flatten
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Closed / Completed Trades */}
+            {closedForThis.map(trade => {
+              const isWin = trade.pnl >= 0;
+              return (
+                <div key={trade.id} className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-black uppercase ${
+                        isWin ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                      }`}>
+                        {isWin ? "✓ RECORDED WIN" : "🛑 RECORDED LOSS"}
+                      </span>
+                      <span className="font-bold text-white">{trade.symbol}</span>
+                    </div>
+                    <div className="text-[10.5px] text-slate-400 flex items-center gap-2">
+                      <span>Bought: <strong className="text-slate-200">${trade.entryPrice.toFixed(2)}</strong></span>
+                      <span>➔</span>
+                      <span>Sold: <strong className="text-slate-200">${trade.exitPrice.toFixed(2)}</strong></span>
+                      <span className="text-slate-500">• {trade.exitTime}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <div className="text-right">
+                      <div className={`font-black text-sm ${isWin ? "text-emerald-400" : "text-rose-400"}`}>
+                        {isWin ? "+" : ""}${trade.pnl.toFixed(2)}
+                      </div>
+                      <div className={`text-[10px] font-bold ${isWin ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                        {trade.pnlPercent}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePostSimpleTradeToDiscord(trade.underlying || symbolKey, trade.symbol, trade.entryPrice, trade.exitPrice)}
+                      disabled={isSendingDiscord}
+                      className="p-1.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white transition-all shadow-sm cursor-pointer"
+                      title="Share to Discord"
+                    >
+                      <DiscordIcon className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClosedTrades(prev => prev.filter(t => t.id !== trade.id));
+                      }}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="Delete recorded trade"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
   // STRICT VERIFIED AUDIT & RISK MANAGEMENT RULES:
   // - Target 1 (+25% to +35%): Scale 50% & Move Stop to Breakeven
   // - Target 2 (+50% to +65%): Exit remaining runner (Average win +34% to +42%)
@@ -3383,6 +3653,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   );
                 })()}
 
+                {/* RECORDED POSITIONS RIGHT BENEATH */}
+                {renderRecordedPositionsDock("SPX")}
+
                 {/* Section 1 Footer */}
                 <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-slate-400">
                   <span className="text-amber-400">Gatekeeper Rule: 3-min close beyond range shelf</span>
@@ -3957,6 +4230,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     </div>
                   );
                 })()}
+
+                {/* RECORDED POSITIONS RIGHT BENEATH */}
+                {renderRecordedPositionsDock(currentSym)}
 
                 {/* Footer */}
                 <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-slate-400">
