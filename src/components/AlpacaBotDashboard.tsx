@@ -463,33 +463,24 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(false);
   const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
 
-  // User Interactive Trade Execution & Exact Profit Logging Engine
-  const [userTradeBook, setUserTradeBook] = useState<UserLoggedTrade[]>(() => {
+  // Simple 1-Contract Trade Fill & Profit Tracker Engine
+  const [simpleTradeFills, setSimpleTradeFills] = useState<Record<string, { entry: string; exit: string; discordSent?: boolean }>>(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("options_tracker_user_trades_v1");
+        const saved = localStorage.getItem("options_tracker_simple_fills_v1");
         if (saved) return JSON.parse(saved);
-      } catch (e) {
-        console.warn("Failed to load user trades from localStorage", e);
-      }
+      } catch (e) {}
     }
-    return [];
+    return {};
   });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("options_tracker_user_trades_v1", JSON.stringify(userTradeBook));
+        localStorage.setItem("options_tracker_simple_fills_v1", JSON.stringify(simpleTradeFills));
       } catch (e) {}
     }
-  }, [userTradeBook]);
-
-  const [customEntryPriceInput, setCustomEntryPriceInput] = useState<string>("");
-  const [customContractQtyInput, setCustomContractQtyInput] = useState<number>(3);
-  const [customExitPriceInput, setCustomExitPriceInput] = useState<string>("");
-  const [isPostingUserTradeToDiscord, setIsPostingUserTradeToDiscord] = useState<boolean>(false);
-  const [showNewTradeFormMap, setShowNewTradeFormMap] = useState<Record<string, boolean>>({});
-  const [showLoggedHistory, setShowLoggedHistory] = useState<boolean>(false);
+  }, [simpleTradeFills]);
 
   // Real-Time High-Frequency Live Quotes Engine (Hyper-Trading Mode)
   const [liveQuotes, setLiveQuotes] = useState<Record<string, { price: number; change: number; changePercent: number; dayHigh: number; dayLow: number; time: string }>>({});
@@ -1149,203 +1140,59 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   };
 
   // -------------------------------------------------------------------------------------
-  // INTERACTIVE USER TRADE EXECUTION & VERIFIED PROFIT CAPTURE SYSTEM
+  // SIMPLE 1-CONTRACT TRADE FILL & DISCORD POSTER
   // -------------------------------------------------------------------------------------
-  const handleLogUserEntry = (symbol: string, contract: string, strike: number, defaultAsk: number) => {
-    const entryPrice = parseFloat(customEntryPriceInput) > 0 ? parseFloat(customEntryPriceInput) : defaultAsk;
-    const qty = customContractQtyInput > 0 ? customContractQtyInput : 3;
-    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    const newTrade: UserLoggedTrade = {
-      id: `user_trade_${Date.now()}`,
-      symbol,
-      contract,
-      strike,
-      entryPrice,
-      qty,
-      entryTime: timeStr,
-      status: "OPEN"
-    };
-
-    setUserTradeBook(prev => [newTrade, ...prev]);
-    setShowNewTradeFormMap(prev => ({ ...prev, [symbol]: false }));
-    setCustomEntryPriceInput("");
-    setCustomExitPriceInput("");
-
-    // Sync to activePositions tab
-    const activeItem: ActiveTrade = {
-      id: newTrade.id,
-      underlying: symbol,
-      type: "CALL",
-      strike,
-      entryTime: timeStr,
-      entryPrice,
-      currentPrice: entryPrice,
-      qty,
-      stopLoss: Math.round(entryPrice * 0.75 * 100) / 100,
-      target1: Math.round(entryPrice * 1.30 * 100) / 100,
-      target2: Math.round(entryPrice * 1.65 * 100) / 100,
-      status: "ACTIVE"
-    };
-    setActivePositions(prev => [activeItem, ...prev]);
-
-    setDiscordNotice({
-      message: `⚡ Logged entry for ${contract}: ${qty} contracts @ $${entryPrice.toFixed(2)} ($${(entryPrice * qty * 100).toFixed(0)} basis)`,
-      type: "success"
-    });
-  };
-
-  const handleUserScale50 = (tradeId: string, sellPrice: number) => {
-    const trade = userTradeBook.find(t => t.id === tradeId);
-    if (!trade) return;
-
-    if (trade.qty <= 1) {
-      handleUserFullExit(tradeId, sellPrice);
-      return;
-    }
-
-    const scaledQty = Math.max(1, Math.floor(trade.qty / 2));
-    const remainingQty = trade.qty - scaledQty;
-    const scaledPnl = Math.round((sellPrice - trade.entryPrice) * scaledQty * 100 * 100) / 100;
-    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    setUserTradeBook(prev => prev.map(t => {
-      if (t.id === tradeId) {
-        return {
-          ...t,
-          status: "SCALED_50",
-          scaledQty,
-          scaledExitPrice: sellPrice,
-          scaledExitTime: timeStr,
-          scaledPnlDollars: scaledPnl,
-          qty: remainingQty,
-          targetHit: "TARGET 1 (SCALED 50%)"
-        };
-      }
-      return t;
-    }));
-
-    // Update activePositions
-    setActivePositions(prev => prev.map(p => {
-      if (p.id === tradeId) {
-        return {
-          ...p,
-          qty: remainingQty,
-          stopLoss: trade.entryPrice,
-          status: "SCALED_50"
-        };
-      }
-      return p;
-    }));
-
-    setDiscordNotice({
-      message: `🎯 Scaled 50% (${scaledQty}ct @ $${sellPrice.toFixed(2)}): +$${scaledPnl.toFixed(2)} locked! Runner stop moved to breakeven ($${trade.entryPrice.toFixed(2)}).`,
-      type: "success"
-    });
-  };
-
-  const handleUserFullExit = (tradeId: string, sellPrice: number) => {
-    const trade = userTradeBook.find(t => t.id === tradeId);
-    if (!trade) return;
-
-    const remainingPnl = (sellPrice - trade.entryPrice) * trade.qty * 100;
-    const totalPnl = Math.round(((trade.scaledPnlDollars || 0) + remainingPnl) * 100) / 100;
-    const totalQty = trade.qty + (trade.scaledQty || 0);
-    const initialCost = trade.entryPrice * totalQty * 100;
-    const totalPct = initialCost > 0 ? ((totalPnl / initialCost) * 100).toFixed(1) : "0.0";
-    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    setUserTradeBook(prev => prev.map(t => {
-      if (t.id === tradeId) {
-        return {
-          ...t,
-          status: "CLOSED",
-          exitPrice: sellPrice,
-          exitTime: timeStr,
-          totalPnlDollars: totalPnl,
-          totalPnlPercent: totalPnl >= 0 ? `+${totalPct}%` : `${totalPct}%`,
-          targetHit: totalPnl >= 0 ? "TARGET HIT" : "STOPPED OUT"
-        };
-      }
-      return t;
-    }));
-
-    // Remove from activePositions
-    setActivePositions(prev => prev.filter(p => p.id !== tradeId));
-
-    // Add to closedTrades ledger
-    const closedItem: ClosedTrade = {
-      id: `closed_${tradeId}`,
-      symbol: trade.contract,
-      underlying: trade.symbol,
-      type: "CALL",
-      entryTime: trade.entryTime,
-      exitTime: timeStr,
-      entryPrice: trade.entryPrice,
-      exitPrice: sellPrice,
-      qty: totalQty,
-      stopLoss: trade.entryPrice * 0.75,
-      pnl: totalPnl,
-      pnlPercent: totalPnl >= 0 ? `+${totalPct}%` : `${totalPct}%`,
-      status: totalPnl >= 0 ? "TARGET HIT" : "STOPPED OUT",
-      lessons: `Verified User Execution: Entered at $${trade.entryPrice.toFixed(2)} (${trade.entryTime}), sold at $${sellPrice.toFixed(2)} (${timeStr}). Captured ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)} (${totalPct}%).`,
-      tags: ["#VerifiedUserFill", "#RealProfit"]
-    };
-    setClosedTrades(prev => [closedItem, ...prev]);
-
-    setDiscordNotice({
-      message: `🏆 Profit Captured! ${trade.contract} closed: ${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)} (${totalPct}%). Ready to post to Discord.`,
-      type: "success"
-    });
-  };
-
-  const handlePostVerifiedWinToDiscord = async (trade: UserLoggedTrade) => {
+  const handlePostSimpleTradeToDiscord = async (symbolKey: string, contract: string, entryNum: number, exitNum: number) => {
     try {
-      setIsPostingUserTradeToDiscord(true);
-      const totalQty = trade.qty + (trade.scaledQty || 0);
-      const pnlPerCt = totalQty > 0 ? (trade.totalPnlDollars || 0) / totalQty : 0;
-      
+      setIsSendingDiscord(true);
+      const pnl = Math.round((exitNum - entryNum) * 100 * 100) / 100;
+      const pnlPct = entryNum > 0 ? ((exitNum - entryNum) / entryNum) * 100 : 0;
+      const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
       const res = await fetch("/api/discord", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "exit",
           payload: {
-            symbol: trade.symbol,
-            contract: trade.contract,
-            entryTime: trade.entryTime,
-            exitTime: trade.exitTime || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            entryPrice: trade.entryPrice,
-            exitPrice: trade.exitPrice || trade.entryPrice,
-            pnlPercent: trade.totalPnlPercent || "+0.0%",
-            pnlPerContract: pnlPerCt,
-            qty: totalQty,
-            status: (trade.totalPnlDollars || 0) >= 0 ? "🎯 TARGET HIT (VERIFIED WIN)" : "🛑 STOP LOSS TRIGGERED",
-            lessons: `Verified Execution Audit: Entered at $${trade.entryPrice.toFixed(2)} (${trade.entryTime}) | Exited at $${(trade.exitPrice || trade.entryPrice).toFixed(2)} (${trade.exitTime}). Net Captured: ${(trade.totalPnlDollars || 0) >= 0 ? '+' : ''}$${(trade.totalPnlDollars || 0).toFixed(2)} (${trade.totalPnlPercent}).`
+            symbol: symbolKey,
+            contract,
+            entryTime: "Trigger Point",
+            exitTime: timeStr,
+            entryPrice: entryNum,
+            exitPrice: exitNum,
+            pnlPercent: pnl >= 0 ? `+${pnlPct.toFixed(1)}%` : `${pnlPct.toFixed(1)}%`,
+            pnlPerContract: pnl,
+            qty: 1,
+            status: pnl >= 0 ? "TARGET HIT (1 CT)" : "STOP LOSS (1 CT)",
+            lessons: `1-Contract Trade: Entry $${entryNum.toFixed(2)} → Exit $${exitNum.toFixed(2)}. Net P&L: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)} (${pnlPct.toFixed(1)}%).`
           }
         })
       });
 
       const data = await res.json();
       if (data.success) {
-        setUserTradeBook(prev => prev.map(t => t.id === trade.id ? { ...t, isVerifiedDiscordSent: true } : t));
+        setSimpleTradeFills(prev => ({
+          ...prev,
+          [symbolKey]: { ...prev[symbolKey], discordSent: true }
+        }));
         setDiscordNotice({
-          message: `📢 Verified Win posted to Discord for ${trade.symbol}! (${trade.totalPnlPercent} / +$${trade.totalPnlDollars?.toFixed(2)})`,
+          message: `📢 Sent to Discord: ${contract} (${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)})`,
           type: "success"
         });
       } else {
         setDiscordNotice({
-          message: `Failed to post to Discord: ${data.error || "Unknown error"}`,
+          message: `Discord error: ${data.error || "Failed to send"}`,
           type: "error"
         });
       }
     } catch (e: any) {
       setDiscordNotice({
-        message: `Discord post error: ${e.message}`,
+        message: `Error sending to Discord: ${e.message}`,
         type: "error"
       });
     } finally {
-      setIsPostingUserTradeToDiscord(false);
+      setIsSendingDiscord(false);
     }
   };
 
@@ -3340,6 +3187,121 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                 </div>
 
+                {/* SIMPLE ENTRY & EXIT BOX (1 CONTRACT) */}
+                {(() => {
+                  const symbolKey = "SPX";
+                  const currentFill = simpleTradeFills[symbolKey] || { entry: "", exit: "" };
+                  const entryNum = parseFloat(currentFill.entry);
+                  const exitNum = parseFloat(currentFill.exit);
+                  const hasEntry = !isNaN(entryNum) && entryNum > 0;
+                  const hasExit = !isNaN(exitNum) && exitNum > 0;
+                  const hasBoth = hasEntry && hasExit;
+                  const pnl = hasBoth ? Math.round((exitNum - entryNum) * 100 * 100) / 100 : null;
+                  const pnlPct = hasBoth && entryNum > 0 ? ((exitNum - entryNum) / entryNum) * 100 : 0;
+
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                          <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                          Trade Fill (1 Contract)
+                        </span>
+                        {pnl !== null && (
+                          <span className={`font-black text-sm ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} ({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
+                            Entry Price ($)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder={entryAsk.toFixed(2)}
+                              value={currentFill.entry}
+                              onChange={(e) => setSimpleTradeFills(prev => ({
+                                ...prev,
+                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: e.target.value, discordSent: false }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
+                            Exit Price ($)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={currentFill.exit}
+                              onChange={(e) => setSimpleTradeFills(prev => ({
+                                ...prev,
+                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), exit: e.target.value, discordSent: false }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSimpleTradeFills(prev => ({
+                              ...prev,
+                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: entryAsk.toFixed(2), discordSent: false }
+                            }))}
+                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
+                          >
+                            Ask: ${entryAsk.toFixed(2)}
+                          </button>
+                          {(currentFill.entry || currentFill.exit) && (
+                            <button
+                              type="button"
+                              onClick={() => setSimpleTradeFills(prev => {
+                                const next = { ...prev };
+                                delete next[symbolKey];
+                                return next;
+                              })}
+                              className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+
+                        {pnl !== null && (
+                          <button
+                            type="button"
+                            onClick={() => handlePostSimpleTradeToDiscord(symbolKey, contract, entryNum, exitNum)}
+                            disabled={currentFill.discordSent || isSendingDiscord}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                              currentFill.discordSent
+                                ? "bg-slate-800 text-slate-400 border border-slate-700"
+                                : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-sm"
+                            }`}
+                          >
+                            <DiscordIcon className="w-3 h-3 text-white" />
+                            <span>{currentFill.discordSent ? "Sent to Discord" : "Post to Discord"}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Section 1 Footer */}
                 <div className="pt-1 flex items-center justify-between text-[11px] font-mono text-slate-400">
                   <span className="text-amber-400">Gatekeeper Rule: 3-min close beyond range shelf</span>
@@ -3578,8 +3540,6 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                           key={sym}
                           onClick={() => {
                             setSelectedSignalTicker(sym);
-                            setCustomEntryPriceInput("");
-                            setCustomExitPriceInput("");
                             fetchLiveQuotes();
                           }}
                           className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 whitespace-nowrap border ${
@@ -3798,448 +3758,117 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                 </div>
 
-                {/* ⚡ INTERACTIVE LIVE TRADE LOGGER & PROFIT CAPTURE DOCK */}
+                {/* SIMPLE ENTRY & EXIT BOX (1 CONTRACT) */}
                 {(() => {
-                  const activeUserTrade = userTradeBook.find(t => t.symbol === currentSym && t.status !== "CLOSED");
-                  const closedUserTradesForSym = userTradeBook.filter(t => t.symbol === currentSym && t.status === "CLOSED");
-                  const recentClosedUserTrade = closedUserTradesForSym[0];
-                  const isShowingNewEntry = showNewTradeFormMap[currentSym] || (!activeUserTrade && !recentClosedUserTrade);
+                  const symbolKey = currentSym;
+                  const currentFill = simpleTradeFills[symbolKey] || { entry: "", exit: "" };
+                  const entryNum = parseFloat(currentFill.entry);
+                  const exitNum = parseFloat(currentFill.exit);
+                  const hasEntry = !isNaN(entryNum) && entryNum > 0;
+                  const hasExit = !isNaN(exitNum) && exitNum > 0;
+                  const hasBoth = hasEntry && hasExit;
+                  const pnl = hasBoth ? Math.round((exitNum - entryNum) * 100 * 100) / 100 : null;
+                  const pnlPct = hasBoth && entryNum > 0 ? ((exitNum - entryNum) / entryNum) * 100 : 0;
 
                   return (
-                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-[#0a101f] via-[#080d19] to-[#050811] border-2 border-indigo-500/50 shadow-[0_0_35px_rgba(99,102,241,0.2)] space-y-4">
-                      {/* Dock Header */}
-                      <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-indigo-500/20">
-                        <div className="flex items-center gap-2">
-                          <div className="p-2 rounded-xl bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.3)]">
-                            <Zap className="w-4 h-4 fill-current text-indigo-400" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-black font-sans uppercase tracking-wider text-white">
-                                ⚡ Live Trade Fill & Profit Capture
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                                Real Execution Desk
-                              </span>
-                            </div>
-                            <span className="text-[10.5px] font-mono text-slate-400">
-                              Enter actual trigger fill price & exit sell price to record true verified P&L
-                            </span>
+                    <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                          <Zap className="w-3.5 h-3.5 text-cyan-400 fill-current" />
+                          Trade Fill (1 Contract)
+                        </span>
+                        {pnl !== null && (
+                          <span className={`font-black text-sm ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} ({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
+                            Entry Price ($)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder={entryAsk.toFixed(2)}
+                              value={currentFill.entry}
+                              onChange={(e) => setSimpleTradeFills(prev => ({
+                                ...prev,
+                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: e.target.value, discordSent: false }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
+                            />
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          {activeUserTrade ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                              POSITION OPEN ({activeUserTrade.qty} ct)
-                            </span>
-                          ) : recentClosedUserTrade && !isShowingNewEntry ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
-                              VERIFIED WIN LOCKED
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-800/90 text-slate-300 border border-slate-700">
-                              <Clock className="w-3 h-3 text-amber-400" />
-                              ARMED AT TRIGGER SHELF (${triggerLevel.toFixed(2)})
-                            </span>
-                          )}
+                        <div>
+                          <label className="text-[10px] font-mono text-slate-400 block mb-1">
+                            Exit Price ($)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={currentFill.exit}
+                              onChange={(e) => setSimpleTradeFills(prev => ({
+                                ...prev,
+                                [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), exit: e.target.value, discordSent: false }
+                              }))}
+                              className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-xl pl-6 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none"
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      {/* DOCK BODY */}
-                      {activeUserTrade ? (
-                        /* ACTIVE POSITION VIEW */
-                        <div className="space-y-3.5">
-                          <div className="p-3.5 rounded-xl bg-slate-950/90 border border-emerald-500/40 flex flex-wrap items-center justify-between gap-3 shadow-inner">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-mono font-black text-white">
-                                  {activeUserTrade.contract}
-                                </span>
-                                <span className="px-2 py-0.5 rounded text-[9.5px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                  {activeUserTrade.qty} {activeUserTrade.qty === 1 ? "Contract" : "Contracts"} Remaining
-                                </span>
-                                {activeUserTrade.status === "SCALED_50" && (
-                                  <span className="px-2 py-0.5 rounded text-[9.5px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                                    50% Scaled (+${activeUserTrade.scaledPnlDollars?.toFixed(2)})
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
-                                Filled @ <strong className="text-white">${activeUserTrade.entryPrice.toFixed(2)}</strong> at {activeUserTrade.entryTime} • Total Basis: ${((activeUserTrade.entryPrice * (activeUserTrade.qty + (activeUserTrade.scaledQty || 0))) * 100).toFixed(0)}
-                              </span>
-                            </div>
-
-                            {(() => {
-                              const liveVal = liveOptionEst;
-                              const openPnl = (liveVal - activeUserTrade.entryPrice) * activeUserTrade.qty * 100;
-                              const totalUnrealized = openPnl + (activeUserTrade.scaledPnlDollars || 0);
-                              const totalCostBasis = activeUserTrade.entryPrice * (activeUserTrade.qty + (activeUserTrade.scaledQty || 0)) * 100;
-                              const unrealizedPct = totalCostBasis > 0 ? (totalUnrealized / totalCostBasis) * 100 : 0;
-                              const isProfitable = totalUnrealized >= 0;
-
-                              return (
-                                <div className={`px-4 py-2 rounded-xl border text-right ${isProfitable ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-300" : "bg-rose-950/40 border-rose-500/50 text-rose-300"}`}>
-                                  <span className="text-[9px] font-mono uppercase font-bold text-slate-400 block">
-                                    Live Unrealized P&L
-                                  </span>
-                                  <div className="flex items-baseline justify-end gap-1.5">
-                                    <span className="text-lg font-mono font-black">
-                                      {isProfitable ? "+" : ""}${totalUnrealized.toFixed(2)}
-                                    </span>
-                                    <span className="text-xs font-mono font-bold">
-                                      ({isProfitable ? "+" : ""}{unrealizedPct.toFixed(1)}%)
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                              <label className="text-xs font-mono font-bold text-slate-300 flex items-center gap-1.5">
-                                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-                                Enter Actual Sell / Exit Price ($):
-                              </label>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <button
-                                  type="button"
-                                  onClick={() => setCustomExitPriceInput(liveOptionEst.toFixed(2))}
-                                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-all cursor-pointer"
-                                >
-                                  Live: ${liveOptionEst.toFixed(2)}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setCustomExitPriceInput(peakOptionEst.toFixed(2))}
-                                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 transition-all cursor-pointer"
-                                >
-                                  Day Peak: ${peakOptionEst.toFixed(2)}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setCustomExitPriceInput(target1.toFixed(2))}
-                                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer"
-                                >
-                                  T1: ${target1.toFixed(2)}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setCustomExitPriceInput(target2.toFixed(2))}
-                                  className="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 transition-all cursor-pointer"
-                                >
-                                  T2: ${target2.toFixed(2)}
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <div className="relative flex-1">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-mono font-bold text-slate-400">$</span>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  placeholder={liveOptionEst.toFixed(2)}
-                                  value={customExitPriceInput}
-                                  onChange={(e) => setCustomExitPriceInput(e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl pl-8 pr-3 py-2 text-sm font-mono font-bold text-white focus:outline-none"
-                                />
-                              </div>
-
-                              {activeUserTrade.status !== "SCALED_50" && activeUserTrade.qty > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const sellP = parseFloat(customExitPriceInput) > 0 ? parseFloat(customExitPriceInput) : liveOptionEst;
-                                    handleUserScale50(activeUserTrade.id, sellP);
-                                  }}
-                                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all active:scale-95 whitespace-nowrap cursor-pointer"
-                                >
-                                  <Target className="w-3.5 h-3.5" />
-                                  Scale 50% Profit
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const sellP = parseFloat(customExitPriceInput) > 0 ? parseFloat(customExitPriceInput) : liveOptionEst;
-                                  handleUserFullExit(activeUserTrade.id, sellP);
-                                }}
-                                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-mono text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all active:scale-95 whitespace-nowrap cursor-pointer"
-                              >
-                                <Check className="w-4 h-4 stroke-[3]" />
-                                Full Exit & Lock Profit
-                              </button>
-                            </div>
-
-                            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
-                              <span>Trail remaining runners with stop loss at breakeven (${activeUserTrade.entryPrice.toFixed(2)})</span>
-                              <button
-                                type="button"
-                                onClick={() => handleUserFullExit(activeUserTrade.id, stopLoss)}
-                                className="text-rose-400 hover:text-rose-300 font-bold underline cursor-pointer"
-                              >
-                                Cut at Hard Stop (${stopLoss.toFixed(2)})
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : recentClosedUserTrade && !isShowingNewEntry ? (
-                        /* VERIFIED CLOSED / PROFIT CAPTURED VIEW */
-                        <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/60 via-slate-950 to-slate-900 border-2 border-emerald-500/60 space-y-3.5 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                                <Award className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <span className="text-[10px] font-mono uppercase font-black tracking-wider text-emerald-400 block">
-                                  Verified Profit Captured
-                                </span>
-                                <div className="flex items-baseline gap-2">
-                                  <span className="text-2xl font-mono font-black text-white">
-                                    {recentClosedUserTrade.totalPnlDollars! >= 0 ? "+" : ""}${recentClosedUserTrade.totalPnlDollars?.toFixed(2)}
-                                  </span>
-                                  <span className="text-sm font-mono font-bold text-emerald-400">
-                                    ({recentClosedUserTrade.totalPnlPercent})
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handlePostVerifiedWinToDiscord(recentClosedUserTrade)}
-                                disabled={isPostingUserTradeToDiscord || recentClosedUserTrade.isVerifiedDiscordSent}
-                                className={`px-4 py-2 rounded-xl text-xs font-mono font-black uppercase tracking-wider flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer ${
-                                  recentClosedUserTrade.isVerifiedDiscordSent
-                                    ? "bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed"
-                                    : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-[0_0_15px_rgba(88,101,242,0.4)]"
-                                }`}
-                              >
-                                <DiscordIcon className="w-4 h-4 text-white" />
-                                <span>{recentClosedUserTrade.isVerifiedDiscordSent ? "✓ Posted to Discord" : "Post Verified Win to Discord"}</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setShowNewTradeFormMap(prev => ({ ...prev, [currentSym]: true }))}
-                                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-bold flex items-center gap-1.5 transition-all border border-slate-700 cursor-pointer"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                <span>+ Log Another Trade</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs font-mono">
-                            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                              <span className="text-[9px] text-slate-400 uppercase block font-bold">Contract</span>
-                              <span className="font-bold text-white text-[11px] block mt-0.5">{recentClosedUserTrade.contract}</span>
-                            </div>
-                            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                              <span className="text-[9px] text-slate-400 uppercase block font-bold">Entry Fill</span>
-                              <span className="font-bold text-cyan-300 text-[11px] block mt-0.5">${recentClosedUserTrade.entryPrice.toFixed(2)} ({recentClosedUserTrade.entryTime})</span>
-                            </div>
-                            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                              <span className="text-[9px] text-slate-400 uppercase block font-bold">Exit Sell Fill</span>
-                              <span className="font-bold text-emerald-300 text-[11px] block mt-0.5">${recentClosedUserTrade.exitPrice?.toFixed(2)} ({recentClosedUserTrade.exitTime})</span>
-                            </div>
-                            <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                              <span className="text-[9px] text-slate-400 uppercase block font-bold">Total Volume</span>
-                              <span className="font-bold text-white text-[11px] block mt-0.5">{recentClosedUserTrade.qty + (recentClosedUserTrade.scaledQty || 0)} Contracts</span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        /* PRE-ENTRY FILL LOGGING VIEW */
-                        <div className="p-4 rounded-xl bg-slate-950/90 border border-slate-800/90 space-y-3.5">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div>
-                              <span className="text-xs font-mono font-black text-slate-200 uppercase tracking-wider block">
-                                Log Trigger Entry Fill: {contract}
-                              </span>
-                              <span className="text-[10.5px] font-mono text-slate-400 block mt-0.5">
-                                Breakout Shelf: <strong className="text-amber-300">${triggerLevel.toFixed(2)}</strong> • Current Ask: <strong className="text-emerald-300">${entryAsk.toFixed(2)}</strong>
-                              </span>
-                            </div>
-
-                            {recentClosedUserTrade && (
-                              <button
-                                type="button"
-                                onClick={() => setShowNewTradeFormMap(prev => ({ ...prev, [currentSym]: false }))}
-                                className="text-[11px] font-mono text-cyan-400 hover:underline cursor-pointer"
-                              >
-                                &larr; View Last Captured Win
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                            <div className="sm:col-span-4 space-y-1">
-                              <div className="flex items-center justify-between text-[11px] font-mono text-slate-300 font-bold">
-                                <span>Actual Entry Fill ($)</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setCustomEntryPriceInput(entryAsk.toFixed(2))}
-                                  className="text-[9.5px] text-cyan-400 hover:underline font-normal cursor-pointer"
-                                >
-                                  Use Ask (${entryAsk.toFixed(2)})
-                                </button>
-                              </div>
-                              <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-mono font-bold text-slate-400">$</span>
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  placeholder={entryAsk.toFixed(2)}
-                                  value={customEntryPriceInput}
-                                  onChange={(e) => setCustomEntryPriceInput(e.target.value)}
-                                  className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-xl pl-8 pr-3 py-2 text-sm font-mono font-bold text-white focus:outline-none"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="sm:col-span-4 space-y-1">
-                              <span className="text-[11px] font-mono text-slate-300 font-bold block">
-                                Contracts Qty
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                {[1, 2, 3, 5, 10].map(qty => (
-                                  <button
-                                    key={qty}
-                                    type="button"
-                                    onClick={() => setCustomContractQtyInput(qty)}
-                                    className={`flex-1 py-2 rounded-xl text-xs font-mono font-black transition-all border cursor-pointer ${
-                                      customContractQtyInput === qty
-                                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-                                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
-                                    }`}
-                                  >
-                                    {qty}x
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="sm:col-span-4">
-                              <button
-                                type="button"
-                                onClick={() => handleLogUserEntry(currentSym, contract, strike, entryAsk)}
-                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all active:scale-95 cursor-pointer"
-                              >
-                                <Zap className="w-4 h-4 fill-current" />
-                                <span>⚡ Log Entry at Trigger</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[10.5px] font-mono text-slate-400 pt-0.5 border-t border-slate-800/80">
-                            <span>
-                              Basis: <strong className="text-white">${(((parseFloat(customEntryPriceInput) || entryAsk) * customContractQtyInput) * 100).toFixed(0)}</strong> total outlay
-                            </span>
-                            <span className="text-amber-300">
-                              Max 25% SL Risk: -${(((parseFloat(customEntryPriceInput) || entryAsk) * customContractQtyInput) * 100 * 0.25).toFixed(0)}
-                            </span>
-                            <span className="text-emerald-400">
-                              T1 (+30%) Gain: +${(((parseFloat(customEntryPriceInput) || entryAsk) * customContractQtyInput) * 100 * 0.30).toFixed(0)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Expandable Verified Execution History Ledger */}
-                      {userTradeBook.length > 0 && (
-                        <div className="pt-2 border-t border-indigo-500/20">
+                      <div className="flex items-center justify-between gap-2 pt-0.5">
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => setShowLoggedHistory(!showLoggedHistory)}
-                            className="flex items-center justify-between w-full text-xs font-mono text-indigo-300 hover:text-indigo-200 font-bold transition-all py-1 cursor-pointer"
+                            onClick={() => setSimpleTradeFills(prev => ({
+                              ...prev,
+                              [symbolKey]: { ...(prev[symbolKey] || { entry: "", exit: "" }), entry: entryAsk.toFixed(2), discordSent: false }
+                            }))}
+                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
                           >
-                            <span className="flex items-center gap-1.5">
-                              <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                              Today's Verified Executions ({userTradeBook.length} Logged)
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] text-slate-400">
-                              {showLoggedHistory ? "Hide Ledger" : "View Ledger"}
-                              {showLoggedHistory ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                            </span>
+                            Ask: ${entryAsk.toFixed(2)}
                           </button>
-
-                          {showLoggedHistory && (
-                            <div className="mt-2.5 overflow-x-auto custom-scrollbar rounded-xl border border-slate-800 bg-slate-950/90">
-                              <table className="w-full text-left text-xs font-mono">
-                                <thead>
-                                  <tr className="border-b border-slate-800 text-[10px] text-slate-400 uppercase bg-slate-900/60">
-                                    <th className="p-2.5">Trade / Contract</th>
-                                    <th className="p-2.5">Entry</th>
-                                    <th className="p-2.5">Exit</th>
-                                    <th className="p-2.5">Volume</th>
-                                    <th className="p-2.5">Realized P&L</th>
-                                    <th className="p-2.5 text-right">Discord</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-800/60">
-                                  {userTradeBook.map(t => {
-                                    const isWin = (t.totalPnlDollars || 0) >= 0;
-                                    return (
-                                      <tr key={t.id} className="hover:bg-slate-900/40">
-                                        <td className="p-2.5 font-bold text-white whitespace-nowrap">
-                                          {t.contract}
-                                        </td>
-                                        <td className="p-2.5 text-cyan-300 whitespace-nowrap">
-                                          ${t.entryPrice.toFixed(2)} <span className="text-slate-500 text-[10px]">({t.entryTime})</span>
-                                        </td>
-                                        <td className="p-2.5 text-emerald-300 whitespace-nowrap">
-                                          {t.status === "CLOSED" ? (
-                                            <>${t.exitPrice?.toFixed(2)} <span className="text-slate-500 text-[10px]">({t.exitTime})</span></>
-                                          ) : (
-                                            <span className="text-amber-400 font-bold">Active Position</span>
-                                          )}
-                                        </td>
-                                        <td className="p-2.5 text-slate-300 whitespace-nowrap">
-                                          {t.qty + (t.scaledQty || 0)} ct
-                                        </td>
-                                        <td className="p-2.5 whitespace-nowrap">
-                                          {t.status === "CLOSED" ? (
-                                            <span className={`font-black ${isWin ? "text-emerald-400" : "text-rose-400"}`}>
-                                              {isWin ? "+" : ""}${t.totalPnlDollars?.toFixed(2)} ({t.totalPnlPercent})
-                                            </span>
-                                          ) : (
-                                            <span className="text-cyan-400">In Play</span>
-                                          )}
-                                        </td>
-                                        <td className="p-2.5 text-right whitespace-nowrap">
-                                          {t.status === "CLOSED" && (
-                                            <button
-                                              type="button"
-                                              onClick={() => handlePostVerifiedWinToDiscord(t)}
-                                              disabled={t.isVerifiedDiscordSent || isPostingUserTradeToDiscord}
-                                              className={`px-2 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer ${
-                                                t.isVerifiedDiscordSent
-                                                  ? "bg-slate-800 text-slate-400 border border-slate-700"
-                                                  : "bg-[#5865F2]/20 hover:bg-[#5865F2]/40 text-indigo-300 border border-[#5865F2]/40"
-                                              }`}
-                                            >
-                                              <DiscordIcon className="w-3 h-3 text-indigo-300" />
-                                              <span>{t.isVerifiedDiscordSent ? "Sent" : "Post"}</span>
-                                            </button>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
+                          {(currentFill.entry || currentFill.exit) && (
+                            <button
+                              type="button"
+                              onClick={() => setSimpleTradeFills(prev => {
+                                const next = { ...prev };
+                                delete next[symbolKey];
+                                return next;
+                              })}
+                              className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-[10.5px] font-mono transition-all cursor-pointer"
+                            >
+                              Clear
+                            </button>
                           )}
                         </div>
-                      )}
+
+                        {pnl !== null && (
+                          <button
+                            type="button"
+                            onClick={() => handlePostSimpleTradeToDiscord(symbolKey, contract, entryNum, exitNum)}
+                            disabled={currentFill.discordSent || isSendingDiscord}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                              currentFill.discordSent
+                                ? "bg-slate-800 text-slate-400 border border-slate-700"
+                                : "bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-sm"
+                            }`}
+                          >
+                            <DiscordIcon className="w-3 h-3 text-white" />
+                            <span>{currentFill.discordSent ? "Sent to Discord" : "Post to Discord"}</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
