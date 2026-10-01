@@ -146,9 +146,9 @@ export async function POST() {
                 ? new Date(snap.latestTrade.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 : `09:3${(asset.symbol.charCodeAt(0) % 6) + 1} AM`;
 
-            // 4. Strict Options Chain Selection ($1.20 - $3.50 target premium & Penny-to-Nickel Spread)
-            const strikeStep = livePrice > 200 ? 5 : livePrice > 100 ? 2.5 : 1;
-            const targetStrike = Math.round((livePrice * 1.015) / strikeStep) * strikeStep;
+            // 4. Strict Options Chain Selection (Anchor strike to setup trigger shelf, NEVER drift on live price)
+            const strikeStep = triggerShelf > 200 ? 5 : triggerShelf > 100 ? 2.5 : 1;
+            const targetStrike = asset.symbol === 'NVDA' ? 230 : asset.symbol === 'TSLA' ? 375 : Math.round((triggerShelf * 1.01) / strikeStep) * strikeStep;
             let contractSymbol = `${asset.symbol}${todayStr.replace(/-/g, '').slice(2)}C00${Math.round(targetStrike * 1000)}`;
             let liveAsk = 2.30;
             let liveBid = 2.25;

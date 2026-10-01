@@ -8,6 +8,7 @@ import {
   sendProspectiveStockAlert,
   sendTestSignal,
   sendSPXPowerHourAlert,
+  sendTargetScaleAlert,
   DEFAULT_DISCORD_WEBHOOK_URL
 } from '@/lib/discord';
 import { CURRENT_MARKET_OUTLOOK } from '@/lib/prospectiveStocks';
@@ -83,6 +84,14 @@ export async function POST(req: Request) {
       }
       const result = await sendTradeExitCallout(payload);
       return NextResponse.json({ success: result.success, message: `Exit alert sent for ${payload.symbol}`, details: result });
+    }
+
+    if (action === 'target-scale') {
+      if (!payload || !payload.symbol || !payload.stage || !payload.currentPrice) {
+        return NextResponse.json({ success: false, error: 'Invalid target-scale payload: symbol, stage, and currentPrice required' }, { status: 400 });
+      }
+      const result = await sendTargetScaleAlert(payload);
+      return NextResponse.json({ success: result.success, message: `Target scale alert sent for ${payload.symbol}`, details: result });
     }
 
     if (action === 'daily-summary') {

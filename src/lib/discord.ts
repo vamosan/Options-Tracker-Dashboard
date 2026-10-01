@@ -235,6 +235,78 @@ export async function sendTradeExitCallout(trade: {
 }
 
 /**
+ * Real-time Target Scale / Runner Exit Alert
+ */
+export async function sendTargetScaleAlert(update: {
+  symbol: string;
+  contract: string;
+  stage: "TARGET_1_HIT" | "TARGET_2_HIT" | "TRAILING_STOP_EXIT" | "OVEREXTENDED_WARNING";
+  currentPrice: number;
+  highPrice: number;
+  entryPrice: number;
+  targetPrice: number;
+  pnlPercent: string;
+  actionMessage: string;
+  stopAdjustment: string;
+}) {
+  const isT1 = update.stage === "TARGET_1_HIT";
+  const isT2 = update.stage === "TARGET_2_HIT";
+  const isTrail = update.stage === "TRAILING_STOP_EXIT";
+
+  const cleanContract = update.contract.startsWith(update.symbol) ? update.contract : `${update.symbol} ${update.contract}`;
+
+  const title = isT1
+    ? `🎯 TARGET 1 HIT (+30%): SCALE 50% ON ${cleanContract}`
+    : isT2
+    ? `🚀 TARGET 2 HIT (+75%): HARVEST RUNNERS ON ${cleanContract}`
+    : isTrail
+    ? `⚠️ TRAILING STOP HIT: SECURE PROFIT ON ${cleanContract}`
+    : `⚠️ OVEREXTENDED WARNING: DO NOT CHASE ${cleanContract}`;
+
+  const color = isT1 ? 0x10B981 : isT2 ? 0x06B6D4 : isTrail ? 0xF59E0B : 0xE11D48;
+
+  const embed: DiscordEmbed = {
+    title,
+    description: `**${update.actionMessage}**\nUnderlying Spot: **$${update.currentPrice.toFixed(2)}** (Session Peak: **$${update.highPrice.toFixed(2)}**)`,
+    color,
+    fields: [
+      {
+        name: "🎯 CONTRACT",
+        value: `**${cleanContract}**`,
+        inline: true,
+      },
+      {
+        name: "📈 ESTIMATED RETURN",
+        value: `**${update.pnlPercent}** (Ask: $${update.targetPrice.toFixed(2)} from $${update.entryPrice.toFixed(2)})`,
+        inline: true,
+      },
+      {
+        name: "🛡️ STOP LEVEL UPDATE",
+        value: `**${update.stopAdjustment}**`,
+        inline: true,
+      },
+      {
+        name: "⚡ EXECUTION DIRECTIVE",
+        value: isT1 
+          ? "Sell 50% of contracts to guarantee green trade. Move stop loss on remaining 50% to entry breakeven."
+          : isT2
+          ? "Sell 75-100% of runners at high. Trail remaining runners tightly behind 5-min EMA9. DO NOT ADD NEW POSITIONS."
+          : "Pullback detected from session peak. Closed remaining runner contracts to lock in net green gains.",
+        inline: false,
+      }
+    ],
+    footer: {
+      text: "Options Tracker AI • Real-Time Execution Desk",
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  return sendDiscordWebhook({
+    embeds: [embed],
+  });
+}
+
+/**
  * Daily Call-Outs Summary (Entry + Exit Times for All Trades of the Day)
  */
 export async function sendDailyCalloutsSummary(data: {

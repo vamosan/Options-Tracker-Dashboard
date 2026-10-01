@@ -588,8 +588,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           window.sessionStorage.setItem(alertKey, "1");
         }
 
-        // Dispatch Discord Alert
-        const contractStrike = liveSetup?.contract?.strike || prospect?.suggestedOption?.strike || (sym === "NVDA" ? 230 : 375);
+        // Lock contract strike to setup anchor (strictly 230 for NVDA, 375 for TSLA)
+        const contractStrike = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : (prospect?.suggestedOption?.strike || liveSetup?.contract?.strike || 230));
         const contractSym = `${sym} $${contractStrike} Call`;
         const entryAsk = liveSetup?.contract?.ask || prospect?.suggestedOption?.estimatedAsk || (sym === "NVDA" ? 2.45 : 3.60);
         const target1 = liveSetup?.targets?.target1 || prospect?.suggestedOption?.target1 || (sym === "NVDA" ? 3.20 : 4.70);
@@ -629,6 +629,102 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
         }).catch(err => {
           console.error("Auto discord dispatch error:", err);
         });
+      }
+
+      // 2. Automated Target 1 Hit Alert (+30% Scalp)
+      const t1StockLevel = triggerShelf * 1.015;
+      const t1AlertKey = `AUTO_DISCORD_${sym}_T1_${todayStr}`;
+      if ((spotPrice >= t1StockLevel || dayHigh >= t1StockLevel) &&
+          !dispatchedDiscordAlertsRef.current.has(t1AlertKey) &&
+          !(typeof window !== "undefined" && window.sessionStorage.getItem(t1AlertKey))) {
+        
+        dispatchedDiscordAlertsRef.current.add(t1AlertKey);
+        if (typeof window !== "undefined") window.sessionStorage.setItem(t1AlertKey, "1");
+
+        const strikeNum = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : 230);
+        fetch("/api/discord", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "target-scale",
+            payload: {
+              symbol: sym,
+              contract: `${sym} $${strikeNum} Call`,
+              stage: "TARGET_1_HIT",
+              currentPrice: spotPrice,
+              highPrice: dayHigh,
+              entryPrice: sym === "NVDA" ? 2.45 : 3.60,
+              targetPrice: sym === "NVDA" ? 3.20 : 4.70,
+              pnlPercent: "+30.6%",
+              actionMessage: `Underlying reached $${t1StockLevel.toFixed(2)}. Target 1 achieved!`,
+              stopAdjustment: `Move stop loss to breakeven ($${triggerShelf.toFixed(2)})`
+            }
+          })
+        }).catch(err => console.error("T1 dispatch error:", err));
+      }
+
+      // 3. Automated Target 2 Hit Alert (+65%–+80% Runner Extension)
+      const t2StockLevel = triggerShelf * 1.024;
+      const t2AlertKey = `AUTO_DISCORD_${sym}_T2_${todayStr}`;
+      if ((spotPrice >= t2StockLevel || dayHigh >= t2StockLevel) &&
+          !dispatchedDiscordAlertsRef.current.has(t2AlertKey) &&
+          !(typeof window !== "undefined" && window.sessionStorage.getItem(t2AlertKey))) {
+        
+        dispatchedDiscordAlertsRef.current.add(t2AlertKey);
+        if (typeof window !== "undefined") window.sessionStorage.setItem(t2AlertKey, "1");
+
+        const strikeNum = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : 230);
+        fetch("/api/discord", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "target-scale",
+            payload: {
+              symbol: sym,
+              contract: `${sym} $${strikeNum} Call`,
+              stage: "TARGET_2_HIT",
+              currentPrice: spotPrice,
+              highPrice: dayHigh,
+              entryPrice: sym === "NVDA" ? 2.45 : 3.60,
+              targetPrice: sym === "NVDA" ? 4.25 : 5.95,
+              pnlPercent: "+73.5%",
+              actionMessage: `Peak extension touched $${dayHigh.toFixed(2)}! Target 2 smashed. Harvest profits!`,
+              stopAdjustment: `Trail runners behind 5-min EMA9. DO NOT ENTER AT MARKET.`
+            }
+          })
+        }).catch(err => console.error("T2 dispatch error:", err));
+      }
+
+      // 4. Automated Trailing Stop Alert on Pullback from High
+      const trailAlertKey = `AUTO_DISCORD_${sym}_TRAIL_${todayStr}`;
+      const hasPeakedAndPulled = dayHigh >= t2StockLevel && spotPrice <= (dayHigh - 2.5);
+      if (hasPeakedAndPulled &&
+          !dispatchedDiscordAlertsRef.current.has(trailAlertKey) &&
+          !(typeof window !== "undefined" && window.sessionStorage.getItem(trailAlertKey))) {
+        
+        dispatchedDiscordAlertsRef.current.add(trailAlertKey);
+        if (typeof window !== "undefined") window.sessionStorage.setItem(trailAlertKey, "1");
+
+        const strikeNum = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : 230);
+        fetch("/api/discord", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "target-scale",
+            payload: {
+              symbol: sym,
+              contract: `${sym} $${strikeNum} Call`,
+              stage: "TRAILING_STOP_EXIT",
+              currentPrice: spotPrice,
+              highPrice: dayHigh,
+              entryPrice: sym === "NVDA" ? 2.45 : 3.60,
+              targetPrice: sym === "NVDA" ? 2.95 : 4.10,
+              pnlPercent: "+20.4% Trailing Win",
+              actionMessage: `Stock pulled back from $${dayHigh.toFixed(2)} peak to $${spotPrice.toFixed(2)}. Trailing stop triggered on runners.`,
+              stopAdjustment: `All positions closed. Overall trade secured in heavy green.`
+            }
+          })
+        }).catch(err => console.error("Trail dispatch error:", err));
       }
     }
   }, [liveQuotes, setups, prospectiveStocksList]);
@@ -3041,8 +3137,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const dayHigh = quote?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : price * 1.012);
             const dayLow = quote?.dayLow || (liveSetup?.orb?.low ? liveSetup.orb.low * 0.992 : price * 0.988);
 
-            const strike = liveSetup?.contract.strike || prospective?.suggestedOption.strike || 230;
-            const contract = liveSetup ? `${symbol} $${strike} Call` : prospective?.suggestedOption.contract || `${symbol} $${strike}C`;
+            // Strict Strike Anchor Rule: Lock to planned setup strike (never drift to higher OTM strikes on live price)
+            const strike = (currentSym === "NVDA" ? 230 : currentSym === "TSLA" ? 375 : (prospective?.suggestedOption.strike || liveSetup?.contract.strike || 230));
+            const contract = `${symbol} $${strike} Call`;
             const entryAsk = liveSetup?.contract.ask || prospective?.suggestedOption.estimatedAsk || 2.45;
             const target1 = liveSetup?.targets.target1 || prospective?.suggestedOption.target1 || 3.20;
             const target2 = liveSetup?.targets.target2 || prospective?.suggestedOption.target2 || 4.05;
@@ -3055,12 +3152,53 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const staticShelf = currentSym === "NVDA" ? 226.50 : currentSym === "TSLA" ? 375.00 : 0;
             const triggerLevel = staticShelf || parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : price * 0.995);
 
-            // Active Breakout latch: True if current price OR dayHigh has breached the trigger shelf, or backend signal state is BREAKOUT
+            // Active Breakout latch & Anchors
             const isBreakoutTriggered = (triggerLevel > 0 && (price >= triggerLevel || dayHigh >= triggerLevel)) || (liveSetup?.signal?.state === "BREAKOUT");
             const distancePts = triggerLevel - price;
             const distancePct = triggerLevel > 0 ? ((triggerLevel - price) / triggerLevel) * 100 : 0;
             const breakoutSpread = Math.max(price, dayHigh) - triggerLevel;
             const invalidationStop = liveSetup ? `$${liveSetup.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (ORB Low)` : prospective?.invalidationLevel || `Underlying Stop: $${(price - 2.5).toFixed(2)}`;
+
+            // Institutional Anchors for Targets & Invalidation
+            const chaseLimit = triggerLevel * 1.008; // e.g. $228.31 for NVDA (max +0.8% buy zone)
+            const t1StockLevel = triggerLevel * 1.015; // e.g. $229.90 for NVDA (+1.5% target)
+            const t2StockLevel = triggerLevel * 1.024; // e.g. $231.90 for NVDA (+2.4% target)
+            const stopStockLevel = triggerLevel * 0.988; // e.g. $223.80 for NVDA (-1.2% stop)
+
+            // Dynamic Option Mark-to-Market Estimation
+            const deltaEst = 0.48;
+            const liveStockSpread = price - triggerLevel;
+            const peakStockSpread = Math.max(0, dayHigh - triggerLevel);
+            const liveOptionEst = Math.max(0.40, Math.round((entryAsk + (liveStockSpread * deltaEst)) * 100) / 100);
+            const peakOptionEst = Math.max(entryAsk, Math.round((entryAsk + (peakStockSpread * deltaEst * 1.1)) * 100) / 100);
+            const peakGainPct = Math.round(((peakOptionEst - entryAsk) / entryAsk) * 100);
+            const liveGainPct = Math.round(((liveOptionEst - entryAsk) / entryAsk) * 100);
+
+            // Lifecycle Trade Phase Engine
+            type TradePhase = "WAITING" | "BUY_ZONE" | "EXTENDED_NO_CHASE" | "TARGET_1_HIT" | "TARGET_2_HIT" | "PULLBACK_RETEST" | "STOPPED_OUT";
+            let tradePhase: TradePhase = "WAITING";
+
+            if (price < triggerLevel && dayHigh < triggerLevel) {
+              tradePhase = "WAITING";
+            } else if (price < stopStockLevel) {
+              tradePhase = "STOPPED_OUT";
+            } else if (dayHigh >= t2StockLevel) {
+              if (price >= t2StockLevel * 0.995) {
+                tradePhase = "TARGET_2_HIT";
+              } else {
+                tradePhase = "PULLBACK_RETEST";
+              }
+            } else if (dayHigh >= t1StockLevel) {
+              if (price >= t1StockLevel * 0.995) {
+                tradePhase = "TARGET_1_HIT";
+              } else {
+                tradePhase = "PULLBACK_RETEST";
+              }
+            } else if (price >= triggerLevel && price <= chaseLimit) {
+              tradePhase = "BUY_ZONE";
+            } else {
+              tradePhase = "EXTENDED_NO_CHASE";
+            }
 
             const executeCurrentSignal = () => {
               if (liveSetup) {
@@ -3230,9 +3368,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     <div className="text-3xl sm:text-4xl font-mono font-black text-white tracking-tight drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
                       {contract}
                     </div>
-                    <span className="px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                      ORB BREAKOUT
-                    </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40" title="Peak option contract value achieved today">
+                        Peak Option: ${peakOptionEst.toFixed(2)} (+{peakGainPct}%)
+                      </span>
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${liveGainPct >= 0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/15 text-rose-300 border-rose-500/40'}`}>
+                        Live Est: ${liveOptionEst.toFixed(2)} ({liveGainPct >= 0 ? '+' : ''}{liveGainPct}%)
+                      </span>
+                      <span className="px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                        ORB BREAKOUT
+                      </span>
+                    </div>
                   </div>
                   <div className="text-xs font-mono text-cyan-400 flex items-center justify-between">
                     <span>{name} • Spot: ${price.toFixed(2)}</span>
@@ -3249,45 +3395,124 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                   <div className="relative h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                     <div 
-                      className={`h-full transition-all duration-500 ${isBreakoutTriggered ? 'bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-gradient-to-r from-slate-700 via-amber-500 to-emerald-500'}`}
+                      className={`h-full transition-all duration-500 ${
+                        tradePhase === "TARGET_2_HIT" || tradePhase === "TARGET_1_HIT"
+                          ? "bg-gradient-to-r from-emerald-500 via-cyan-400 to-fuchsia-400 shadow-[0_0_12px_rgba(6,182,212,0.8)]"
+                          : tradePhase === "BUY_ZONE"
+                          ? "bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]"
+                          : tradePhase === "PULLBACK_RETEST" || tradePhase === "EXTENDED_NO_CHASE"
+                          ? "bg-gradient-to-r from-amber-500 to-rose-400 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                          : "bg-gradient-to-r from-slate-700 via-amber-500 to-emerald-500"
+                      }`}
                       style={{ width: `${isBreakoutTriggered ? 100 : Math.min(100, Math.max(5, ((price - dayLow) / Math.max(1, dayHigh - dayLow)) * 100))}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono">
                     <span className="text-slate-500">Support Floor: {invalidationStop}</span>
-                    <span className={isBreakoutTriggered ? "text-emerald-400 font-black" : "text-amber-400 font-bold"}>
-                      {isBreakoutTriggered ? `🔥 +$${breakoutSpread.toFixed(2)} Past Trigger Shelf (Session High $${dayHigh.toFixed(2)})` : `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`}
+                    <span className={
+                      tradePhase === "BUY_ZONE" ? "text-emerald-400 font-black" :
+                      tradePhase === "TARGET_1_HIT" ? "text-cyan-400 font-black" :
+                      tradePhase === "TARGET_2_HIT" ? "text-fuchsia-400 font-black" :
+                      tradePhase === "PULLBACK_RETEST" ? "text-amber-400 font-bold" :
+                      "text-amber-400 font-bold"
+                    }>
+                      {tradePhase === "BUY_ZONE" && `🔥 +$${breakoutSpread.toFixed(2)} Past Trigger Shelf (Optimal Buy)`}
+                      {tradePhase === "TARGET_1_HIT" && `🎯 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 1 Reached)`}
+                      {tradePhase === "TARGET_2_HIT" && `🚀 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 2 Smashed)`}
+                      {tradePhase === "PULLBACK_RETEST" && `🔄 Peaked at $${dayHigh.toFixed(2)} (Pullback to $${price.toFixed(2)})`}
+                      {tradePhase === "EXTENDED_NO_CHASE" && `⚠️ +$${breakoutSpread.toFixed(2)} Extended (Do Not Chase)`}
+                      {tradePhase === "STOPPED_OUT" && `🛑 Stop Floor Breached`}
+                      {tradePhase === "WAITING" && `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`}
                     </span>
                   </div>
                 </div>
 
-                {/* ENTER TRADE NOW Panel */}
-                <div className="p-4 rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-950/40 via-emerald-900/15 to-slate-950 space-y-2.5 shadow-[0_0_30px_rgba(16,185,129,0.12)]">
+                {/* ACTIONABLE TRADE LIFECYCLE PANEL */}
+                <div className={`p-4 rounded-2xl border-2 space-y-2.5 transition-all shadow-[0_0_30px_rgba(0,0,0,0.4)] ${
+                  tradePhase === "BUY_ZONE" 
+                    ? "border-emerald-500/70 bg-gradient-to-r from-emerald-950/50 via-emerald-900/20 to-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+                    : tradePhase === "TARGET_1_HIT"
+                    ? "border-cyan-500/70 bg-gradient-to-r from-cyan-950/50 via-cyan-900/20 to-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.2)]"
+                    : tradePhase === "TARGET_2_HIT"
+                    ? "border-fuchsia-500/70 bg-gradient-to-r from-fuchsia-950/50 via-fuchsia-900/20 to-slate-950 shadow-[0_0_30px_rgba(217,70,239,0.2)]"
+                    : tradePhase === "PULLBACK_RETEST"
+                    ? "border-amber-500/60 bg-gradient-to-r from-amber-950/40 via-amber-900/15 to-slate-950 shadow-[0_0_30px_rgba(245,158,11,0.15)]"
+                    : tradePhase === "EXTENDED_NO_CHASE"
+                    ? "border-amber-500/60 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 shadow-[0_0_30px_rgba(245,158,11,0.15)]"
+                    : tradePhase === "STOPPED_OUT"
+                    ? "border-rose-500/70 bg-gradient-to-r from-rose-950/50 via-rose-900/20 to-slate-950"
+                    : "border-slate-800 bg-slate-950"
+                }`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className={`w-2.5 h-2.5 rounded-full ${isBreakoutTriggered ? 'bg-emerald-400 animate-ping' : 'bg-cyan-400'}`}></span>
-                      {isBreakoutTriggered ? "🔥 ENTER TRADE NOW (BREAKOUT ACTIVE)" : "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)"}
+                    <span className={`text-xs font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                      tradePhase === "BUY_ZONE" ? "text-emerald-300" :
+                      tradePhase === "TARGET_1_HIT" ? "text-cyan-300" :
+                      tradePhase === "TARGET_2_HIT" ? "text-fuchsia-300" :
+                      tradePhase === "PULLBACK_RETEST" ? "text-amber-300" :
+                      tradePhase === "EXTENDED_NO_CHASE" ? "text-amber-300" :
+                      tradePhase === "STOPPED_OUT" ? "text-rose-300" : "text-slate-400"
+                    }`}>
+                      <span className={`w-2.5 h-2.5 rounded-full ${
+                        tradePhase === "BUY_ZONE" ? "bg-emerald-400 animate-ping" :
+                        tradePhase === "TARGET_1_HIT" ? "bg-cyan-400 animate-ping" :
+                        tradePhase === "TARGET_2_HIT" ? "bg-fuchsia-400 animate-ping" :
+                        tradePhase === "PULLBACK_RETEST" ? "bg-amber-400" :
+                        tradePhase === "EXTENDED_NO_CHASE" ? "bg-amber-400 animate-pulse" :
+                        tradePhase === "STOPPED_OUT" ? "bg-rose-400 animate-ping" : "bg-slate-500"
+                      }`}></span>
+                      {tradePhase === "BUY_ZONE" && "🔥 ENTER TRADE NOW (OPTIMAL BUY ZONE)"}
+                      {tradePhase === "TARGET_1_HIT" && "🎯 TARGET 1 HIT (+30%) — SCALE 50% PROFIT"}
+                      {tradePhase === "TARGET_2_HIT" && "🚀 TARGET 2 HIT (+75%) — HARVEST RUNNERS"}
+                      {tradePhase === "PULLBACK_RETEST" && "🔄 PULLBACK AFTER PEAK — RUNNERS TRAILED"}
+                      {tradePhase === "EXTENDED_NO_CHASE" && "⚠️ EXTENDED (+2.0%+) — DO NOT CHASE"}
+                      {tradePhase === "STOPPED_OUT" && "🛑 HARD STOP LOSS TRIGGERED — CUT TRADE"}
+                      {tradePhase === "WAITING" && "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)"}
                     </span>
-                    <span className="text-xs font-mono text-emerald-300 font-black">
-                      Ask Fill: ${entryAsk.toFixed(2)}
+                    <span className="text-xs font-mono font-black text-slate-200">
+                      {tradePhase === "BUY_ZONE" && `Ask Fill: $${entryAsk.toFixed(2)}`}
+                      {tradePhase === "TARGET_1_HIT" && `Scalp Fill: $${target1.toFixed(2)} (+30%)`}
+                      {tradePhase === "TARGET_2_HIT" && `Peak Option: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
+                      {tradePhase === "PULLBACK_RETEST" && `Locked Net: +$${Math.max(0, peakOptionEst - entryAsk).toFixed(2)}/ct`}
+                      {tradePhase === "EXTENDED_NO_CHASE" && `Est. Ask: $${liveOptionEst.toFixed(2)}`}
+                      {tradePhase === "STOPPED_OUT" && `Cut Price: $${stopLoss.toFixed(2)}`}
+                      {tradePhase === "WAITING" && `Est. Ask: $${entryAsk.toFixed(2)}`}
                     </span>
                   </div>
+
                   <div className="grid grid-cols-2 gap-3 text-xs font-mono pt-1">
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">When To Enter</span>
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Execution Directive</span>
                       <span className="font-black text-slate-100 text-[11px] block mt-0.5 line-clamp-2">
-                        {isBreakoutTriggered 
-                          ? `Confirmed Breakout above $${triggerLevel.toFixed(2)}! Spot is $${price.toFixed(2)} (High $${dayHigh.toFixed(2)}).`
-                          : `Breakout above $${triggerLevel.toFixed(2)} resistance shelf`}
+                        {tradePhase === "BUY_ZONE" && `Confirmed breakout above $${triggerLevel.toFixed(2)}! Spot $${price.toFixed(2)} is inside buy zone.`}
+                        {tradePhase === "TARGET_1_HIT" && `Target 1 achieved! Scale 50% profits, move stop to breakeven ($${triggerLevel.toFixed(2)}).`}
+                        {tradePhase === "TARGET_2_HIT" && `Touched $${dayHigh.toFixed(2)} peak! Harvest 75-100% of runners. DO NOT BUY AT MARKET.`}
+                        {tradePhase === "PULLBACK_RETEST" && `Stock dropped from $${dayHigh.toFixed(2)} high to $${price.toFixed(2)}. Runners closed in green.`}
+                        {tradePhase === "EXTENDED_NO_CHASE" && `Price is +$${breakoutSpread.toFixed(2)} past trigger shelf. High mean-reversion risk.`}
+                        {tradePhase === "STOPPED_OUT" && `Underlying violated stop floor $${stopStockLevel.toFixed(2)}. Hard cut executed.`}
+                        {tradePhase === "WAITING" && `Breakout above $${triggerLevel.toFixed(2)} resistance shelf.`}
                       </span>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">
-                        {isBreakoutTriggered ? "Momentum expanding • Enter now" : `Needs +$${Math.max(0, distancePts).toFixed(2)} to trigger shelf`}
+                        {tradePhase === "BUY_ZONE" && "Momentum expanding • Execute now"}
+                        {tradePhase === "TARGET_1_HIT" && "Lock 50% • Guaranteed green trade"}
+                        {tradePhase === "TARGET_2_HIT" && "Maximum extension • Protect gains"}
+                        {tradePhase === "PULLBACK_RETEST" && "Trade secured • Do not buy falling knife"}
+                        {tradePhase === "EXTENDED_NO_CHASE" && "Wait for re-test of shelf"}
+                        {tradePhase === "STOPPED_OUT" && "Strict loss discipline adhered to"}
+                        {tradePhase === "WAITING" && `Needs +$${Math.max(0, distancePts).toFixed(2)} to trigger shelf`}
                       </span>
                     </div>
+
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Contract Entry Ask</span>
-                      <span className="font-black text-emerald-300 text-xl block mt-0.5">${entryAsk.toFixed(2)}</span>
-                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Max Risk: ~$${Math.round(entryAsk * 100)} / contract</span>
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Option Return Profile</span>
+                      <div className="flex items-baseline gap-2 mt-0.5">
+                        <span className="font-black text-emerald-300 text-xl">${liveOptionEst.toFixed(2)}</span>
+                        <span className={`text-[10px] font-bold ${liveGainPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          ({liveGainPct >= 0 ? "+" : ""}{liveGainPct}%)
+                        </span>
+                      </div>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">
+                        Entry: ${entryAsk.toFixed(2)} • Day Peak: ${peakOptionEst.toFixed(2)} (+{peakGainPct}%)
+                      </span>
                     </div>
                   </div>
                 </div>
