@@ -440,6 +440,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [prospectiveSector, setProspectiveSector] = useState<string>("ALL");
   const [prospectiveSearch, setProspectiveSearch] = useState<string>("");
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(false);
+  const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
 
   const loadLiveMarketOutlook = async () => {
     try {
@@ -2611,969 +2612,368 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
       {/* 4. TAB 1: SCANNER & ACTIONABLE SETUPS */}
       {activeTab === "SETUPS" && (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           
-          {/* SPX 0DTE POWER HOUR SCANNER SUB-PANEL — SIMPLIFIED 1-TRADE VIEW */}
+          {/* SECTION 1: ⚡ SPX 0DTE POWER HOUR */}
           {(() => {
             const sig = spxPowerHourState?.directSignal || (spxPowerHourState?.activeSurgeCandidate ? {
               direction: spxPowerHourState.activeSurgeCandidate.type,
               contractName: `SPX 0DTE ${spxPowerHourState.activeSurgeCandidate.strike} ${spxPowerHourState.activeSurgeCandidate.type}`,
-              miniContractEquivalent: spxPowerHourState.activeSurgeCandidate.miniContractEquivalent || `SPY ${Math.round(spxPowerHourState.activeSurgeCandidate.strike / 10)} ${spxPowerHourState.activeSurgeCandidate.type}`,
+              miniContractEquivalent: spxPowerHourState.activeSurgeCandidate.miniContractEquivalent || `XSP/SPY ${Math.round(spxPowerHourState.activeSurgeCandidate.strike / 10)} ${spxPowerHourState.activeSurgeCandidate.type}`,
               bestStrike: spxPowerHourState.activeSurgeCandidate.strike,
-              entryAsk: spxPowerHourState.activeSurgeCandidate.estimatedAsk || 0.70,
-              target1: spxPowerHourState.activeSurgeCandidate.target1 || 1.54,
-              target2: spxPowerHourState.activeSurgeCandidate.target2 || 3.15,
-              stopLoss: spxPowerHourState.activeSurgeCandidate.stopLoss || 0.20,
+              entryAsk: spxPowerHourState.activeSurgeCandidate.estimatedAsk || 3.70,
+              target1: spxPowerHourState.activeSurgeCandidate.target1 || 8.14,
+              target2: spxPowerHourState.activeSurgeCandidate.target2 || 16.65,
+              stopLoss: spxPowerHourState.activeSurgeCandidate.stopLoss || 1.11,
               triggerRule: spxPowerHourState.activeSurgeCandidate.triggerCondition || "Breakout confirmed",
               statusText: "⚡ LIVE CONFIRMED ENTRY"
             } : null);
 
             const isCall = sig?.direction === "CALL";
             const isTriggered = sig?.status === "ACTIVE_TRIGGERED" || spxSubPanelSimulate;
-            const isArmed = !isTriggered;
-            const spot = spxPowerHourState?.spxSpot || 7678.50;
-            const changePts = spxPowerHourState?.dayChangePts ?? -4.8;
-            const changePct = spxPowerHourState?.dayChangePct ?? -0.06;
-            const low30 = spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7672.9";
-            const high30 = spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7684.4";
-            const strike = sig?.bestStrike || (isCall ? 7685 : 7665);
+            const spot = spxPowerHourState?.spxSpot || 7651.54;
+            const changePts = spxPowerHourState?.dayChangePts ?? -19.3;
+            const changePct = spxPowerHourState?.dayChangePct ?? -0.25;
+            const low30 = spxPowerHourState?.rangeShelf?.low30?.toFixed(1) || "7646.5";
+            const high30 = spxPowerHourState?.rangeShelf?.high30?.toFixed(1) || "7656.0";
+            const strike = sig?.bestStrike || (isCall ? 7660 : 7645);
             const contract = sig?.contractName || `SPX 0DTE ${strike} ${isCall ? 'CALL' : 'PUT'}`;
-            const mini = sig?.miniContractEquivalent || `SPY ${Math.round(strike / 10)} ${isCall ? 'CALL' : 'PUT'} @ ~$0.70`;
-            const entryAsk = sig?.entryAsk || (isCall ? 0.65 : 0.70);
+            const mini = sig?.miniContractEquivalent || `XSP/SPY ${Math.round(strike / 10)} ${isCall ? 'CALL' : 'PUT'} @ ~$0.38`;
+            const entryAsk = sig?.entryAsk || 3.70;
             const target1 = sig?.target1 || Math.round(entryAsk * 2.2 * 100) / 100;
             const target2 = sig?.target2 || Math.round(entryAsk * 4.5 * 100) / 100;
-            const stopLoss = sig?.stopLoss || 0.20;
+            const stopLoss = sig?.stopLoss || 1.11;
+            const triggerText = isCall ? `Break above $${high30} resistance` : `Break below $${low30} support`;
 
             return (
-              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 shadow-2xl overflow-hidden p-5">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/40 shadow-2xl p-5 md:p-6 flex flex-col justify-between space-y-5">
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
                       <Flame className="w-5 h-5 fill-current" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
                         <h2 className="text-base font-black text-white tracking-tight">
                           ⚡ SPX 0DTE Power Hour
                         </h2>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                          LIVE REAL-TIME FEED
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30">
-                          Broker Cutoff: 15:40 ET
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                          15:00–16:00 ET
                         </span>
                       </div>
-                      <span className="text-xs text-slate-400 font-mono mt-0.5 block">
-                        Institutional 3:00–4:00 PM ET Closing Imbalance Engine
+                      <span className="text-[11px] font-mono text-slate-400">
+                        SPX Spot: <strong className="text-white">$${spot.toFixed(2)}</strong> ({changePts >= 0 ? "+" : ""}{changePts.toFixed(1)} pts / {changePct.toFixed(2)}%)
                       </span>
                     </div>
                   </div>
 
-                  {/* Spot & Controls */}
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <div className="text-right px-3 py-1.5 bg-slate-950/80 rounded-xl border border-slate-800">
-                      <span className="text-[9.5px] font-mono text-slate-400 uppercase font-bold block">SPX SPOT</span>
-                      <div className="text-base font-mono font-black text-white flex items-center gap-1">
-                        <span>${spot.toFixed(2)}</span>
-                        <span className={`text-xs font-bold ${changePts >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          {changePts >= 0 ? "+" : ""}{changePts.toFixed(1)} ({changePct.toFixed(2)}%)
-                        </span>
-                      </div>
-                    </div>
-
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSpxSubPanelSimulate(!spxSubPanelSimulate)}
-                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all border ${
+                      className={`px-2.5 py-1 rounded-lg text-[10.5px] font-mono font-bold transition-all border ${
                         spxSubPanelSimulate 
                           ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow" 
                           : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
                       }`}
-                      title="Toggle simulated breakout trigger"
+                      title="Toggle simulated trigger"
                     >
-                      <span>{spxSubPanelSimulate ? "Simulating Active" : "Simulate"}</span>
+                      {spxSubPanelSimulate ? "Simulating" : "Simulate"}
                     </button>
-
                     <button
                       onClick={triggerDiscordSPXAlert}
                       disabled={isSendingDiscord}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 cursor-pointer"
-                      title="Dispatch alert to Discord"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95"
+                      title="Send alert to Discord"
                     >
                       <DiscordIcon className="w-3.5 h-3.5 text-white" />
                       <span>Alert Discord</span>
                     </button>
-
-                    {onNavigateTab && (
-                      <button
-                        onClick={() => onNavigateTab("powerhour")}
-                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-md active:scale-95"
-                      >
-                        <span>Full Desk</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
                 </div>
 
-                {/* The 1 Clear Trade Card */}
-                <div className={`mt-4 p-5 rounded-xl border transition-all ${
-                  isCall
-                    ? "bg-emerald-950/20 border-emerald-500/40"
-                    : "bg-rose-950/20 border-rose-500/40"
-                }`}>
-                  {/* Status & Bias Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-800/80">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider ${
-                        isCall ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50" : "bg-rose-500/20 text-rose-300 border border-rose-500/50"
-                      }`}>
-                        {isCall ? "BULLISH ↗ CALL SETUP" : "BEARISH ↘ PUT SETUP"}
-                      </span>
-                      {isTriggered ? (
-                        <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider animate-pulse flex items-center gap-1.5 shadow-lg ${
-                          isCall
-                            ? "bg-emerald-500 text-slate-950 shadow-emerald-500/30"
-                            : "bg-rose-500 text-white shadow-rose-500/30"
-                        }`}>
-                          <span>🚨 ENTER TRADE NOW</span>
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
-                          ⏳ ARMED ON TRIGGER (STANDBY)
-                        </span>
-                      )}
+                {/* The Trade */}
+                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
+                    The Trade
+                  </span>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
+                      {contract}
                     </div>
-
-                    <div className="text-xs font-mono text-slate-300">
-                      <span className="text-slate-400">Shelf Range: </span>
-                      <b className="text-rose-400">${low30}</b> (L30) — <b className="text-emerald-400">${high30}</b> (H30)
-                    </div>
-                  </div>
-
-                  {/* Trade Metrics Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                    {/* Contract Details */}
-                    <div className="md:col-span-2 space-y-1">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
-                        Recommended 0DTE Contract
-                      </span>
-                      <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
-                        {contract}
-                      </div>
-                      <div className="text-xs font-mono text-cyan-400">
-                        {mini}
-                      </div>
-                      <div className="text-xs font-mono text-amber-300/90 pt-1">
-                        🎯 Trigger: {isCall ? `Break above $${high30} resistance` : `Breakdown below $${low30} support`}
-                      </div>
-                    </div>
-
-                    {/* Entry Ask */}
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">Entry Ask</span>
-                      <div className="text-xl font-mono font-black text-white mt-0.5">
-                        ${entryAsk.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-400">~${Math.round(entryAsk * 100)} max risk</span>
-                    </div>
-
-                    {/* Targets */}
-                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-center">
-                      <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">Targets (Scale)</span>
-                      <div className="text-xl font-mono font-black text-emerald-300 mt-0.5">
-                        ${target1.toFixed(2)} <span className="text-xs font-normal text-slate-400">/</span> ${target2.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] font-mono text-emerald-400/80">+120% (50%) / +350% (25%)</span>
-                    </div>
-
-                    {/* Stop Loss */}
-                    <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-center">
-                      <span className="text-[10px] font-mono text-rose-400 uppercase font-bold block">Stop Loss</span>
-                      <div className="text-xl font-mono font-black text-rose-300 mt-0.5">
-                        ${stopLoss.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] font-mono text-rose-400/80">Cut on shelf re-entry</span>
-                    </div>
-                  </div>
-
-                  {/* Execution Guidance Footer */}
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-2">
-                    <span className="flex items-center gap-1.5 text-amber-300">
-                      <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>{isArmed ? `Preserve capital inside shelf ($${low30} - $${high30}). DO NOT ENTER until price crosses ${isCall ? `above $${high30}` : `below $${low30}`}.` : `Breakout verified! Place order before 15:40 ET retail broker lock.`}</span>
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-black uppercase ${
+                      isCall ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                    }`}>
+                      {isCall ? 'BULLISH CALL' : 'BEARISH PUT'}
                     </span>
-                    <span className="text-slate-400">
-                      Mandatory Exit: <b className="text-white">3:58 PM ET</b> (Cash Settlement)
-                    </span>
+                  </div>
+                  <div className="text-xs font-mono text-cyan-400">
+                    Mini Alternative: {mini}
                   </div>
                 </div>
+
+                {/* ENTER TRADE NOW Panel */}
+                <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${isTriggered ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`}></span>
+                      {isTriggered ? "ENTER TRADE NOW" : "WAIT FOR TRIGGER (ARMED)"}
+                    </span>
+                    <span className="text-xs font-mono text-emerald-400 font-bold">
+                      Ask Fill: $${entryAsk.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs font-mono pt-1">
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">When To Enter</span>
+                      <span className="font-bold text-slate-100 text-[11px] block mt-0.5">{triggerText}</span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Range Shelf: $${low30} – $${high30}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Contract Entry Ask</span>
+                      <span className="font-black text-emerald-300 text-lg block mt-0.5">$${entryAsk.toFixed(2)}</span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Max Risk: ~$${Math.round(entryAsk * 100)} / contract</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* EXIT TRADE NOW Panel */}
+                <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-black text-rose-300 uppercase tracking-wider">
+                      EXIT TRADE NOW
+                    </span>
+                    <span className="text-xs font-mono text-rose-400 font-bold">
+                      Mandatory Exit: 3:58 PM ET
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono pt-1">
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9px] text-emerald-400 font-bold uppercase block">Target 1 (+120%)</span>
+                      <span className="font-black text-emerald-300 text-base block mt-0.5">$${target1.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Scale 50%</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9px] text-cyan-400 font-bold uppercase block">Target 2 (+350%)</span>
+                      <span className="font-black text-cyan-300 text-base block mt-0.5">$${target2.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Scale Runner</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9px] text-rose-400 font-bold uppercase block">Stop Loss</span>
+                      <span className="font-black text-rose-300 text-base block mt-0.5">$${stopLoss.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Cut on Shelf Re-entry</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 1 Footer */}
+                {onNavigateTab && (
+                  <div className="pt-1 flex items-center justify-end">
+                    <button
+                      onClick={() => onNavigateTab("powerhour")}
+                      className="text-xs font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors"
+                    >
+                      <span>Open Full SPX Power Hour Desk</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })()}
 
-          {/* #1 PRIME MORNING FOCUS SETUP — INSTITUTIONAL ORB BREAKOUT */}
+          {/* SECTION 2: 🎯 SIGNALS */}
           {(() => {
-            const primeLive = setups.find(s => s.gatekeeper?.passed) || setups[0];
-            const primeProspective = prospectiveStocksList.find(s => s.probabilityScore >= 92 && s.gatekeeperStatus.status === "READY") || prospectiveStocksList[0];
+            const availableSymbols = ["NVDA", "CVS", "META", "AMD", "CRWD", "PLTR", "LLY"];
+            const currentSym = availableSymbols.includes(selectedSignalTicker) ? selectedSignalTicker : "NVDA";
             
-            const symbol = primeLive ? primeLive.symbol : primeProspective?.symbol || "NVDA";
-            const name = primeLive ? primeLive.name : primeProspective?.name || "NVIDIA Corp.";
-            const price = primeLive ? primeLive.price : primeProspective?.price || 225.07;
-            const changePct = primeLive ? primeLive.changePercent : primeProspective?.changePercent || 0.22;
-            const contract = primeLive ? `${primeLive.symbol} $${primeLive.contract.strike} Call` : primeProspective?.suggestedOption.contract || "NVDA $230C";
-            const entryAsk = primeLive ? primeLive.contract.ask : primeProspective?.suggestedOption.estimatedAsk || 2.45;
-            const stopLoss = primeLive ? primeLive.targets.stopLoss : primeProspective?.suggestedOption.stopLoss || 1.85;
-            const target1 = primeLive ? primeLive.targets.target1 : primeProspective?.suggestedOption.target1 || 3.20;
-            const target2 = primeLive ? primeLive.targets.target2 : primeProspective?.suggestedOption.target2 || 4.05;
-            const triggerCondition = primeLive ? `Breakout above $${primeLive.orb.high.toFixed(2)} shelf` : primeProspective?.triggerShelf || "Breakout above $226.50 ORB High";
-            const invalidationStop = primeLive ? `$${primeLive.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (5-min ORB Low)` : primeProspective?.invalidationLevel || "$222.10 (5-min ORB Low)";
-            const catalystHeadline = primeLive ? primeLive.catalyst.headline : primeProspective?.catalystHeadline || "Blackwell Ultra GB200 Volume Shipments Accelerated";
-            const isBreakout = primeLive ? primeLive.signal.state === "BREAKOUT" : false;
+            const liveSetup = setups.find(s => s.symbol === currentSym);
+            const prospective = prospectiveStocksList.find(s => s.symbol === currentSym);
+
+            const symbol = currentSym;
+            const name = liveSetup?.name || prospective?.name || symbol;
+            const price = liveSetup?.price || prospective?.price || 225.07;
+            const changePct = liveSetup?.changePercent ?? prospective?.changePercent ?? 0.22;
+            const strike = liveSetup?.contract.strike || prospective?.suggestedOption.strike || 230;
+            const contract = liveSetup ? `${symbol} $${strike} Call` : prospective?.suggestedOption.contract || `${symbol} $${strike}C`;
+            const entryAsk = liveSetup?.contract.ask || prospective?.suggestedOption.estimatedAsk || 2.45;
+            const target1 = liveSetup?.targets.target1 || prospective?.suggestedOption.target1 || 3.20;
+            const target2 = liveSetup?.targets.target2 || prospective?.suggestedOption.target2 || 4.05;
+            const stopLoss = liveSetup?.targets.stopLoss || prospective?.suggestedOption.stopLoss || 1.85;
+            const triggerText = liveSetup ? `Breakout above $${liveSetup.orb.high.toFixed(2)} shelf` : prospective?.triggerShelf || `Breakout above morning resistance shelf`;
+            const invalidationStop = liveSetup ? `$${liveSetup.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (ORB Low)` : prospective?.invalidationLevel || `Underlying Stop: $${(price - 2.5).toFixed(2)}`;
+            const isBreakout = liveSetup?.signal.state === "BREAKOUT";
+
+            const executeCurrentSignal = () => {
+              if (liveSetup) {
+                handleExecutePaperTrade(liveSetup, 3);
+              } else if (prospective) {
+                const syntheticSetup = {
+                  symbol: prospective.symbol,
+                  contract: {
+                    symbol: `${prospective.symbol} ${prospective.suggestedOption.strike}C`,
+                    strike: prospective.suggestedOption.strike,
+                    ask: prospective.suggestedOption.estimatedAsk,
+                  },
+                  targets: {
+                    stopLoss: prospective.suggestedOption.stopLoss,
+                    target1: prospective.suggestedOption.target1,
+                    target2: prospective.suggestedOption.target2,
+                  }
+                };
+                handleExecutePaperTrade(syntheticSetup, 3);
+              }
+            };
+
+            const alertCurrentSignal = () => {
+              if (liveSetup) {
+                triggerDiscordLiveEntry(liveSetup);
+              } else if (prospective) {
+                triggerDiscordProspectiveStock(prospective);
+              }
+            };
 
             return (
-              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-emerald-500/40 shadow-2xl overflow-hidden p-5">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-emerald-500/40 shadow-2xl p-5 md:p-6 flex flex-col justify-between space-y-5">
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                       <Target className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
                         <h2 className="text-base font-black text-white tracking-tight">
-                          🎯 #1 Prime Morning Focus Setup
+                          🎯 Stock Signals
                         </h2>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                          GATEKEEPER QUALIFIED (96.6% WIN RATE)
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                          09:35–10:00 AM ET Window
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                          Gatekeeper 96.6%
                         </span>
                       </div>
-                      <span className="text-xs text-slate-400 font-mono mt-0.5 block">
-                        Institutional Catalyst &amp; Highest Conviction Opening Range Breakout Setup
+                      <span className="text-[11px] font-mono text-slate-400">
+                        {symbol} Spot: <strong className="text-white">$${price.toFixed(2)}</strong> ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%)
                       </span>
                     </div>
                   </div>
 
-                  {/* Price & Actions */}
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <div className="text-right px-3 py-1.5 bg-slate-950/80 rounded-xl border border-slate-800">
-                      <span className="text-[9.5px] font-mono text-slate-400 uppercase font-bold block">{symbol} SPOT</span>
-                      <div className="text-base font-mono font-black text-white flex items-center gap-1">
-                        <span>${price.toFixed(2)}</span>
-                        <span className={`text-xs font-bold ${changePct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          {changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
-
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
-                        if (primeLive) triggerDiscordLiveEntry(primeLive);
-                        else if (primeProspective) triggerDiscordProspectiveStock(primeProspective);
-                      }}
+                      onClick={alertCurrentSignal}
                       disabled={isSendingDiscord}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 cursor-pointer"
-                      title="Dispatch Morning Focus Trade alert to Discord"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95"
+                      title="Send alert to Discord"
                     >
                       <DiscordIcon className="w-3.5 h-3.5 text-white" />
                       <span>Alert Discord</span>
                     </button>
-
                     <button
-                      onClick={() => {
-                        if (primeLive) handleExecutePaperTrade(primeLive, 3);
-                      }}
-                      className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all shadow-md active:scale-95"
+                      onClick={executeCurrentSignal}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95"
                     >
                       <Zap className="w-3.5 h-3.5 fill-current" />
-                      <span>Execute Paper (3x @ ${entryAsk.toFixed(2)})</span>
+                      <span>Execute</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Focus Trade Card Details */}
-                <div className="mt-4 p-5 rounded-xl border border-emerald-500/30 bg-emerald-950/10">
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                    {/* Contract Details */}
-                    <div className="md:col-span-2 space-y-1">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
-                        Recommended Morning Contract
-                      </span>
-                      <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight flex items-center gap-2">
-                        <span>{contract}</span>
-                        <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-bold">
-                          {isBreakout ? "ACTIVE BREAKOUT" : "ARMED ON SHELF"}
-                        </span>
-                      </div>
-                      <div className="text-xs font-mono text-cyan-300">
-                        ⚡ Catalyst: {catalystHeadline}
-                      </div>
-                    </div>
+                {/* Ticker Selector Bar */}
+                <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+                  {availableSymbols.map(sym => (
+                    <button
+                      key={sym}
+                      onClick={() => setSelectedSignalTicker(sym)}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all whitespace-nowrap ${
+                        selectedSignalTicker === sym
+                          ? "bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20"
+                          : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      {sym === "NVDA" ? "⭐ NVDA (Prime)" : sym}
+                    </button>
+                  ))}
+                </div>
 
-                    {/* Entry Ask */}
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase font-bold block">Entry Ask</span>
-                      <div className="text-xl font-mono font-black text-white mt-0.5">
-                        ${entryAsk.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-400">~${Math.round(entryAsk * 100)} / contract</span>
+                {/* The Trade */}
+                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase font-bold tracking-wider block">
+                    The Trade
+                  </span>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
+                      {contract}
                     </div>
-
-                    {/* Targets */}
-                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-center">
-                      <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">Targets (Scale)</span>
-                      <div className="text-xl font-mono font-black text-emerald-300 mt-0.5">
-                        ${target1.toFixed(2)} <span className="text-xs font-normal text-slate-400">/</span> ${target2.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] font-mono text-emerald-400/80">+30% (50%) / +65% (Runner)</span>
-                    </div>
-
-                    {/* Stop Loss */}
-                    <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-center">
-                      <span className="text-[10px] font-mono text-rose-400 uppercase font-bold block">Option Stop Loss</span>
-                      <div className="text-xl font-mono font-black text-rose-300 mt-0.5">
-                        ${stopLoss.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] font-mono text-rose-400/80">Underlying: {invalidationStop}</span>
-                    </div>
-                  </div>
-
-                  {/* Critical WHEN TO ENTER Guidance Callout */}
-                  <div className="mt-4 p-3 rounded-xl bg-slate-950/90 border border-cyan-500/30 flex flex-wrap items-center justify-between text-xs font-mono text-slate-300 gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40 text-[10.5px]">
-                        WHEN TO ENTER:
-                      </span>
-                      <span className="text-slate-100 font-semibold">
-                        {triggerCondition}. Require 09:35 AM 5-min candle close confirmation + RVOL &ge; 2.8x.
-                      </span>
-                    </div>
-                    <span className="text-amber-300 text-[11px] flex items-center gap-1 font-sans">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Avoid 09:31–09:34 AM opening tick traps</span>
+                    <span className="px-2.5 py-1 rounded-md text-xs font-mono font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      ORB BREAKOUT
                     </span>
                   </div>
+                  <div className="text-xs font-mono text-cyan-400">
+                    {name} • Spot: $${price.toFixed(2)}
+                  </div>
+                </div>
+
+                {/* ENTER TRADE NOW Panel */}
+                <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${isBreakout ? 'bg-emerald-400 animate-ping' : 'bg-cyan-400'}`}></span>
+                      {isBreakout ? "ENTER TRADE NOW" : "WAIT FOR TRIGGER (ARMED)"}
+                    </span>
+                    <span className="text-xs font-mono text-emerald-400 font-bold">
+                      Ask Fill: $${entryAsk.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs font-mono pt-1">
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">When To Enter</span>
+                      <span className="font-bold text-slate-100 text-[11px] block mt-0.5 line-clamp-2">{triggerText}</span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Require 09:35 AM close + RVOL ≥ 2.8x</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Contract Entry Ask</span>
+                      <span className="font-black text-emerald-300 text-lg block mt-0.5">$${entryAsk.toFixed(2)}</span>
+                      <span className="text-[9.5px] text-slate-500 block mt-0.5">Max Risk: ~$${Math.round(entryAsk * 100)} / contract</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* EXIT TRADE NOW Panel */}
+                <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-black text-rose-300 uppercase tracking-wider">
+                      EXIT TRADE NOW
+                    </span>
+                    <span className="text-xs font-mono text-rose-400 font-bold">
+                      Exit: {invalidationStop}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2.5 text-center text-xs font-mono pt-1">
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9px] text-emerald-400 font-bold uppercase block">Target 1 (+30%)</span>
+                      <span className="font-black text-emerald-300 text-base block mt-0.5">$${target1.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Scale 50%</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9px] text-cyan-400 font-bold uppercase block">Target 2 (+65%)</span>
+                      <span className="font-black text-cyan-300 text-base block mt-0.5">$${target2.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Scale Runner</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                      <span className="text-[9px] text-rose-400 font-bold uppercase block">Stop Loss</span>
+                      <span className="font-black text-rose-300 text-base block mt-0.5">$${stopLoss.toFixed(2)}</span>
+                      <span className="text-[9px] text-slate-500 block mt-0.5">Cut on Stop</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2 Footer */}
+                <div className="pt-1 text-right">
+                  <span className="text-[11px] font-mono text-slate-400">
+                    Standard Rule: Scale 50% at Target 1, move stop to breakeven.
+                  </span>
                 </div>
               </div>
             );
           })()}
-
-          {/* DAILY MACRO OUTLOOK & TAPE HEADS-UP BRIEFING */}
-          <div className="rounded-xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-xl overflow-hidden">
-            <div className="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 bg-slate-950/40">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-                  <Compass className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-black text-slate-100 tracking-tight">
-                      Daily Market Outlook &amp; Heads-Up Intelligence
-                    </h2>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                      {marketOutlook.tapeBias.overall}
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      {marketDataSource === "live" ? "VERIFIED LIVE" : "ACCURATE 2026"}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    Macro Tape Compass • Economic Event Calendar • Institutional Stock Catalysts for {marketOutlook.date}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={loadLiveMarketOutlook}
-                  disabled={isLiveMarketLoading}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs flex items-center gap-1 font-mono disabled:opacity-50"
-                  title="Refresh live market data from Yahoo Finance"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isLiveMarketLoading ? 'animate-spin text-cyan-400' : ''}`} />
-                  <span className="text-[10px] hidden sm:inline">Refresh</span>
-                </button>
-                <button
-                  onClick={triggerDiscordDailyBriefing}
-                  disabled={isSendingDiscord}
-                  className="px-3 py-1.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all disabled:opacity-50 shadow-md active:scale-95"
-                  title="Broadcast this morning's market heads-up and prospective stocks to Discord"
-                >
-                  <DiscordIcon className="w-3.5 h-3.5" />
-                  <span>Send Heads-Up to Discord</span>
-                </button>
-                <button
-                  onClick={() => setShowOutlookDetails(!showOutlookDetails)}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs"
-                >
-                  {showOutlookDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {showOutlookDetails && (
-              <div className="p-4 space-y-3.5 bg-slate-900/50">
-                {/* 4-COLUMN MACRO TAPE METRICS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
-                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
-                      <span>SPY Trend</span>
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                    </div>
-                    <div className="font-bold text-slate-100 text-[11px] truncate">
-                      {marketOutlook.tapeBias.spyTrend}
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
-                      <span>QQQ Trend</span>
-                      <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                    </div>
-                    <div className="font-bold text-slate-100 text-[11px] truncate">
-                      {marketOutlook.tapeBias.qqqTrend}
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
-                      <span>VIX Tape</span>
-                      <Activity className="w-3.5 h-3.5 text-purple-400" />
-                    </div>
-                    <div className="font-black text-purple-300">
-                      {marketOutlook.tapeBias.vixValue} (Low-Vol Risk-On)
-                    </div>
-                    <div className="text-[9.5px] text-slate-400 truncate">
-                      Favors clean directional call breakouts
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-sans">
-                      <span>10-Yr Yield</span>
-                      <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-                    </div>
-                    <div className="font-bold text-slate-100 text-[11px]">
-                      {marketOutlook.tapeBias.tenYearYield}
-                    </div>
-                  </div>
-                </div>
-
-                {/* GAMEPLAN & ECONOMIC EVENT WATCH */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 pt-1">
-                  <div className="lg:col-span-2 p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-2 text-xs">
-                    <span className="text-[10px] font-bold text-cyan-400 uppercase font-mono flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5" /> Today&apos;s Institutional Directive &amp; Edge
-                    </span>
-                    <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-                      {marketOutlook.executiveSummary}
-                    </p>
-                    <div className="space-y-1 pt-1">
-                      {marketOutlook.gameplanDirectives.map((d, i) => (
-                        <div key={i} className="flex items-start gap-1.5 text-[10.5px] text-slate-300 font-sans">
-                          <Check className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
-                          <span>{d}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-2 text-xs">
-                    <span className="text-[10px] font-bold text-amber-400 uppercase font-mono flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" /> Economic Events Scheduled
-                    </span>
-                    <div className="space-y-2">
-                      {marketOutlook.todayEvents.map((ev, i) => (
-                        <div key={i} className="text-[10.5px] font-mono border-b border-slate-800/60 pb-1.5 last:border-0 last:pb-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-cyan-400 font-bold">{ev.time}</span>
-                            <span className={`text-[9px] px-1 py-0.2 rounded font-sans font-bold ${
-                              ev.impact === "HIGH" ? "bg-rose-500/20 text-rose-300" :
-                              ev.impact === "FED" ? "bg-purple-500/20 text-purple-300" :
-                              "bg-blue-500/20 text-blue-300"
-                            }`}>
-                              {ev.impact}
-                            </span>
-                          </div>
-                          <div className="text-slate-200 font-sans font-medium truncate">{ev.event}</div>
-                          <div className="text-[9.5px] text-slate-400 truncate">Est: {ev.consensus}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* SEARCH CRITERIA & PROFIT FILTERS TOOLBAR */}
-          <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-slate-400 font-bold uppercase flex items-center gap-1 text-[11px]">
-                <Filter className="w-3 h-3 text-cyan-400" />
-                Discovery Filters:
-              </span>
-
-              {/* Gatekeeper Filter Switch */}
-              <button
-                onClick={() => setGatekeeperFilterEnabled(!gatekeeperFilterEnabled)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm ${
-                  gatekeeperFilterEnabled
-                    ? 'bg-emerald-500 text-slate-950 font-black shadow-emerald-500/20'
-                    : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 fill-current" />
-                <span>Gatekeeper Filter (96.6% Win Rate): {gatekeeperFilterEnabled ? 'ON' : 'OFF'}</span>
-              </button>
-
-              {/* Confidence Filter */}
-              <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-500 px-1.5 font-bold uppercase">Confidence:</span>
-                {(["ALL", "90", "80"] as const).map(tier => (
-                  <button
-                    key={tier}
-                    onClick={() => setFilterConfidence(tier)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                      filterConfidence === tier 
-                        ? 'bg-cyan-500 text-slate-950 font-black' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {tier === "ALL" ? "All" : `${tier}%+`}
-                  </button>
-                ))}
-              </div>
-
-              {/* RVOL Filter */}
-              <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-500 px-1.5 font-bold uppercase">RVOL:</span>
-                {(["ALL", "2.0", "3.0"] as const).map(r => (
-                  <button
-                    key={r}
-                    onClick={() => setFilterRvol(r)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                      filterRvol === r 
-                        ? 'bg-fuchsia-500 text-slate-950 font-black' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {r === "ALL" ? "All" : `>${r}x`}
-                  </button>
-                ))}
-              </div>
-
-              {/* Signal Trigger Filter */}
-              <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
-                <span className="text-[10px] text-slate-500 px-1.5 font-bold uppercase">Trigger:</span>
-                {(["ALL", "BREAKOUT"] as const).map(st => (
-                  <button
-                    key={st}
-                    onClick={() => setFilterSignal(st)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                      filterSignal === st 
-                        ? 'bg-emerald-500 text-slate-950 font-black' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {st === "ALL" ? "All" : "Breakouts Only"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <span className="text-[11px] font-mono text-cyan-400 font-bold">
-              {filteredSetups.length > 0 ? `Showing ${filteredSetups.length} of ${setups.length} Live Setups` : `Showing ${filteredProspectiveStocks.length} Watchlist Setups`}
-            </span>
-          </div>
-
-          {/* COMPACT SETUP CARDS GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredSetups.map(s => {
-              const isBreakout = s.signal.state === "BREAKOUT";
-              const confScore = s.confidence.score;
-
-              return (
-                <div 
-                  key={s.symbol}
-                  className={`rounded-xl border transition-all duration-200 overflow-hidden shadow-xl flex flex-col justify-between ${
-                    isBreakout 
-                      ? 'bg-slate-900/90 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
-                      : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  
-                  {/* COMPACT HEADER: TICKER • PRICE • CONFIDENCE METER */}
-                  <div className="p-3.5 border-b border-slate-800/80 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl font-black text-slate-100 font-mono">{s.symbol}</span>
-                        <span className="text-xs text-slate-400 truncate max-w-[110px]">{s.name}</span>
-                        <span className="text-sm font-bold text-slate-100 font-mono">${s.price.toFixed(2)}</span>
-                        <span className={`text-[10px] font-bold font-mono px-1.5 py-0.2 rounded ${
-                          s.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                        }`}>
-                          {s.changePercent >= 0 ? `+${s.changePercent.toFixed(1)}%` : `${s.changePercent.toFixed(1)}%`}
-                        </span>
-                      </div>
-
-                      {/* CONFIDENCE & GATEKEEPER BADGES */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {s.gatekeeper && (
-                          <div className={`px-2 py-0.5 rounded-md text-[9.5px] font-mono font-black border flex items-center gap-1 ${
-                            s.gatekeeper.passed
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-                              : s.gatekeeper.status === 'PENDING'
-                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/50'
-                              : 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                          }`}>
-                            <ShieldCheck className="w-3 h-3" />
-                            <span>{s.gatekeeper.passed ? 'GATEKEEPER 96.6%' : s.gatekeeper.status === 'PENDING' ? 'AWAIT 09:35' : 'FILTERED'}</span>
-                          </div>
-                        )}
-
-                        <div className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-black border flex items-center gap-1 ${
-                          confScore >= 90
-                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/40'
-                            : confScore >= 80
-                            ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/40'
-                            : 'bg-amber-500/10 text-amber-300 border-amber-500/40'
-                        }`}>
-                          <Flame className="w-3 h-3 fill-current" />
-                          <span>{confScore}% {s.confidence.tier}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* CONFIDENCE BAR VISUALIZER */}
-                    <div className="space-y-1">
-                      <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden flex">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            confScore >= 90 ? 'bg-emerald-400' : confScore >= 80 ? 'bg-cyan-400' : 'bg-amber-400'
-                          }`}
-                          style={{ width: `${confScore}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
-                        <span>RVOL: {s.confidence.breakdown.rvol}/25</span>
-                        <span>ORB: {s.confidence.breakdown.structure}/25</span>
-                        <span>Spread: {s.confidence.breakdown.liquidity}/25</span>
-                        <span>Catalyst: {s.confidence.breakdown.catalyst}/25</span>
-                      </div>
-                    </div>
-
-                    {/* COMPACT METRIC ROW */}
-                    <div className="flex items-center justify-between text-[10px] font-mono pt-0.5 text-slate-400">
-                      <span>Cap: <b className="text-slate-200">{s.marketCap}</b></span>
-                      <span>RVOL: <b className="text-fuchsia-400">{s.rvol}</b></span>
-                      <span>Alert: <b className="text-cyan-300">{s.discoveredAt}</b></span>
-                    </div>
-
-                    {/* COMPACT CATALYST PILL */}
-                    <div className="px-2 py-1 rounded bg-slate-950/60 border border-slate-800/80 text-[10px] text-slate-300 truncate">
-                      ⚡ <span className="font-semibold text-slate-200">{s.catalyst.headline}</span>
-                    </div>
-
-                    {/* GATEKEEPER DEFENSE DETAIL BOX */}
-                    {s.gatekeeper && (
-                      <div className={`px-2.5 py-1.5 rounded text-[10px] flex items-start gap-1.5 font-sans border ${
-                        s.gatekeeper.passed
-                          ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                          : 'bg-amber-950/30 border-amber-500/30 text-amber-300'
-                      }`}>
-                        <ShieldCheck className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${s.gatekeeper.passed ? 'text-emerald-400' : 'text-amber-400'}`} />
-                        <div>
-                          <b className="font-mono">{s.gatekeeper.passed ? 'Passed Gatekeeper Defense:' : 'Gatekeeper Filter:'} </b>
-                          <span>{s.gatekeeper.reason}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* COMPACT ORB SHELF & TARGET OPTION */}
-                  <div className="p-3.5 space-y-2.5 bg-slate-950/30 border-b border-slate-800/80">
-                    <div className="flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-slate-400">
-                        ORB Shelf: <b className="text-rose-400">${s.orb.low}</b> - <b className="text-emerald-400">${s.orb.high}</b>
-                      </span>
-                      <span className={`px-2 py-0.2 rounded text-[10px] font-bold ${
-                        isBreakout 
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {s.signal.badge}
-                      </span>
-                    </div>
-
-                    <div className="p-2 rounded-lg bg-slate-950/70 border border-slate-800 grid grid-cols-3 gap-2 text-center text-xs font-mono">
-                      <div className="text-left">
-                        <span className="text-[9px] text-slate-500 block uppercase">Option Play</span>
-                        <span className="font-black text-slate-100">${s.contract.strike} Call</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-500 block uppercase">Ask Fill</span>
-                        <span className="font-black text-cyan-400">${s.contract.ask.toFixed(2)}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[9px] text-slate-500 block uppercase">Spread</span>
-                        <span className="font-black text-emerald-400">${s.contract.spread.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* COMPACT RISK / TARGET EXECUTION BAR */}
-                  <div className="p-3 bg-slate-900/60 space-y-2.5">
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
-                      <div className="p-1.5 rounded bg-rose-500/10 border border-rose-500/20">
-                        <span className="text-[9px] text-rose-400 font-bold block">Stop</span>
-                        <span className="font-bold text-rose-300">${s.targets.stopLoss.toFixed(2)}</span>
-                      </div>
-                      <div className="p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                        <span className="text-[9px] text-emerald-400 font-bold block">T1 (+30%)</span>
-                        <span className="font-bold text-emerald-300">${s.targets.target1.toFixed(2)}</span>
-                      </div>
-                      <div className="p-1.5 rounded bg-cyan-500/10 border border-cyan-500/20">
-                        <span className="text-[9px] text-cyan-400 font-bold block">T2 (+65%)</span>
-                        <span className="font-bold text-cyan-300">${s.targets.target2.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    {/* EXECUTE BUTTON */}
-                    <div className="flex items-center justify-between gap-2 pt-0.5">
-                      <span className="text-[10px] font-mono text-slate-400">
-                        R:R <b className="text-emerald-400">{s.targets.rrRatio}</b>
-                      </span>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => triggerDiscordLiveEntry(s)}
-                          disabled={isSendingDiscord}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-300 font-bold text-xs uppercase flex items-center gap-1 transition-all disabled:opacity-50"
-                          title="Broadcast Live Entry Call-Out to Discord"
-                        >
-                          <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
-                          <span>Alert Discord</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleExecutePaperTrade(s, 3)}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md active:scale-95"
-                        >
-                          <Zap className="w-3.5 h-3.5 fill-current" />
-                          Execute Paper (3x @ ${s.contract.ask})
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              );
-            })}
-          </div>
-
-          {/* NOTICE WHEN FILTERED LIVE BREAKOUTS ARE ZERO */}
-          {filteredSetups.length === 0 && (
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span className="text-slate-300">
-                  {gatekeeperFilterEnabled
-                    ? "Gatekeeper Filter Active: Opening traps and unconfirmed spikes safely blocked. Zero false breakouts taken."
-                    : "No live breakout triggers active right now."}
-                </span>
-              </div>
-              <span className="text-[11px] text-cyan-400 font-bold bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/30">
-                Evaluating Today&apos;s High-Probability Setups Below &darr;
-              </span>
-            </div>
-          )}
-
-          {/* PROBABLE & PROSPECTIVE STOCKS MATRIX (HEADS-UP FOR THE DAY) */}
-          {filteredSetups.length === 0 && (
-            <div className="space-y-4 pt-4 border-t border-slate-800/80">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  Probable &amp; Prospective Stocks — Today&apos;s Market Heads-Up
-                </h3>
-                <p className="text-[11px] text-slate-400 font-mono">
-                  Curated institutional setups evaluated against current news, SEC 8-K filings, earnings momentum, macro catalysts, and key breakout trigger shelves.
-                </p>
-              </div>
-
-              {/* Sector Filters & Search */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Search Input */}
-                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-xs font-mono">
-                  <Search className="w-3.5 h-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    value={prospectiveSearch}
-                    onChange={(e) => setProspectiveSearch(e.target.value)}
-                    placeholder="Search ticker or catalyst..."
-                    className="bg-transparent text-slate-200 placeholder-slate-500 focus:outline-none w-36 text-xs"
-                  />
-                  {prospectiveSearch && (
-                    <button onClick={() => setProspectiveSearch("")} className="text-slate-500 hover:text-white">×</button>
-                  )}
-                </div>
-
-                {/* Sector Selector */}
-                <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 overflow-x-auto custom-scrollbar">
-                  {(["ALL", "AI & Semi", "Cybersecurity", "Cloud & Big Tech", "Healthcare", "High-Beta & Crypto"] as const).map(sec => (
-                    <button
-                      key={sec}
-                      onClick={() => setProspectiveSector(sec)}
-                      className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition-all whitespace-nowrap ${
-                        prospectiveSector === sec
-                          ? "bg-cyan-500 text-slate-950 font-black shadow-sm"
-                          : "text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      {sec === "ALL" ? `All (${prospectiveStocksList.length})` : sec}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* PROSPECTIVE STOCKS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredProspectiveStocks.map(stock => {
-                const isElite = stock.probabilityScore >= 92;
-                return (
-                  <div
-                    key={stock.symbol}
-                    className="rounded-xl border border-slate-800/80 bg-slate-900/80 hover:border-slate-700 transition-all duration-200 overflow-hidden shadow-xl flex flex-col justify-between"
-                  >
-                    {/* CARD HEADER */}
-                    <div className="p-3.5 border-b border-slate-800/80 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-black text-slate-100 font-mono">{stock.symbol}</span>
-                          <span className="text-xs text-slate-400 truncate max-w-[120px]">{stock.name}</span>
-                          <span className="px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold bg-slate-800 text-slate-300">
-                            {stock.sector}
-                          </span>
-                        </div>
-
-                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold flex items-center gap-1 border ${
-                          isElite 
-                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/40" 
-                            : "bg-cyan-500/10 text-cyan-300 border-cyan-500/40"
-                        }`}>
-                          <Flame className="w-3 h-3 fill-current" />
-                          <span>{stock.probabilityRating}</span>
-                        </div>
-                      </div>
-
-                      {/* PRICE & METRICS */}
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-200">${stock.price.toFixed(2)}</span>
-                          <span className={`text-[11px] font-bold ${stock.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-slate-400">Cap: <b className="text-slate-200">{stock.marketCap}</b></span>
-                      </div>
-
-                      {/* CATALYST HEADLINE & EVENT TYPE */}
-                      <div className="space-y-1 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80">
-                        <div className="flex items-center justify-between text-[9.5px]">
-                          <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono font-bold border border-cyan-500/30">
-                            {stock.eventType}
-                          </span>
-                          <span className="text-slate-400 font-mono font-bold text-[9px]">{stock.gatekeeperStatus.rvolExpectation}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-200 font-medium leading-snug">
-                          {stock.catalystHeadline}
-                        </p>
-                        <p className="text-[10px] text-slate-400 leading-relaxed font-sans line-clamp-2">
-                          {stock.newsDetails}
-                        </p>
-                      </div>
-
-                      {/* TRIGGER SHELF TO WATCH */}
-                      <div className="p-2 rounded-lg bg-slate-950/90 border border-cyan-500/20 text-xs font-mono space-y-1">
-                        <div className="flex items-center gap-1.5 text-cyan-400 font-bold text-[10.5px]">
-                          <Target className="w-3 h-3" />
-                          <span>Key Watch Trigger Shelf:</span>
-                        </div>
-                        <div className="text-slate-200 text-[11px] pl-4 font-semibold">
-                          {stock.triggerShelf}
-                        </div>
-                        <div className="text-[10px] text-slate-400 pl-4">
-                          Support Floor: <b className="text-rose-300 font-mono">{stock.invalidationLevel}</b>
-                        </div>
-                      </div>
-
-                      {/* GATEKEEPER DEFENSE EVALUATION */}
-                      <div className={`p-2 rounded-lg border text-[10.5px] font-sans flex items-start gap-1.5 ${
-                        stock.gatekeeperStatus.status === "READY"
-                          ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-300"
-                          : stock.gatekeeperStatus.status === "DEFENSIVE_MIDDAY"
-                          ? "bg-purple-950/30 border-purple-500/30 text-purple-300"
-                          : "bg-amber-950/30 border-amber-500/30 text-amber-300"
-                      }`}>
-                        <ShieldCheck className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <span className="font-bold font-mono mr-1.5">{stock.gatekeeperStatus.badge}:</span>
-                          <span>{stock.gatekeeperStatus.rulesMessage}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* SUGGESTED OPTION CONTRACT & ACTION BUTTONS */}
-                    <div className="p-3 bg-slate-950/60 border-t border-slate-800/80 space-y-2.5">
-                      <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800 text-left px-2">
-                          <span className="text-[8.5px] text-slate-400 block uppercase font-sans">Option Play</span>
-                          <span className="font-black text-cyan-300">{stock.suggestedOption.contract}</span>
-                        </div>
-                        <div className="p-1 rounded bg-slate-900 border border-slate-800">
-                          <span className="text-[8.5px] text-slate-400 block uppercase font-sans">Est. Ask</span>
-                          <span className="font-bold text-slate-100">${stock.suggestedOption.estimatedAsk.toFixed(2)}</span>
-                        </div>
-                        <div className="p-1 rounded bg-emerald-500/10 border border-emerald-500/20">
-                          <span className="text-[8.5px] text-emerald-400 block uppercase font-sans">T2 (+65%)</span>
-                          <span className="font-bold text-emerald-300">${stock.suggestedOption.target2.toFixed(2)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2 pt-0.5">
-                        <span className="text-[10px] font-mono text-slate-400">
-                          Stop: <b className="text-rose-400">${stock.suggestedOption.stopLoss.toFixed(2)}</b>
-                        </span>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => triggerDiscordProspectiveStock(stock)}
-                            disabled={isSendingDiscord}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#5865F2]/20 hover:bg-[#5865F2]/30 border border-[#5865F2]/50 text-indigo-300 font-bold text-xs uppercase flex items-center gap-1 transition-all disabled:opacity-50"
-                            title="Send this prospective stock heads-up to Discord"
-                          >
-                            <DiscordIcon className="w-3.5 h-3.5 text-[#5865F2]" />
-                            <span>Alert Discord</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          )}
 
         </div>
       )}
