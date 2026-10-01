@@ -1262,8 +1262,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           if (todaySignals.length > 0) {
             const existingSymbols = new Set(dayTrades.map(t => t.symbol));
             const liveRecords: DailyTradeRecord[] = [];
+            const INDEX_ETFS = new Set(["SPY", "QQQ", "SPX", "IWM", "DIA"]);
             for (const s of todaySignals) {
-              if (!existingSymbols.has(s.symbol)) {
+              if (s.symbol && !INDEX_ETFS.has(s.symbol.toUpperCase()) && !existingSymbols.has(s.symbol)) {
                 existingSymbols.add(s.symbol);
                 liveRecords.push({
                   id: `live_${s.id || s.symbol}`,
@@ -2931,16 +2932,18 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
           {/* SECTION 2: 🎯 STOCK SIGNALS — HYPER-TRADING COCKPIT */}
           {(() => {
-            // Strictly filter available symbols to candidates passed by our Gatekeeper logic
-            // For today's active session: NVDA & TSLA
+            // Strictly filter available symbols to stock candidates passed by our Gatekeeper logic
+            // Exclude index ETFs (SPY, QQQ, SPX, IWM, DIA, XSP) because they belong to SPX Power Hour
+            const INDEX_EXCLUSIONS = new Set(["SPY", "QQQ", "SPX", "IWM", "DIA", "XSP"]);
             const todayCalendarDay = calendarDays.find(d => d.date === "2026-10-01");
             const rawTodayTrades = todayCalendarDay ? (todayCalendarDay.allDayTrades || todayCalendarDay.trades) : [];
             const qualifiedTrades = rawTodayTrades.filter(t => (t.gatekeeperRule?.passed ?? evaluateGatekeeperRule(t).passed));
-            const qualifiedSymbols = Array.from(new Set(qualifiedTrades.map(t => t.symbol)));
+            const qualifiedSymbols = Array.from(new Set(qualifiedTrades.map(t => t.symbol)))
+              .filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()));
 
-            // Filtered symbols: Strictly only the ones that pass our logic (NVDA & TSLA)
+            // Filtered symbols: Strictly only the verified stock equities (NVDA & TSLA)
             const availableSymbols = qualifiedSymbols.length > 0 ? qualifiedSymbols : ["NVDA", "TSLA"];
-            const currentSym = availableSymbols.includes(selectedSignalTicker) ? selectedSignalTicker : "NVDA";
+            const currentSym = availableSymbols.includes(selectedSignalTicker) ? selectedSignalTicker : availableSymbols[0];
             
             const liveSetup = setups.find(s => s.symbol === currentSym);
             const prospective = prospectiveStocksList.find(s => s.symbol === currentSym);
@@ -3074,8 +3077,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   <div className="flex items-center gap-2">
                     {availableSymbols.map(sym => {
                       const q = liveQuotes[sym];
-                      const p = q?.price || (prospectiveStocksList.find(s => s.symbol === sym)?.price ?? (sym === "TSLA" ? 372.11 : 228.38));
-                      const chg = q ? q.changePercent : (prospectiveStocksList.find(s => s.symbol === sym)?.changePercent ?? (sym === "TSLA" ? -1.54 : 0.51));
+                      const prospect = prospectiveStocksList.find(s => s.symbol === sym);
+                      const p = q?.price || prospect?.price || (sym === "TSLA" ? 354.81 : sym === "NVDA" ? 228.38 : 0);
+                      const chg = q ? q.changePercent : (prospect?.changePercent ?? 0);
                       const isSelected = selectedSignalTicker === sym;
 
                       return (
