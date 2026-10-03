@@ -3787,11 +3787,22 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const qualifiedSymbols = Array.from(new Set(qualifiedTrades.map(t => t.symbol)))
               .filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()));
 
-            // Roster of Institutional Gatekeeper-passed equities
-            const availableSymbols = Array.from(new Set([
-              ...qualifiedSymbols,
-              "NVDA", "TSLA", "AMD", "PLTR", "META", "CRWD", "CVS"
-            ])).filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()));
+            // Strictly isolate TOP 2 BEST OPPORTUNITIES vetted by Agentic Consensus Desk & Gatekeeper
+            // (1 Primary Focus + 1 Secondary Watch) - eliminating all lower-conviction noise
+            const top1Candidate = agenticConsensusData?.topOpportunity?.symbol || prospectiveStocksList[0]?.symbol || "NVDA";
+            const top2Candidate = agenticConsensusData?.secondaryOpportunity?.symbol || prospectiveStocksList[1]?.symbol || "TSLA";
+            
+            const rawTop2 = [top1Candidate, top2Candidate]
+              .filter(Boolean)
+              .filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()))
+              .filter((v, i, a) => a.indexOf(v) === i);
+            
+            // Guarantee strictly 2 distinct equities (1 Primary Focus + 1 Secondary Watch)
+            if (rawTop2.length < 2) {
+              const fallback = top1Candidate === "NVDA" ? "TSLA" : "NVDA";
+              if (!rawTop2.includes(fallback)) rawTop2.push(fallback);
+            }
+            const availableSymbols = rawTop2.slice(0, 2);
             const currentSym = availableSymbols.includes(selectedSignalTicker) ? selectedSignalTicker : availableSymbols[0];
             
             const liveSetup = setups.find(s => s.symbol === currentSym);
@@ -3949,12 +3960,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         <h2 className="text-base font-black text-white tracking-tight font-sans">
                           🎯 Stock Signals
                         </h2>
-                        {prospective?.probabilityScore && prospective.probabilityScore >= 92 ? (
+                        {currentSym === availableSymbols[0] ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.25)]">
-                            <span>⭐</span>
+                            <span>🏆</span>
                             <span>#1 BEST OPPORTUNITY</span>
                           </span>
-                        ) : null}
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+                            <span>🥈</span>
+                            <span>#2 SECONDARY WATCH</span>
+                          </span>
+                        )}
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                           {prospective?.sector || "Sector-Agnostic"}
                         </span>
@@ -3992,15 +4008,16 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
                 </div>
 
-                {/* Hyper-Trading Interactive Filtered Ticker Bar */}
+                {/* Hyper-Trading Interactive Filtered Ticker Bar — Strictly Top 2 Opportunities */}
                 <div className="flex flex-wrap items-center justify-between gap-2 overflow-x-auto custom-scrollbar pb-1">
                   <div className="flex items-center gap-2">
-                    {availableSymbols.map(sym => {
+                    {availableSymbols.map((sym, idx) => {
                       const q = liveQuotes[sym];
                       const prospect = prospectiveStocksList.find(s => s.symbol === sym);
                       const p = q?.price || prospect?.price || (sym === "TSLA" ? 354.81 : sym === "NVDA" ? 228.38 : 0);
                       const chg = q ? q.changePercent : (prospect?.changePercent ?? 0);
                       const isSelected = selectedSignalTicker === sym;
+                      const isPrimary = idx === 0;
 
                       return (
                         <button
@@ -4009,22 +4026,26 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                             setSelectedSignalTicker(sym);
                             fetchLiveQuotes();
                           }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 whitespace-nowrap border ${
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-2 whitespace-nowrap border ${
                             isSelected
                               ? "bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.35)]"
                               : "bg-slate-950/80 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                           }`}
                         >
-                          <span className="font-black text-slate-100 flex items-center gap-1">
-                            {sym === availableSymbols[0] && <span className="text-amber-400 text-[10px]" title="Best Opportunity">⭐</span>}
-                            <span>{sym}</span>
+                          <span className="font-black text-slate-100 flex items-center gap-1.5">
+                            {isPrimary ? (
+                              <span className="text-amber-400 text-xs font-black">🏆 #1</span>
+                            ) : (
+                              <span className="text-indigo-400 text-xs font-black">🥈 #2</span>
+                            )}
+                            <span className="text-white font-extrabold">{sym}</span>
                           </span>
                           {p > 0 && (
                             <span className="text-[11px] text-slate-300 font-mono">
                               ${p >= 1000 ? p.toFixed(0) : p.toFixed(2)}
                             </span>
                           )}
-                          <span className={`text-[9.5px] px-1 py-0.2 rounded font-bold ${
+                          <span className={`text-[9.5px] px-1.5 py-0.5 rounded font-bold ${
                             chg >= 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
                           }`}>
                             {chg >= 0 ? "+" : ""}{chg.toFixed(1)}%
@@ -4035,9 +4056,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   </div>
 
                   {/* Gatekeeper Filter Status Indicator */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-[10px] font-mono text-slate-300 whitespace-nowrap shadow-sm">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-[10px] font-mono text-slate-300 whitespace-nowrap shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">{availableSymbols.length} Ranked</strong> ({availableSymbols.slice(0, 3).join(", ")})</span>
+                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">Top 2 Institutional Focus</strong> (#{1}: {availableSymbols[0]} • #{2}: {availableSymbols[1]})</span>
                   </div>
                 </div>
 
