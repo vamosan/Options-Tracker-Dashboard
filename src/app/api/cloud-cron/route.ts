@@ -161,14 +161,14 @@ async function handleCron(request: Request) {
                 const maxChaseNVDA = nvdaTrigger + 1.30; // $227.80 max safe entry
 
                 // Proximity Alert (Within 50¢ of shelf before trigger)
-                if (!isCached(nvdaProxKey) && !isCached(nvdaKey)) {
-                    if (nvdaPrice >= (nvdaTrigger - 0.55) && nvdaPrice < nvdaTrigger) {
+                if ((!isCached(nvdaProxKey) && !isCached(nvdaKey)) || (forceTest && testStep === 'prox')) {
+                    if ((nvdaPrice >= (nvdaTrigger - 0.55) && nvdaPrice < nvdaTrigger) || (forceTest && testStep === 'prox')) {
                         await sendProximityAlert({
                             symbol: "NVDA",
                             contract: "NVDA $230C",
                             currentPrice: nvdaPrice,
                             triggerPrice: nvdaTrigger,
-                            gapDollars: nvdaTrigger - nvdaPrice,
+                            gapDollars: Math.max(0.35, nvdaTrigger - nvdaPrice),
                             timeET: timeDisplay,
                             catalyst: "Testing $226.50 morning shelf. Load $230C now."
                         });
@@ -399,7 +399,7 @@ async function handleCron(request: Request) {
     // DISCORD RULE: ONLY ALERT ON VALID BREAKOUT ENTRIES OR MOC IMBALANCE
     // NO SPAM OR GENERIC BRIEFINGS
     // ==============================================================
-    if ((timeVal >= 1500 && timeVal <= 1600) || forceTest) {
+    if ((timeVal >= 1500 && timeVal <= 1600) || (forceTest && (testStep === 'spx' || testStep === 'all'))) {
         try {
             const spxData = await getLiveSPXPowerHourData();
             const { spxSpot, rangeShelf, mocImbalance, directSignal } = spxData;
@@ -410,11 +410,11 @@ async function handleCron(request: Request) {
 
             // 2A. Pre-Broker Cutoff Breakout Entry Window (3:10 PM - 3:40 PM ET)
             // Active across full window so no 5-minute cron tick misses the setup
-            if ((timeVal >= 1510 && timeVal <= 1540) || forceTest) {
+            if ((timeVal >= 1510 && timeVal <= 1540) || (forceTest && (testStep === 'spx' || testStep === 'all'))) {
                 const isCall = rangeShelf.breakoutDirection === "UPWARD_BREAKOUT";
                 const isPut = rangeShelf.breakoutDirection === "DOWNWARD_BREAKOUT";
 
-                if (isCall || isPut || forceTest) {
+                if (isCall || isPut || (forceTest && testStep === 'spx')) {
                     const breakoutKey = `SPX_BREAKOUT_${todayStr}`;
                     if (!isCached(breakoutKey)) {
                         const callSide = isCall || forceTest;
@@ -451,7 +451,7 @@ async function handleCron(request: Request) {
 
             // 2B. NYSE MOC Imbalance Window (3:45 PM - 4:00 PM ET)
             // Captures late imbalance threshold surge
-            if ((timeVal >= 1545 && timeVal <= 1600) || forceTest) {
+            if ((timeVal >= 1545 && timeVal <= 1600) || (forceTest && (testStep === 'spx' || testStep === 'all'))) {
                 const mocKey = `SPX_MOC_${todayStr}`;
                 if (!isCached(mocKey) && (forceTest || (mocImbalance.status === "PUBLISHED" && mocImbalance.thresholdMet))) {
                     const isMocBuy = mocImbalance.direction === "BUY" || forceTest;
