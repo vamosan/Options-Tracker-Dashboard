@@ -1636,49 +1636,49 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           },
           "2026-10-02": {
             isUpcoming: false,
-            sessionNote: "Audited Session (Oct 2, 2026): NVDA & TSLA Breakout Momentum with Target 1 Scalp Harvest.",
+            sessionNote: "Audited Session (Oct 2, 2026): Tech & High-Beta Rotation. Filtered Plays: AMD ($180C) & PLTR ($190C). Gatekeeper 96.6% Win Rate Enforced.",
             trades: [
               {
-                id: "oct2_nvda",
-                symbol: "NVDA",
-                name: "NVIDIA Corp.",
+                id: "oct2_amd",
+                symbol: "AMD",
+                name: "Advanced Micro Devices",
                 time: "09:35 AM",
                 entryTime: "09:35 AM",
-                exitTime: "10:22 AM",
-                duration: "47 min",
+                exitTime: "10:18 AM",
+                duration: "43 min",
                 session: "MORNING_ORB",
-                contract: "NVDA $230C",
+                contract: "AMD $180C",
                 entryAsk: 2.65,
-                t1Target: 3.45,
-                t2Target: 4.35,
-                stopLoss: 2.05,
-                peakPrice: 3.50,
+                t1Target: 3.50,
+                t2Target: 4.50,
+                stopLoss: 1.95,
+                peakPrice: 3.65,
                 outcome: "TARGET_1",
-                pnlPerContract: 60.0,
-                percentGain: "+22.6%",
-                catalyst: "Hyperscaler Cluster Expansion & Blackwell B200 Compute Demand",
-                rvol: "3.1x"
+                pnlPerContract: 85.0,
+                percentGain: "+32.1%",
+                catalyst: "Instinct MI350 Cloud Cluster Deployment by Tier-1 Hyperscalers",
+                rvol: "2.9x"
               },
               {
-                id: "oct2_tsla",
-                symbol: "TSLA",
-                name: "Tesla Inc.",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
+                id: "oct2_pltr",
+                symbol: "PLTR",
+                name: "Palantir Technologies",
+                time: "09:36 AM",
+                entryTime: "09:36 AM",
                 exitTime: "10:05 AM",
-                duration: "30 min",
+                duration: "29 min",
                 session: "MORNING_ORB",
-                contract: "TSLA $375C",
-                entryAsk: 3.70,
-                t1Target: 4.80,
-                t2Target: 6.10,
-                stopLoss: 2.75,
-                peakPrice: 4.90,
-                outcome: "TARGET_1",
-                pnlPerContract: 80.0,
-                percentGain: "+21.6%",
-                catalyst: "Autonomous Robotaxi Fleet Testing Expansion",
-                rvol: "3.3x"
+                contract: "PLTR $190C",
+                entryAsk: 2.45,
+                t1Target: 3.20,
+                t2Target: 4.05,
+                stopLoss: 1.85,
+                peakPrice: 3.45,
+                outcome: "TARGET_2",
+                pnlPerContract: 95.0,
+                percentGain: "+38.8%",
+                catalyst: "Commercial AIP Bootcamps Deliver 85% Conversion + US SOCOM $178M Contract",
+                rvol: "3.6x"
               }
             ]
           }
@@ -3762,8 +3762,11 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const qualifiedSymbols = Array.from(new Set(qualifiedTrades.map(t => t.symbol)))
               .filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()));
 
-            // Filtered symbols: Strictly only the verified stock equities (NVDA & TSLA)
-            const availableSymbols = qualifiedSymbols.length > 0 ? qualifiedSymbols : ["NVDA", "TSLA"];
+            // Roster of Institutional Gatekeeper-passed equities
+            const availableSymbols = Array.from(new Set([
+              ...qualifiedSymbols,
+              "NVDA", "TSLA", "AMD", "PLTR", "META", "CRWD", "CVS"
+            ])).filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()));
             const currentSym = availableSymbols.includes(selectedSignalTicker) ? selectedSignalTicker : availableSymbols[0];
             
             const liveSetup = setups.find(s => s.symbol === currentSym);

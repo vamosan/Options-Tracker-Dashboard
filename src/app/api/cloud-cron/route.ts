@@ -102,6 +102,28 @@ async function handleCron(request: Request) {
                 date: todayStr,
                 setups: [
                     {
+                        symbol: "AMD",
+                        trigger: 181.50,
+                        maxChase: 182.70,
+                        contract: "AMD $180C",
+                        entryAsk: 2.65,
+                        stopLoss: 1.95,
+                        target1: 3.50,
+                        target2: 4.50,
+                        catalyst: "Instinct MI350 Cloud Cluster Deployment by Tier-1 Hyperscalers"
+                    },
+                    {
+                        symbol: "PLTR",
+                        trigger: 192.50,
+                        maxChase: 193.80,
+                        contract: "PLTR $190C",
+                        entryAsk: 2.45,
+                        stopLoss: 1.85,
+                        target1: 3.20,
+                        target2: 4.05,
+                        catalyst: "Commercial AIP Bootcamps Deliver 85% Conversion + US SOCOM $178M Contract"
+                    },
+                    {
                         symbol: "NVDA",
                         trigger: 226.50,
                         maxChase: 227.80,
@@ -127,7 +149,7 @@ async function handleCron(request: Request) {
             });
             setCache(planKey);
             actionsTriggered.push("PREMARKET_GAMEPLAN");
-            logs.push(`[Pre-Market] Daily Action Plan dispatched for NVDA & TSLA`);
+            logs.push(`[Pre-Market] Multi-Sector Action Plan dispatched for AMD, PLTR, NVDA & TSLA`);
         }
     }
 
