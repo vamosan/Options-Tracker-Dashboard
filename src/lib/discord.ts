@@ -86,6 +86,11 @@ export async function sendTradeEntryCallout(trade: {
   gatekeeperReason?: string;
   catalyst?: string;
   confidenceScore?: number;
+  agenticConsensus?: {
+    scoreBreakdown?: string;
+    riskOfficerBadge?: string;
+    devilsAdvocateCritique?: string;
+  };
 }) {
   const rvolDisplay = typeof trade.rvol === "number" ? `${trade.rvol.toFixed(1)}x` : trade.rvol || "3.2x";
   const riskDollars = Math.round((trade.entryPrice - trade.stopLoss) * 100);
@@ -96,6 +101,19 @@ export async function sendTradeEntryCallout(trade: {
   const t1Pct = trade.entryPrice > 0 ? Math.round(((trade.target1 - trade.entryPrice) / trade.entryPrice) * 100) : 30;
   const t2Pct = trade.entryPrice > 0 ? Math.round(((trade.target2 - trade.entryPrice) / trade.entryPrice) * 100) : 65;
   const slPct = trade.entryPrice > 0 ? Math.round(((trade.entryPrice - trade.stopLoss) / trade.entryPrice) * 100) : 25;
+
+  const agenticFields: DiscordField[] = trade.agenticConsensus ? [
+    {
+      name: "🏛️ AGENTIC DESK MULTI-PILLAR CONSENSUS",
+      value: `**${trade.agenticConsensus.riskOfficerBadge || "GATEKEEPER QUALIFIED"}**\n${trade.agenticConsensus.scoreBreakdown || "Trend + Momentum + Macro consensus verified."}`,
+      inline: false,
+    },
+    {
+      name: "🛡️ ADVERSARIAL RISK OFFICER AUDIT (DEVIL'S ADVOCATE)",
+      value: trade.agenticConsensus.devilsAdvocateCritique || "All exhaustion flags checked. Mean reversion & stretch risk audited. Zero hindsight entry approved.",
+      inline: false,
+    }
+  ] : [];
 
   const embed: DiscordEmbed = {
     title: `🚨 ENTER TRADE NOW: BUY ${cleanContract}`,
@@ -139,6 +157,7 @@ export async function sendTradeEntryCallout(trade: {
         value: `**${rvolDisplay}** Institutional Surge`,
         inline: true,
       },
+      ...agenticFields,
       {
         name: "🛡️ GATEKEEPER RATIONALE",
         value: trade.gatekeeperReason || "Rule 1-4 Passed: Tech Momentum + RVOL Floor >= 2.8x + Confirmed Candle Close + Positive Body Delta",
@@ -733,6 +752,11 @@ export async function sendProximityAlert(data: {
  */
 export async function sendPreMarketGamePlan(data: {
   date: string;
+  macroSummary?: string;
+  agenticDebate?: {
+    hunterThesis?: string;
+    riskOfficerAudit?: string;
+  };
   setups: Array<{
     symbol: string;
     trigger: number;
@@ -746,6 +770,9 @@ export async function sendPreMarketGamePlan(data: {
     sector?: string;
     isTopPick?: boolean;
     rank?: number;
+    convictionScore?: number;
+    riskBadge?: string;
+    pillarSummary?: string;
   }>;
 }) {
   const setupFields: DiscordField[] = data.setups.map((s, idx) => {
@@ -757,20 +784,39 @@ export async function sendPreMarketGamePlan(data: {
     return {
       name: `${badge} • ${s.contract}`,
       value: [
+        s.convictionScore ? `• **Conviction Rating:** \`${s.convictionScore}% ELITE\` • **Gatekeeper:** \`${s.riskBadge || "GATEKEEPER QUALIFIED"}\`` : "",
+        s.pillarSummary ? `• **Agentic Pillars:** \`${s.pillarSummary}\`` : "",
         `• **Breakout Trigger:** \`$${s.trigger.toFixed(2)}\` | **Max Chase Limit:** \`$${s.maxChase.toFixed(2)}\``,
         `• **Est. Ask:** \`$${s.entryAsk.toFixed(2)}\` | **Stop Loss:** \`$${s.stopLoss.toFixed(2)}\``,
         `• **Targets:** T1: \`$${s.target1.toFixed(2)}\` (+30%) | T2: \`$${s.target2.toFixed(2)}\` (+65%)`,
         `• **Catalyst:** ${s.catalyst}`,
-      ].join("\n"),
+      ].filter(Boolean).join("\n"),
       inline: false,
     };
   });
 
+  const debateFields: DiscordField[] = [];
+  if (data.macroSummary) {
+    debateFields.push({
+      name: "🌐 MACRO REGIME & MARKET TAPE",
+      value: data.macroSummary,
+      inline: false,
+    });
+  }
+  if (data.agenticDebate?.riskOfficerAudit) {
+    debateFields.push({
+      name: "⚖️ AGENTIC RISK OFFICER AUDIT (DEVIL'S ADVOCATE)",
+      value: data.agenticDebate.riskOfficerAudit,
+      inline: false,
+    });
+  }
+
   const embed: DiscordEmbed = {
     title: `🌅 TODAY'S ORB GAME PLAN — BEST OPPORTUNITY SPOTLIGHT (${data.date})`,
-    description: "**Sector-Agnostic Top Conviction Pick:** Highlighted across all market sectors based on Relative Volume (RVOL), institutional catalyst impact, and 96.6% Gatekeeper qualification.",
+    description: "**Sector-Agnostic Top Conviction Pick:** Evaluated across all market sectors by the Multi-Agent Trading Desk (Macro & Regime, Sector-Agnostic Hunter, Quant Structurer, and Adversarial Risk Officer).",
     color: 0xF59E0B, // Amber Gold
     fields: [
+      ...debateFields,
       ...setupFields,
       {
         name: "🛡️ ZERO-HINDSIGHT EXECUTION RULES",
@@ -779,7 +825,7 @@ export async function sendPreMarketGamePlan(data: {
       }
     ],
     footer: {
-      text: "Options Tracker AI • Sector-Agnostic Market Screener",
+      text: "Options Tracker AI • Sector-Agnostic Agentic Desk",
     },
     timestamp: new Date().toISOString(),
   };

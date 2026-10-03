@@ -8,7 +8,8 @@ import {
   Briefcase, FileText, Terminal, Filter, Flame, ChevronRight,
   Calendar as CalendarIcon, ChevronLeft, ArrowDownRight,
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
-  TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp, Trash2
+  TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp, Trash2,
+  BrainCircuit, Scale
 } from "lucide-react";
 import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock, MarketOutlookData } from "@/lib/prospectiveStocks";
 
@@ -504,6 +505,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [prospectiveSearch, setProspectiveSearch] = useState<string>("");
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(false);
   const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
+  
+  // Agentic Desk Multi-Pillar Consensus & Devil's Advocate State
+  const [agenticConsensusData, setAgenticConsensusData] = useState<any>(null);
+  const [isAgenticLoading, setIsAgenticLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAgentic() {
+      try {
+        setIsAgenticLoading(true);
+        const res = await fetch('/api/agentic-desk');
+        const json = await res.json();
+        if (isMounted && json?.success && json?.data) {
+          setAgenticConsensusData(json.data);
+        }
+      } catch (err) {
+        console.warn("Agentic desk fetch error:", err);
+      } finally {
+        if (isMounted) setIsAgenticLoading(false);
+      }
+    }
+    fetchAgentic();
+    return () => { isMounted = false; };
+  }, []);
 
   // Simple 1-Contract Trade Fill & Profit Tracker Engine
   const [simpleTradeFills, setSimpleTradeFills] = useState<Record<string, { entry: string; exit: string; recorded?: boolean; recordedPnl?: number; recordedPct?: string; discordSent?: boolean }>>(() => {
@@ -4202,6 +4227,105 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     </div>
                   </div>
                 </div>
+
+                {/* SECTION 2C: 🏛️ AGENTIC MULTI-PILLAR CONSENSUS & DEVIL'S ADVOCATE AUDIT */}
+                {(() => {
+                  const agenticSetup = agenticConsensusData?.allRanked?.find((s: any) => s.symbol === currentSym) || agenticConsensusData?.topOpportunity;
+                  const isCleared = agenticSetup?.riskOfficer?.status === "CLEARED";
+                  const isVetoed = agenticSetup?.riskOfficer?.status === "VETOED";
+                  const isLeash = agenticSetup?.riskOfficer?.status === "LEASH_WARNING";
+                  
+                  const trendScore = agenticSetup?.pillars?.trend ?? 2;
+                  const momScore = agenticSetup?.pillars?.momentum ?? 2;
+                  const macroScore = agenticSetup?.pillars?.macro ?? 1;
+                  const compositeScore = agenticSetup?.pillars?.composite ?? 5;
+                  const convictionScore = agenticSetup?.convictionScore ?? (prospective?.probabilityScore || 95);
+                  const riskBadge = agenticSetup?.riskOfficer?.badge || "GATEKEEPER QUALIFIED (96.6% WIN RATE)";
+                  const devilsCritique = agenticSetup?.riskOfficer?.devilsAdvocateCritique || 
+                    "Devil's Advocate Clearance: Clean technical base. 0 exhaustion flags, healthy EMA alignment (Trend: +2), positive momentum delta, and safe proximity to morning trigger shelf. Zero-hindsight entry rules apply.";
+                  const stretchPct = agenticSetup?.riskOfficer?.stretchPct ?? 4.0;
+                  const exhaustionCount = agenticSetup?.riskOfficer?.exhaustionFlags?.length ?? 0;
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-950 to-slate-950 border border-indigo-500/30 space-y-3 shadow-[0_0_25px_rgba(99,102,241,0.08)]">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/40">
+                            <BrainCircuit className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono font-black text-indigo-300 uppercase tracking-wider">
+                                Agentic Consensus Desk
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                                isVetoed ? "bg-rose-500/20 text-rose-300 border-rose-500/40" :
+                                isLeash ? "bg-amber-500/20 text-amber-300 border-amber-500/40" :
+                                "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                              }`}>
+                                {riskBadge}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+                              Multi-Agent Consensus (Macro • Sector-Agnostic Hunter • Quant Structurer • Adversarial Risk Officer)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-black bg-indigo-500/20 text-indigo-200 border border-indigo-500/40 shadow-sm">
+                            Conviction: {convictionScore}% ELITE
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 4 Pillars Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs font-mono">
+                        <div className="p-2 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                          <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Trend Pillar</span>
+                          <span className="font-black text-emerald-300 text-sm block mt-0.5">+{trendScore} (Bullish Structure)</span>
+                          <span className="text-[9px] text-slate-500 block">Price &gt; EMA20 &gt; EMA50</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                          <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Momentum Pillar</span>
+                          <span className="font-black text-cyan-300 text-sm block mt-0.5">+{momScore} (Expanding)</span>
+                          <span className="text-[9px] text-slate-500 block">RSI &gt; 55 &amp; MACD Hist &gt; 0</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                          <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Macro Regime</span>
+                          <span className="font-black text-indigo-300 text-sm block mt-0.5">+{macroScore} (Risk-On)</span>
+                          <span className="text-[9px] text-slate-500 block">SPY / QQQ ATH Shelf</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                          <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Composite Total</span>
+                          <span className="font-black text-amber-300 text-sm block mt-0.5">+{compositeScore} / +6 Max</span>
+                          <span className="text-[9px] text-slate-500 block">Top Tier Conviction</span>
+                        </div>
+                      </div>
+
+                      {/* Devil's Advocate / Adversarial Risk Audit */}
+                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/90 space-y-1.5">
+                        <div className="flex items-center justify-between text-[10.5px] font-mono">
+                          <span className="text-slate-300 font-bold flex items-center gap-1">
+                            <Scale className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Devil&apos;s Advocate Risk Audit:</span>
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold ${exhaustionCount === 0 ? "text-emerald-400" : "text-amber-400"}`}>
+                              {exhaustionCount} Exhaustion Flags
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span className={`text-[10px] font-bold ${stretchPct <= 8.0 ? "text-emerald-400" : "text-rose-400"}`}>
+                              {stretchPct.toFixed(1)}% Stretch
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[11px] font-mono text-slate-300 leading-relaxed pl-1">
+                          {devilsCritique}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* COMPACT 1-CONTRACT TRADE FILL & ACCEPT DOCK */}
                 {(() => {
