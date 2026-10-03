@@ -14,5 +14,5 @@ jobs:
       - name: Trigger Cloud Market Scanner & Discord Alerts
         run: |
           echo "Triggering Options Tracker AI Cloud Monitor..."
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://options-tracker-iota.vercel.app/api/cloud-cron")
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://options-tracker-chi.vercel.app/api/cloud-cron")
           echo "$RESPONSE"
