@@ -3924,6 +3924,15 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         <h2 className="text-base font-black text-white tracking-tight font-sans">
                           🎯 Stock Signals
                         </h2>
+                        {prospective?.probabilityScore && prospective.probabilityScore >= 92 ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.25)]">
+                            <span>⭐</span>
+                            <span>#1 BEST OPPORTUNITY</span>
+                          </span>
+                        ) : null}
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          {prospective?.sector || "Sector-Agnostic"}
+                        </span>
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
                           Gatekeeper 96.6%
                         </span>
@@ -3933,7 +3942,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         </span>
                       </div>
                       <span className="text-[11px] font-mono text-slate-400 mt-0.5 block">
-                        {symbol} Spot: <strong className="text-white font-black">${price.toFixed(2)}</strong> ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%){lastQuoteFetchTime ? ` • ${lastQuoteFetchTime}` : ""}
+                        {name} ({symbol}) • Spot: <strong className="text-white font-black">${price.toFixed(2)}</strong> ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)}%){lastQuoteFetchTime ? ` • ${lastQuoteFetchTime}` : ""}
                       </span>
                     </div>
                   </div>
@@ -3981,7 +3990,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                               : "bg-slate-950/80 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                           }`}
                         >
-                          <span className="font-black text-slate-100">{sym}</span>
+                          <span className="font-black text-slate-100 flex items-center gap-1">
+                            {sym === availableSymbols[0] && <span className="text-amber-400 text-[10px]" title="Best Opportunity">⭐</span>}
+                            <span>{sym}</span>
+                          </span>
                           {p > 0 && (
                             <span className="text-[11px] text-slate-300 font-mono">
                               ${p >= 1000 ? p.toFixed(0) : p.toFixed(2)}
@@ -4000,7 +4012,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   {/* Gatekeeper Filter Status Indicator */}
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-[10px] font-mono text-slate-300 whitespace-nowrap shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Gatekeeper Filter: <strong className="text-emerald-400 font-bold">2 Qualified</strong> (NVDA, TSLA)</span>
+                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">{availableSymbols.length} Ranked</strong> ({availableSymbols.slice(0, 3).join(", ")})</span>
                   </div>
                 </div>
 

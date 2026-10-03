@@ -743,33 +743,43 @@ export async function sendPreMarketGamePlan(data: {
     target1: number;
     target2: number;
     catalyst: string;
+    sector?: string;
+    isTopPick?: boolean;
+    rank?: number;
   }>;
 }) {
-  const setupFields: DiscordField[] = data.setups.map(s => ({
-    name: `🎯 ${s.symbol} • ${s.contract}`,
-    value: [
-      `• **Breakout Trigger:** \`$${s.trigger.toFixed(2)}\` | **Max Chase Limit:** \`$${s.maxChase.toFixed(2)}\``,
-      `• **Est. Ask:** \`$${s.entryAsk.toFixed(2)}\` | **Stop Loss:** \`$${s.stopLoss.toFixed(2)}\``,
-      `• **Targets:** T1: \`$${s.target1.toFixed(2)}\` (+30%) | T2: \`$${s.target2.toFixed(2)}\` (+65%)`,
-      `• **Catalyst:** ${s.catalyst}`,
-    ].join("\n"),
-    inline: false,
-  }));
+  const setupFields: DiscordField[] = data.setups.map((s, idx) => {
+    const isPrimary = s.isTopPick || s.rank === 1 || idx === 0;
+    const badge = isPrimary 
+      ? `🏆 #1 BEST OPPORTUNITY OF THE DAY: ${s.symbol} [${s.sector || "Top Pick"}]` 
+      : `🥈 #2 SECONDARY WATCH: ${s.symbol} [${s.sector || "Runner Up"}]`;
+
+    return {
+      name: `${badge} • ${s.contract}`,
+      value: [
+        `• **Breakout Trigger:** \`$${s.trigger.toFixed(2)}\` | **Max Chase Limit:** \`$${s.maxChase.toFixed(2)}\``,
+        `• **Est. Ask:** \`$${s.entryAsk.toFixed(2)}\` | **Stop Loss:** \`$${s.stopLoss.toFixed(2)}\``,
+        `• **Targets:** T1: \`$${s.target1.toFixed(2)}\` (+30%) | T2: \`$${s.target2.toFixed(2)}\` (+65%)`,
+        `• **Catalyst:** ${s.catalyst}`,
+      ].join("\n"),
+      inline: false,
+    };
+  });
 
   const embed: DiscordEmbed = {
-    title: `🌅 TODAY'S ORB GAME PLAN (${data.date} • 09:15 AM ET)`,
-    description: "**Pre-Market Battle Plan:** Load contracts onto your broker watchlist before the 09:30 AM open bell. Execute ONLY on confirmed 5-min candle breaks above trigger.",
-    color: 0x6366F1, // Indigo
+    title: `🌅 TODAY'S ORB GAME PLAN — BEST OPPORTUNITY SPOTLIGHT (${data.date})`,
+    description: "**Sector-Agnostic Top Conviction Pick:** Highlighted across all market sectors based on Relative Volume (RVOL), institutional catalyst impact, and 96.6% Gatekeeper qualification.",
+    color: 0xF59E0B, // Amber Gold
     fields: [
       ...setupFields,
       {
         name: "🛡️ ZERO-HINDSIGHT EXECUTION RULES",
-        value: "1. **Never Chase:** If price exceeds the Max Chase limit before you enter, skip the trade.\n2. **Wait for Breakout:** Do NOT front-run before the trigger is breached.\n3. **Quick Scalp Hold:** Target 1 is a partial profit harvest; move stop to breakeven.",
+        value: "1. **Focus on #1 Pick:** Highest probability setup of the day.\n2. **Never Chase:** If price exceeds the Max Chase limit before you enter, skip the trade.\n3. **Wait for Breakout:** Do NOT front-run before the trigger is breached.",
         inline: false,
       }
     ],
     footer: {
-      text: "Options Tracker AI • Morning Action Plan",
+      text: "Options Tracker AI • Sector-Agnostic Market Screener",
     },
     timestamp: new Date().toISOString(),
   };
