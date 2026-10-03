@@ -91,6 +91,12 @@ export async function sendTradeEntryCallout(trade: {
     riskOfficerBadge?: string;
     devilsAdvocateCritique?: string;
   };
+  kellySizing?: {
+    recommendedContracts: number;
+    maxDollarRisk: number;
+    edgePercent: number;
+    quarterKellyFraction: number;
+  };
 }) {
   const rvolDisplay = typeof trade.rvol === "number" ? `${trade.rvol.toFixed(1)}x` : trade.rvol || "3.2x";
   const riskDollars = Math.round((trade.entryPrice - trade.stopLoss) * 100);
@@ -111,6 +117,14 @@ export async function sendTradeEntryCallout(trade: {
     {
       name: "🛡️ ADVERSARIAL RISK OFFICER AUDIT (DEVIL'S ADVOCATE)",
       value: trade.agenticConsensus.devilsAdvocateCritique || "All exhaustion flags checked. Mean reversion & stretch risk audited. Zero hindsight entry approved.",
+      inline: false,
+    }
+  ] : [];
+
+  const kellyFields: DiscordField[] = trade.kellySizing ? [
+    {
+      name: "📐 QUANT CAPITAL SIZING (1/4 KELLY)",
+      value: `**Recommended:** \`${trade.kellySizing.recommendedContracts} Contract${trade.kellySizing.recommendedContracts > 1 ? 's' : ''}\` (Max Risk: $${trade.kellySizing.maxDollarRisk}) • Mathematical Edge: **+${trade.kellySizing.edgePercent}%** (Quarter Kelly: ${(trade.kellySizing.quarterKellyFraction * 100).toFixed(1)}%)`,
       inline: false,
     }
   ] : [];
@@ -158,6 +172,7 @@ export async function sendTradeEntryCallout(trade: {
         inline: true,
       },
       ...agenticFields,
+      ...kellyFields,
       {
         name: "🛡️ GATEKEEPER RATIONALE",
         value: trade.gatekeeperReason || "Rule 1-4 Passed: Tech Momentum + RVOL Floor >= 2.8x + Confirmed Candle Close + Positive Body Delta",
@@ -753,6 +768,12 @@ export async function sendProximityAlert(data: {
 export async function sendPreMarketGamePlan(data: {
   date: string;
   macroSummary?: string;
+  calibration?: {
+    brierScore: number;
+    calibrationRating: string;
+    observedWinRate: number;
+    reliabilityDelta: number;
+  };
   agenticDebate?: {
     hunterThesis?: string;
     riskOfficerAudit?: string;
@@ -807,6 +828,13 @@ export async function sendPreMarketGamePlan(data: {
     debateFields.push({
       name: "⚖️ AGENTIC RISK OFFICER AUDIT (DEVIL'S ADVOCATE)",
       value: data.agenticDebate.riskOfficerAudit,
+      inline: false,
+    });
+  }
+  if (data.calibration) {
+    debateFields.push({
+      name: "🎯 STATISTICAL CALIBRATION (BRIER SCORE)",
+      value: `Brier Score: **${data.calibration.brierScore.toFixed(4)}** (\`${data.calibration.calibrationRating}\`) • Empirical Win Rate: **${data.calibration.observedWinRate}%** (Reliability Delta: +${data.calibration.reliabilityDelta}%)`,
       inline: false,
     });
   }

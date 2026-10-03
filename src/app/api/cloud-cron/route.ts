@@ -105,6 +105,7 @@ async function handleCron(request: Request) {
             await sendPreMarketGamePlan({
                 date: todayStr,
                 macroSummary: consensus.macro.summary,
+                calibration: consensus.calibration,
                 agenticDebate: {
                     hunterThesis: consensus.debate.hunterThesis,
                     riskOfficerAudit: consensus.debate.riskOfficerAudit
@@ -214,7 +215,8 @@ async function handleCron(request: Request) {
                                     scoreBreakdown: `Trend: +${setup.pillars.trend} | Momentum: +${setup.pillars.momentum} | Macro: ${setup.pillars.macro >= 0 ? '+' : ''}${setup.pillars.macro} | Score: ${setup.convictionScore}%`,
                                     riskOfficerBadge: setup.riskOfficer.badge,
                                     devilsAdvocateCritique: setup.riskOfficer.devilsAdvocateCritique
-                                }
+                                },
+                                kellySizing: setup.kellySizing
                             });
                             setCache(entryKey);
                             actionsTriggered.push(`ORB_ENTRY_${sym}`);
