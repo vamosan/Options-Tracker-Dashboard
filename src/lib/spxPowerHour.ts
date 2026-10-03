@@ -258,13 +258,13 @@ export async function getLiveSPXPowerHourData(options?: {
   const YahooFinance = (yahooFinance as any).default || yahooFinance;
   const yf = new (YahooFinance as any)({ suppressNotices: ['yahooSurvey'] });
 
-  let spxSpot = 7705.50;
-  let dayChangePts = -38.50;
-  let dayChangePct = -0.50;
-  let dayHigh = 7721.70;
-  let dayLow = 7697.50;
-  let spyPrice = 767.50;
-  let vixVal = 16.0;
+  let spxSpot = 7722.72;
+  let dayChangePts = 56.27;
+  let dayChangePct = 0.73;
+  let dayHigh = 7754.67;
+  let dayLow = 7700.51;
+  let spyPrice = 769.64;
+  let vixVal = 16.39;
 
   try {
     // 1. Primary: Finnhub Institutional Real-Time Quote for SPY (100% reliable, no IPv6/throttling blocks)
