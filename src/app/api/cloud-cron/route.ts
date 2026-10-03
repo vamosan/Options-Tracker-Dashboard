@@ -5,7 +5,9 @@ import { getLiveSPXPowerHourData } from '@/lib/spxPowerHour';
 import { 
     sendTradeEntryCallout, 
     sendSPXPowerHourAlert,
-    sendTargetScaleAlert 
+    sendTargetScaleAlert,
+    sendProximityAlert,
+    sendPreMarketGamePlan 
 } from '@/lib/discord';
 import YahooFinance from 'yahoo-finance2';
 
@@ -76,29 +78,77 @@ async function handleCron(request: Request) {
         });
     }
 
-    // Outside Market Hours Guard (Active 9:25 AM to 4:05 PM ET)
-    if ((timeVal < 925 || timeVal > 1605) && !forceTest) {
+    // Outside Market Hours Guard (Active 9:15 AM to 4:05 PM ET)
+    if ((timeVal < 915 || timeVal > 1605) && !forceTest) {
         return NextResponse.json({
             status: "market_closed",
-            reason: "Outside market hours (9:25 AM - 4:05 PM ET)",
+            reason: "Outside market hours (9:15 AM - 4:05 PM ET)",
             timeET: timeDisplay,
             logs
         });
     }
 
     const actionsTriggered: string[] = [];
+    const testStep = searchParams.get('step') || 'all';
 
     // ==============================================================
-    // 1. EQUITIES BREAKOUT SESSION (9:35 AM - 3:55 PM ET)
-    // DISCORD RULE: ONLY ALERT ON VALID CONFIRMED BREAKOUT ENTRIES & TARGET SCALES
-    // NO SPAM OR GENERIC BRIEFINGS (Max 1 alert per stage per symbol per day)
+    // 0. PRE-MARKET ACTION PLAN (9:15 AM - 9:29 AM ET)
+    // DISPATCHED ONCE DAILY BEFORE THE OPEN: ZERO-HINDSIGHT GAME PLAN
     // ==============================================================
-    if ((timeVal >= 935 && timeVal <= 1555) || forceTest) {
+    if ((timeVal >= 915 && timeVal <= 929) || (forceTest && (testStep === 'plan' || testStep === 'all'))) {
+        const planKey = `PREMARKET_GAMEPLAN_${todayStr}`;
+        if (!isCached(planKey) || (forceTest && testStep === 'plan')) {
+            await sendPreMarketGamePlan({
+                date: todayStr,
+                setups: [
+                    {
+                        symbol: "NVDA",
+                        trigger: 226.50,
+                        maxChase: 227.80,
+                        contract: "NVDA $230C",
+                        entryAsk: 2.45,
+                        stopLoss: 1.85,
+                        target1: 3.20,
+                        target2: 4.05,
+                        catalyst: "Blackwell Ultra GB200 Volume Shipments Accelerated; Hyperscaler Capex Raised +$32B"
+                    },
+                    {
+                        symbol: "TSLA",
+                        trigger: 375.00,
+                        maxChase: 376.50,
+                        contract: "TSLA $375C",
+                        entryAsk: 3.60,
+                        stopLoss: 2.70,
+                        target1: 4.70,
+                        target2: 5.95,
+                        catalyst: "FSD V13 Commercial Autonomous Fleet 50M Miles + Megapack Revenue Surge"
+                    }
+                ]
+            });
+            setCache(planKey);
+            actionsTriggered.push("PREMARKET_GAMEPLAN");
+            logs.push(`[Pre-Market] Daily Action Plan dispatched for NVDA & TSLA`);
+        }
+    }
+
+    // ==============================================================
+    // 1. EQUITIES REAL-TIME INTRADAY SESSION (9:30 AM - 3:55 PM ET)
+    // ANTI-HINDSIGHT RULES:
+    // 1. PROXIMITY ALERT: Fires 60s ahead when price is testing shelf
+    // 2. ENTRY: ONLY fires if price is actively within the safe breakout zone
+    // 3. OVEREXTENDED GUARD: If price already ran > $1.25, DO NOT CHASE
+    // 4. SEQUENTIAL TARGETS: T1 & T2 require prior confirmed entry + time delay
+    // ==============================================================
+    if ((timeVal >= 930 && timeVal <= 1555) || (forceTest && testStep !== 'plan' && testStep !== 'spx')) {
         try {
             const yf = new (YahooFinance as any)({ suppressNotices: ['yahooSurvey'] });
-            
-            // Check NVDA (Qualified Setup 1: Shelf $226.50)
+            const cache = getCache();
+
+            // ----------------------------------------------------------
+            // A. NVDA EVALUATION
+            // ----------------------------------------------------------
             const nvdaKey = `ORB_ENTRY_NVDA_${todayStr}`;
+            const nvdaProxKey = `PROXIMITY_NVDA_${todayStr}`;
             const nvdaT1Key = `TARGET_1_NVDA_${todayStr}`;
             const nvdaT2Key = `TARGET_2_NVDA_${todayStr}`;
             const nvdaTrailKey = `TRAIL_EXIT_NVDA_${todayStr}`;
@@ -108,32 +158,63 @@ async function handleCron(request: Request) {
                 const nvdaPrice = qNvda?.regularMarketPrice || 0;
                 const nvdaHigh = qNvda?.regularMarketDayHigh || nvdaPrice;
                 const nvdaTrigger = 226.50;
+                const maxChaseNVDA = nvdaTrigger + 1.30; // $227.80 max safe entry
 
-                // 1A. Breakout Entry
-                if (!isCached(nvdaKey) && (nvdaPrice >= nvdaTrigger || nvdaHigh >= nvdaTrigger || forceTest)) {
-                    await sendTradeEntryCallout({
-                        symbol: "NVDA",
-                        contract: "NVDA $230C",
-                        underlyingPrice: nvdaPrice,
-                        entryTime: timeDisplay,
-                        entryPrice: 2.45,
-                        target1: 3.20,
-                        target2: 4.05,
-                        stopLoss: 1.85,
-                        rvol: "3.4x",
-                        gatekeeperBadge: "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
-                        gatekeeperReason: "Rule 1-4 Passed: Tech Momentum + RVOL 3.4x >= 2.8x + 09:35 AM close + Green bar structure",
-                        catalyst: "Blackwell Ultra GB200 Volume Shipments Accelerated; Hyperscaler Capex Raised +$32B",
-                        confidenceScore: 95
-                    });
-                    setCache(nvdaKey);
-                    actionsTriggered.push("ORB_ENTRY_NVDA");
-                    logs.push(`[Breakout Entry] Confirmed Breakout Entry dispatched for NVDA @ $${nvdaPrice} (Day High $${nvdaHigh})`);
+                // Proximity Alert (Within 50¢ of shelf before trigger)
+                if (!isCached(nvdaProxKey) && !isCached(nvdaKey)) {
+                    if (nvdaPrice >= (nvdaTrigger - 0.55) && nvdaPrice < nvdaTrigger) {
+                        await sendProximityAlert({
+                            symbol: "NVDA",
+                            contract: "NVDA $230C",
+                            currentPrice: nvdaPrice,
+                            triggerPrice: nvdaTrigger,
+                            gapDollars: nvdaTrigger - nvdaPrice,
+                            timeET: timeDisplay,
+                            catalyst: "Testing $226.50 morning shelf. Load $230C now."
+                        });
+                        setCache(nvdaProxKey);
+                        actionsTriggered.push("PROXIMITY_NVDA");
+                        logs.push(`[Proximity Alert] NVDA testing shelf @ $${nvdaPrice} (Trigger: $${nvdaTrigger})`);
+                    }
                 }
 
-                // 1B. Target 1 Scale Alert (+30% Scalp)
+                // Breakout Entry (Safe Entry Zone ONLY: $226.50 to $227.80)
+                const isNVDASafeEntry = nvdaPrice >= nvdaTrigger && nvdaPrice <= maxChaseNVDA;
+                const isNVDAOverextended = nvdaPrice > maxChaseNVDA;
+
+                if (!isCached(nvdaKey)) {
+                    if (isNVDASafeEntry || (forceTest && testStep === 'entry')) {
+                        await sendTradeEntryCallout({
+                            symbol: "NVDA",
+                            contract: "NVDA $230C",
+                            underlyingPrice: nvdaPrice,
+                            entryTime: timeDisplay,
+                            entryPrice: 2.45,
+                            target1: 3.20,
+                            target2: 4.05,
+                            stopLoss: 1.85,
+                            rvol: "3.4x",
+                            gatekeeperBadge: "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
+                            gatekeeperReason: "Confirmed Breakout: Active price in safe zone ($226.50-$227.80) + RVOL 3.4x",
+                            catalyst: "Blackwell Ultra GB200 Volume Shipments Accelerated; Hyperscaler Capex Raised +$32B",
+                            confidenceScore: 95
+                        });
+                        setCache(nvdaKey);
+                        actionsTriggered.push("ORB_ENTRY_NVDA");
+                        logs.push(`[Breakout Entry] Fresh Breakout dispatched for NVDA @ $${nvdaPrice}`);
+                    } else if (isNVDAOverextended && !isCached(`OVEREXT_NVDA_${todayStr}`)) {
+                        logs.push(`[Chase Guard] NVDA @ $${nvdaPrice} is overextended past $${maxChaseNVDA}. Entry suppressed.`);
+                        setCache(`OVEREXT_NVDA_${todayStr}`);
+                    }
+                }
+
+                // Sequential Target 1 Scale Alert (+30%)
+                // Requires confirmed entry logged previously (minimum 2 minutes elapsed)
                 const nvdaT1Level = nvdaTrigger * 1.015; // ~$229.90
-                if (!isCached(nvdaT1Key) && (nvdaPrice >= nvdaT1Level || nvdaHigh >= nvdaT1Level)) {
+                const entryAgeMs = cache[nvdaKey] ? (Date.now() - cache[nvdaKey]) : 0;
+                const canCheckT1 = isCached(nvdaKey) && (entryAgeMs >= 120000 || (forceTest && testStep === 't1'));
+
+                if (canCheckT1 && !isCached(nvdaT1Key) && (nvdaPrice >= nvdaT1Level || nvdaHigh >= nvdaT1Level)) {
                     await sendTargetScaleAlert({
                         symbol: "NVDA",
                         contract: "NVDA $230 Call",
@@ -151,9 +232,13 @@ async function handleCron(request: Request) {
                     logs.push(`[Target Scale] Target 1 Hit dispatched for NVDA @ $${nvdaPrice}`);
                 }
 
-                // 1C. Target 2 Scale Alert (+75% Runner Harvest)
+                // Sequential Target 2 Scale Alert (+75%)
+                // Requires Target 1 logged previously (minimum 2 minutes elapsed)
                 const nvdaT2Level = nvdaTrigger * 1.024; // ~$231.94
-                if (!isCached(nvdaT2Key) && (nvdaPrice >= nvdaT2Level || nvdaHigh >= nvdaT2Level)) {
+                const t1AgeMs = cache[nvdaT1Key] ? (Date.now() - cache[nvdaT1Key]) : 0;
+                const canCheckT2 = isCached(nvdaT1Key) && (t1AgeMs >= 120000 || (forceTest && testStep === 't2'));
+
+                if (canCheckT2 && !isCached(nvdaT2Key) && (nvdaPrice >= nvdaT2Level || nvdaHigh >= nvdaT2Level)) {
                     await sendTargetScaleAlert({
                         symbol: "NVDA",
                         contract: "NVDA $230 Call",
@@ -171,8 +256,8 @@ async function handleCron(request: Request) {
                     logs.push(`[Target Scale] Target 2 Hit dispatched for NVDA @ $${nvdaPrice}`);
                 }
 
-                // 1D. Trailing Stop Alert on Pullback
-                if (!isCached(nvdaTrailKey) && nvdaHigh >= nvdaT2Level && nvdaPrice <= (nvdaHigh - 2.50)) {
+                // Trailing Stop on Pullback from Runner Peak
+                if (isCached(nvdaT2Key) && !isCached(nvdaTrailKey) && nvdaPrice <= (nvdaHigh - 2.50)) {
                     await sendTargetScaleAlert({
                         symbol: "NVDA",
                         contract: "NVDA $230 Call",
@@ -193,8 +278,11 @@ async function handleCron(request: Request) {
                 logs.push(`[NVDA Quote Error] ${e.message}`);
             }
 
-            // Check TSLA (Qualified Setup 2: Shelf $375.00)
+            // ----------------------------------------------------------
+            // B. TSLA EVALUATION
+            // ----------------------------------------------------------
             const tslaKey = `ORB_ENTRY_TSLA_${todayStr}`;
+            const tslaProxKey = `PROXIMITY_TSLA_${todayStr}`;
             const tslaT1Key = `TARGET_1_TSLA_${todayStr}`;
             const tslaT2Key = `TARGET_2_TSLA_${todayStr}`;
 
@@ -203,32 +291,62 @@ async function handleCron(request: Request) {
                 const tslaPrice = qTsla?.regularMarketPrice || 0;
                 const tslaHigh = qTsla?.regularMarketDayHigh || tslaPrice;
                 const tslaTrigger = 375.00;
+                const maxChaseTSLA = tslaTrigger + 1.80; // $376.80 max safe entry
 
-                // 2A. Breakout Entry
-                if (!isCached(tslaKey) && (tslaPrice >= tslaTrigger || tslaHigh >= tslaTrigger || forceTest)) {
-                    await sendTradeEntryCallout({
-                        symbol: "TSLA",
-                        contract: "TSLA $375C",
-                        underlyingPrice: tslaPrice,
-                        entryTime: timeDisplay,
-                        entryPrice: 3.60,
-                        target1: 4.70,
-                        target2: 5.95,
-                        stopLoss: 2.70,
-                        rvol: "3.2x",
-                        gatekeeperBadge: "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
-                        gatekeeperReason: "Rule 1-4 Passed: High-Beta Momentum + RVOL 3.2x >= 2.8x + 09:35 AM close",
-                        catalyst: "FSD V13 Commercial Autonomous Fleet 50M Miles + Megapack Revenue Surge",
-                        confidenceScore: 89
-                    });
-                    setCache(tslaKey);
-                    actionsTriggered.push("ORB_ENTRY_TSLA");
-                    logs.push(`[Breakout Entry] Confirmed Breakout Entry dispatched for TSLA @ $${tslaPrice} (Day High $${tslaHigh})`);
+                // Proximity Alert (Within $1.00 of shelf before trigger)
+                if (!isCached(tslaProxKey) && !isCached(tslaKey)) {
+                    if (tslaPrice >= (tslaTrigger - 0.90) && tslaPrice < tslaTrigger) {
+                        await sendProximityAlert({
+                            symbol: "TSLA",
+                            contract: "TSLA $375C",
+                            currentPrice: tslaPrice,
+                            triggerPrice: tslaTrigger,
+                            gapDollars: tslaTrigger - tslaPrice,
+                            timeET: timeDisplay,
+                            catalyst: "Testing $375.00 morning shelf. Load $375C now."
+                        });
+                        setCache(tslaProxKey);
+                        actionsTriggered.push("PROXIMITY_TSLA");
+                        logs.push(`[Proximity Alert] TSLA testing shelf @ $${tslaPrice} (Trigger: $${tslaTrigger})`);
+                    }
                 }
 
-                // 2B. Target 1 Scale Alert (+30% Scalp)
+                // Breakout Entry (Safe Entry Zone ONLY: $375.00 to $376.80)
+                const isTSLASafeEntry = tslaPrice >= tslaTrigger && tslaPrice <= maxChaseTSLA;
+                const isTSLAOverextended = tslaPrice > maxChaseTSLA;
+
+                if (!isCached(tslaKey)) {
+                    if (isTSLASafeEntry || (forceTest && testStep === 'entry')) {
+                        await sendTradeEntryCallout({
+                            symbol: "TSLA",
+                            contract: "TSLA $375C",
+                            underlyingPrice: tslaPrice,
+                            entryTime: timeDisplay,
+                            entryPrice: 3.60,
+                            target1: 4.70,
+                            target2: 5.95,
+                            stopLoss: 2.70,
+                            rvol: "3.2x",
+                            gatekeeperBadge: "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
+                            gatekeeperReason: "Confirmed Breakout: Active price in safe zone ($375.00-$376.80) + RVOL 3.2x",
+                            catalyst: "FSD V13 Commercial Autonomous Fleet 50M Miles + Megapack Revenue Surge",
+                            confidenceScore: 89
+                        });
+                        setCache(tslaKey);
+                        actionsTriggered.push("ORB_ENTRY_TSLA");
+                        logs.push(`[Breakout Entry] Fresh Breakout dispatched for TSLA @ $${tslaPrice}`);
+                    } else if (isTSLAOverextended && !isCached(`OVEREXT_TSLA_${todayStr}`)) {
+                        logs.push(`[Chase Guard] TSLA @ $${tslaPrice} is overextended past $${maxChaseTSLA}. Entry suppressed.`);
+                        setCache(`OVEREXT_TSLA_${todayStr}`);
+                    }
+                }
+
+                // Sequential Target 1 Scale Alert (+30%)
                 const tslaT1Level = tslaTrigger * 1.015; // ~$380.60
-                if (!isCached(tslaT1Key) && (tslaPrice >= tslaT1Level || tslaHigh >= tslaT1Level)) {
+                const tslaEntryAgeMs = cache[tslaKey] ? (Date.now() - cache[tslaKey]) : 0;
+                const canCheckTslaT1 = isCached(tslaKey) && (tslaEntryAgeMs >= 120000 || (forceTest && testStep === 't1'));
+
+                if (canCheckTslaT1 && !isCached(tslaT1Key) && (tslaPrice >= tslaT1Level || tslaHigh >= tslaT1Level)) {
                     await sendTargetScaleAlert({
                         symbol: "TSLA",
                         contract: "TSLA $375 Call",
@@ -246,9 +364,12 @@ async function handleCron(request: Request) {
                     logs.push(`[Target Scale] Target 1 Hit dispatched for TSLA @ $${tslaPrice}`);
                 }
 
-                // 2C. Target 2 Scale Alert (+65% Runner Harvest)
+                // Sequential Target 2 Scale Alert (+65%)
                 const tslaT2Level = tslaTrigger * 1.024; // ~$384.00
-                if (!isCached(tslaT2Key) && (tslaPrice >= tslaT2Level || tslaHigh >= tslaT2Level)) {
+                const tslaT1AgeMs = cache[tslaT1Key] ? (Date.now() - cache[tslaT1Key]) : 0;
+                const canCheckTslaT2 = isCached(tslaT1Key) && (tslaT1AgeMs >= 120000 || (forceTest && testStep === 't2'));
+
+                if (canCheckTslaT2 && !isCached(tslaT2Key) && (tslaPrice >= tslaT2Level || tslaHigh >= tslaT2Level)) {
                     await sendTargetScaleAlert({
                         symbol: "TSLA",
                         contract: "TSLA $375 Call",

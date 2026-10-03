@@ -7,6 +7,10 @@
     "crons": [
         {
             "path": "/api/cloud-cron",
+            "schedule": "15 13 * * 1-5"
+        },
+        {
+            "path": "/api/cloud-cron",
             "schedule": "35 13 * * 1-5"
         },
         {

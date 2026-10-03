@@ -681,4 +681,101 @@ export async function sendSPXPowerHourAlert(payload: SPXPowerHourDiscordPayload)
   });
 }
 
+/**
+ * 60-Second Proximity Alert (Stock approaching trigger shelf)
+ */
+export async function sendProximityAlert(data: {
+  symbol: string;
+  contract: string;
+  currentPrice: number;
+  triggerPrice: number;
+  gapDollars: number;
+  timeET: string;
+  catalyst?: string;
+}) {
+  const embed: DiscordEmbed = {
+    title: `⚠️ ON DECK: ${data.symbol} TESTING BREAKOUT SHELF`,
+    description: `**Price is testing resistance shelf!** Prepare order for immediate execution on confirmed breach.\n${data.catalyst || "Institutional accumulation volume building."}`,
+    color: 0xF59E0B, // Amber Warning
+    fields: [
+      {
+        name: "🎯 BREAKOUT TRIGGER",
+        value: `**$${data.triggerPrice.toFixed(2)}**`,
+        inline: true,
+      },
+      {
+        name: "⚡ CURRENT SPOT",
+        value: `**$${data.currentPrice.toFixed(2)}** (${data.gapDollars > 0 ? `${(data.gapDollars * 100).toFixed(0)}¢ away` : "Testing level"})`,
+        inline: true,
+      },
+      {
+        name: "📋 TARGET CONTRACT",
+        value: `**${data.contract}**`,
+        inline: true,
+      },
+      {
+        name: "⏱️ ACTION REQUIRED",
+        value: "Load contract on your trading screen now. Do NOT enter until 5-min candle crosses and prints above trigger.",
+        inline: false,
+      }
+    ],
+    footer: {
+      text: "Options Tracker AI • Real-Time Proximity Alert",
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  return sendDiscordWebhook({ embeds: [embed] });
+}
+
+/**
+ * Pre-Market Daily Game Plan (Dispatched at 09:15 AM ET)
+ */
+export async function sendPreMarketGamePlan(data: {
+  date: string;
+  setups: Array<{
+    symbol: string;
+    trigger: number;
+    maxChase: number;
+    contract: string;
+    entryAsk: number;
+    stopLoss: number;
+    target1: number;
+    target2: number;
+    catalyst: string;
+  }>;
+}) {
+  const setupFields: DiscordField[] = data.setups.map(s => ({
+    name: `🎯 ${s.symbol} • ${s.contract}`,
+    value: [
+      `• **Breakout Trigger:** \`$${s.trigger.toFixed(2)}\` | **Max Chase Limit:** \`$${s.maxChase.toFixed(2)}\``,
+      `• **Est. Ask:** \`$${s.entryAsk.toFixed(2)}\` | **Stop Loss:** \`$${s.stopLoss.toFixed(2)}\``,
+      `• **Targets:** T1: \`$${s.target1.toFixed(2)}\` (+30%) | T2: \`$${s.target2.toFixed(2)}\` (+65%)`,
+      `• **Catalyst:** ${s.catalyst}`,
+    ].join("\n"),
+    inline: false,
+  }));
+
+  const embed: DiscordEmbed = {
+    title: `🌅 TODAY'S ORB GAME PLAN (${data.date} • 09:15 AM ET)`,
+    description: "**Pre-Market Battle Plan:** Load contracts onto your broker watchlist before the 09:30 AM open bell. Execute ONLY on confirmed 5-min candle breaks above trigger.",
+    color: 0x6366F1, // Indigo
+    fields: [
+      ...setupFields,
+      {
+        name: "🛡️ ZERO-HINDSIGHT EXECUTION RULES",
+        value: "1. **Never Chase:** If price exceeds the Max Chase limit before you enter, skip the trade.\n2. **Wait for Breakout:** Do NOT front-run before the trigger is breached.\n3. **Quick Scalp Hold:** Target 1 is a partial profit harvest; move stop to breakeven.",
+        inline: false,
+      }
+    ],
+    footer: {
+      text: "Options Tracker AI • Morning Action Plan",
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  return sendDiscordWebhook({ embeds: [embed] });
+}
+
+
 
