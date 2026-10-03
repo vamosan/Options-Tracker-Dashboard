@@ -16,6 +16,22 @@
         {
             "path": "/api/cloud-cron",
             "schedule": "30 19 * * 1-5"
+        },
+        {
+            "path": "/api/cloud-cron",
+            "schedule": "35 19 * * 1-5"
+        },
+        {
+            "path": "/api/cloud-cron",
+            "schedule": "37 19 * * 1-5"
+        },
+        {
+            "path": "/api/cloud-cron",
+            "schedule": "40 19 * * 1-5"
+        },
+        {
+            "path": "/api/cloud-cron",
+            "schedule": "50 19 * * 1-5"
         }
     ]
 }

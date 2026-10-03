@@ -454,6 +454,83 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     }
   };
 
+  // Automated Real-Time SPX Power Hour Discord Dispatch Engine
+  useEffect(() => {
+    if (!autoDiscordArm || !spxPowerHourState) return;
+
+    const isBreakoutActive = 
+      spxPowerHourState.directSignal?.status === "ACTIVE_TRIGGERED" ||
+      spxPowerHourState.rangeShelf?.breakoutDirection === "UPWARD_BREAKOUT" ||
+      spxPowerHourState.rangeShelf?.breakoutDirection === "DOWNWARD_BREAKOUT" ||
+      spxSubPanelSimulate;
+
+    if (!isBreakoutActive) return;
+
+    const surge = spxPowerHourState.activeSurgeCandidate || (spxPowerHourState.directSignal ? {
+      type: spxPowerHourState.directSignal.direction,
+      strike: spxPowerHourState.directSignal.bestStrike,
+      estimatedAsk: spxPowerHourState.directSignal.entryAsk || 3.70,
+      target1: spxPowerHourState.directSignal.target1 || 8.14,
+      target2: spxPowerHourState.directSignal.target2 || 16.65,
+      stopLoss: spxPowerHourState.directSignal.stopLoss || 1.11,
+      maxRiskDollars: spxPowerHourState.directSignal.maxRiskDollars || 370,
+    } : null);
+
+    if (!surge) return;
+
+    const todayStr = getTodayET();
+    const alertKey = `AUTO_DISCORD_SPX_${surge.type}_${surge.strike}_${todayStr}`;
+
+    if (
+      !dispatchedDiscordAlertsRef.current.has(alertKey) &&
+      !(typeof window !== "undefined" && window.sessionStorage.getItem(alertKey))
+    ) {
+      dispatchedDiscordAlertsRef.current.add(alertKey);
+      if (typeof window !== "undefined") window.sessionStorage.setItem(alertKey, "1");
+
+      const isCall = surge.type === "CALL";
+      const isPreCutoff = spxPowerHourState.phaseInfo?.isPreBrokerCutoff || spxPowerHourState.phaseInfo?.phase === "PRE_CUTOFF_BREAKOUT";
+
+      fetch("/api/discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "spx-powerhour",
+          payload: {
+            setupType: isPreCutoff
+              ? (isCall ? "PRE_CUTOFF_BREAKOUT_CALL" : "PRE_CUTOFF_BREAKOUT_PUT")
+              : (isCall ? "MOC_GAMMA_CALL" : "MOC_GAMMA_PUT"),
+            triggerTime: spxPowerHourState.currentTimeET || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            spxSpot: spxPowerHourState.spxSpot,
+            contract: `SPX 0DTE ${surge.strike} ${surge.type}`,
+            strike: surge.strike,
+            entryAsk: surge.estimatedAsk,
+            target1: surge.target1,
+            target2: surge.target2,
+            stopLoss: surge.stopLoss,
+            maxRiskPerContract: surge.maxRiskDollars,
+            mocImbalance: spxPowerHourState.mocImbalance?.rawText || "NYSE MOC Tracking Active",
+            mocImbalanceType: spxPowerHourState.mocImbalance?.direction || "BALANCED",
+            morningBias: spxPowerHourState.morningMomentumBias?.bias || "BEARISH",
+            shelfBreak: spxPowerHourState.recommendationReason || `Broke shelf (H30: $${spxPowerHourState.rangeShelf?.high30} / L30: $${spxPowerHourState.rangeShelf?.low30})`,
+            brokerCutoffWarning: "Most retail brokers (Webull, Robinhood, IBKR) lock 0DTE trading at 15:40 ET! Execute before 15:40 ET.",
+            exitCutoff: "3:58 PM ET (Cash Settlement)"
+          }
+        })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          setDiscordNotice({
+            message: `🔥 Automated Real-Time Discord Alert dispatched for SPX 0DTE ${surge.strike} ${surge.type}!`,
+            type: "success"
+          });
+          setTimeout(() => setDiscordNotice(null), 6000);
+        }
+      }).catch(err => {
+        console.error("Auto SPX Discord dispatch error:", err);
+      });
+    }
+  }, [spxPowerHourState, autoDiscordArm, spxSubPanelSimulate]);
+
   const [setups, setSetups] = useState<DiscoveredSetup[]>([]);
   const [signalsHistory, setSignalsHistory] = useState<SignalEvent[]>([]);
   const [closedTrades, setClosedTrades] = useState<ClosedTrade[]>(() => {
