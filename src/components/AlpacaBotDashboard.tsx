@@ -817,10 +817,27 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  // Automated Zero-Spam Discord Dispatch for Confirmed Breakouts (NVDA & TSLA)
+  // Automated Zero-Spam Discord Dispatch for Confirmed Breakouts
   useEffect(() => {
+    // Strictly gate automated execution alerts to regular trading hours AFTER 09:35 AM ET candle close
+    const now = new Date();
+    const etString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+    const etDate = new Date(etString);
+    const dayOfWeek = etDate.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const hours = etDate.getHours();
+    const minutes = etDate.getMinutes();
+    const timeVal = hours * 100 + minutes;
+
+    // Quarantined during weekends, pre-market (<09:35 AM ET), and after-hours (>=16:00 ET)
+    if (isWeekend || timeVal < 935 || timeVal >= 1600) {
+      return;
+    }
+
     const todayStr = getTodayET();
-    const targets = ["NVDA", "TSLA"];
+    const top1 = agenticConsensusData?.topOpportunity?.symbol || prospectiveStocksList[0]?.symbol || "NVDA";
+    const top2 = agenticConsensusData?.secondaryOpportunity?.symbol || prospectiveStocksList[1]?.symbol || "META";
+    const targets = [top1, top2].filter(Boolean);
 
     for (const sym of targets) {
       const alertKey = `AUTO_DISCORD_${sym}_ENTRY_${todayStr}`;
@@ -4020,10 +4037,32 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const qualifiedSymbols = Array.from(new Set(qualifiedTrades.map(t => t.symbol)))
               .filter(s => !INDEX_EXCLUSIONS.has(s.toUpperCase()));
 
+            // Authoritative ET Market Timing Engine
+            const now = new Date();
+            const etString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+            const etDate = new Date(etString);
+            const etHours = etDate.getHours();
+            const etMinutes = etDate.getMinutes();
+            const timeVal = etHours * 100 + etMinutes;
+            const dayOfWeek = etDate.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+            // Session Timing Boundaries
+            // Prior to 08:00 AM ET (Early Pre-Market Standby)
+            const isPreMarketPending = isWeekend || timeVal < 800; 
+            // 08:00 AM – 09:30 AM ET (Active Discovery Scan & Confirmation)
+            const isPreMarketDiscovery = !isWeekend && timeVal >= 800 && timeVal < 930; 
+            // 09:30 AM – 09:35 AM ET (Opening 5-minute Range Formation — quarantine early wicks)
+            const isFormingORB = !isWeekend && timeVal >= 930 && timeVal < 935; 
+            // 09:35 AM – 16:00 PM ET (Regular Intraday Breakout Execution Active)
+            const isRegularMarketActive = !isWeekend && timeVal >= 935 && timeVal < 1600; 
+            // 16:00 PM ET onwards (Post-Market Session Closed)
+            const isPostMarket = !isWeekend && timeVal >= 1600;
+
             // Strictly isolate TOP 2 BEST OPPORTUNITIES vetted by Agentic Consensus Desk & Gatekeeper
             // (1 Primary Focus + 1 Secondary Watch) - eliminating all lower-conviction noise
             const top1Candidate = agenticConsensusData?.topOpportunity?.symbol || prospectiveStocksList[0]?.symbol || "NVDA";
-            const top2Candidate = agenticConsensusData?.secondaryOpportunity?.symbol || prospectiveStocksList[1]?.symbol || "TSLA";
+            const top2Candidate = agenticConsensusData?.secondaryOpportunity?.symbol || (prospectiveStocksList.find(s => s.symbol !== top1Candidate && !INDEX_EXCLUSIONS.has(s.symbol))?.symbol) || "META";
             
             const rawTop2 = [top1Candidate, top2Candidate]
               .filter(Boolean)
@@ -4032,7 +4071,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             
             // Guarantee strictly 2 distinct equities (1 Primary Focus + 1 Secondary Watch)
             if (rawTop2.length < 2) {
-              const fallback = top1Candidate === "NVDA" ? "TSLA" : "NVDA";
+              const fallback = top1Candidate === "NVDA" ? "META" : "NVDA";
               if (!rawTop2.includes(fallback)) rawTop2.push(fallback);
             }
             const availableSymbols = rawTop2.slice(0, 2);
@@ -4046,28 +4085,31 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const name = liveSetup?.name || prospective?.name || symbol;
 
             // Live high-frequency price resolution
-            const price = quote?.price || liveSetup?.price || prospective?.price || 225.07;
+            const price = quote?.price || liveSetup?.price || prospective?.price || (currentSym === "META" ? 751.66 : 225.07);
             const changePct = quote ? quote.changePercent : (liveSetup?.changePercent ?? prospective?.changePercent ?? 0.22);
             const dayHigh = quote?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : price * 1.012);
             const dayLow = quote?.dayLow || (liveSetup?.orb?.low ? liveSetup.orb.low * 0.992 : price * 0.988);
 
             // Strict Strike Anchor Rule: Lock to planned setup strike (never drift to higher OTM strikes on live price)
-            const strike = (currentSym === "NVDA" ? 230 : currentSym === "TSLA" ? 375 : (prospective?.suggestedOption.strike || liveSetup?.contract.strike || 230));
+            const strike = (currentSym === "NVDA" ? 230 : currentSym === "TSLA" ? 375 : currentSym === "META" ? 760 : (prospective?.suggestedOption.strike || liveSetup?.contract.strike || 230));
             const contract = `${symbol} $${strike} Call`;
-            const entryAsk = liveSetup?.contract.ask || prospective?.suggestedOption.estimatedAsk || 2.45;
-            const target1 = liveSetup?.targets.target1 || prospective?.suggestedOption.target1 || 3.20;
-            const target2 = liveSetup?.targets.target2 || prospective?.suggestedOption.target2 || 4.05;
-            const stopLoss = liveSetup?.targets.stopLoss || prospective?.suggestedOption.stopLoss || 1.85;
+            const entryAsk = liveSetup?.contract.ask || prospective?.suggestedOption.estimatedAsk || (currentSym === "META" ? 3.10 : 2.45);
+            const target1 = liveSetup?.targets.target1 || prospective?.suggestedOption.target1 || (currentSym === "META" ? 4.05 : 3.20);
+            const target2 = liveSetup?.targets.target2 || prospective?.suggestedOption.target2 || (currentSym === "META" ? 5.10 : 4.05);
+            const stopLoss = liveSetup?.targets.stopLoss || prospective?.suggestedOption.stopLoss || (currentSym === "META" ? 2.30 : 1.85);
             
             // Primary Institutional Trigger Shelf:
-            // Extract the first dollar value from prospective triggerShelf (e.g. $226.50 for NVDA, $375.00 for TSLA)
             const shelfMatch = prospective?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
             const parsedShelf = shelfMatch ? parseFloat(shelfMatch[1]) : 0;
-            const staticShelf = currentSym === "NVDA" ? 226.50 : currentSym === "TSLA" ? 375.00 : 0;
+            const staticShelf = currentSym === "NVDA" ? 226.50 : currentSym === "TSLA" ? 375.00 : currentSym === "META" ? 758.00 : 0;
             const triggerLevel = staticShelf || parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : price * 0.995);
 
             // Active Breakout latch & Anchors
-            const isBreakoutTriggered = (triggerLevel > 0 && (price >= triggerLevel || dayHigh >= triggerLevel)) || (liveSetup?.signal?.state === "BREAKOUT");
+            // CRITICAL: Intraday breakout can ONLY be true during regular market hours (after 09:35 AM ET)
+            // Pre-market and off-hours prices NEVER trigger active breakout signals
+            const isBreakoutTriggered = isRegularMarketActive && (
+              (triggerLevel > 0 && (price >= triggerLevel || dayHigh >= triggerLevel)) || (liveSetup?.signal?.state === "BREAKOUT")
+            );
             const distancePts = triggerLevel - price;
             const distancePct = triggerLevel > 0 ? ((triggerLevel - price) / triggerLevel) * 100 : 0;
             const breakoutSpread = Math.max(price, dayHigh) - triggerLevel;
@@ -4089,10 +4131,16 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const liveGainPct = Math.round(((liveOptionEst - entryAsk) / entryAsk) * 100);
 
             // Lifecycle Trade Phase Engine
-            type TradePhase = "WAITING" | "BUY_ZONE" | "EXTENDED_NO_CHASE" | "TARGET_1_HIT" | "TARGET_2_HIT" | "PULLBACK_RETEST" | "STOPPED_OUT";
+            type TradePhase = "PRE_MARKET_STANDBY" | "PRE_MARKET_DISCOVERY" | "FORMING_ORB" | "WAITING" | "BUY_ZONE" | "EXTENDED_NO_CHASE" | "TARGET_1_HIT" | "TARGET_2_HIT" | "PULLBACK_RETEST" | "STOPPED_OUT";
             let tradePhase: TradePhase = "WAITING";
 
-            if (price < triggerLevel && dayHigh < triggerLevel) {
+            if (isPreMarketPending) {
+              tradePhase = "PRE_MARKET_STANDBY";
+            } else if (isPreMarketDiscovery) {
+              tradePhase = "PRE_MARKET_DISCOVERY";
+            } else if (isFormingORB) {
+              tradePhase = "FORMING_ORB";
+            } else if (price < triggerLevel && dayHigh < triggerLevel) {
               tradePhase = "WAITING";
             } else if (price < stopStockLevel) {
               tradePhase = "STOPPED_OUT";
@@ -4196,12 +4244,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         {currentSym === availableSymbols[0] ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.25)]">
                             <span>🏆</span>
-                            <span>#1 BEST OPPORTUNITY</span>
+                            <span>{isPreMarketPending ? "#1 PRELIMINARY BASELINE" : isPreMarketDiscovery ? "#1 PRE-MARKET FOCUS" : "#1 BEST OPPORTUNITY"}</span>
                           </span>
                         ) : (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1 shadow-[0_0_10px_rgba(99,102,241,0.25)]">
                             <span>🥈</span>
-                            <span>#2 SECONDARY WATCH</span>
+                            <span>{isPreMarketPending ? "#2 PRELIMINARY BASELINE" : isPreMarketDiscovery ? "#2 PRE-MARKET WATCH" : "#2 SECONDARY WATCH"}</span>
                           </span>
                         )}
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -4210,9 +4258,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
                           Gatekeeper 96.6%
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                          LIVE 6s TICK
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold border ${
+                          isPreMarketPending
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                            : isPreMarketDiscovery
+                            ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                            : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            isPreMarketPending ? "bg-amber-400" : isPreMarketDiscovery ? "bg-cyan-400 animate-ping" : "bg-emerald-400 animate-ping"
+                          }`}></span>
+                          {isPreMarketPending ? "PRE-MKT STANDBY" : isPreMarketDiscovery ? "DISCOVERY SCAN" : "LIVE 6s TICK"}
                         </span>
                       </div>
                       <span className="text-[11px] font-mono text-slate-400 mt-0.5 block">
@@ -4224,22 +4280,76 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   <div className="flex items-center gap-2">
                     <button
                       onClick={alertCurrentSignal}
-                      disabled={isSendingDiscord}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 shadow-[0_0_15px_rgba(88,101,242,0.3)]"
-                      title="Send alert to Discord"
+                      disabled={isSendingDiscord || isPreMarketPending}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        isPreMarketPending
+                          ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                          : "bg-[#5865F2] hover:bg-[#4752C4] text-white active:scale-95 shadow-[0_0_15px_rgba(88,101,242,0.3)]"
+                      }`}
+                      title={isPreMarketPending ? "Discord alerts unlock during pre-market discovery (08:00 AM ET)" : "Send alert to Discord"}
                     >
                       <DiscordIcon className="w-3.5 h-3.5 text-white" />
-                      <span>Alert Discord</span>
+                      <span>{isPreMarketPending ? "Alert (Standby)" : "Alert Discord"}</span>
                     </button>
                     <button
                       onClick={executeCurrentSignal}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                      disabled={isPreMarketPending || isPreMarketDiscovery || isFormingORB}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
+                        isPreMarketPending || isPreMarketDiscovery || isFormingORB
+                          ? "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                          : "bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                      }`}
+                      title={isPreMarketPending ? "Execution unlocks after 09:35 AM ORB confirmation" : "Execute paper trade"}
                     >
                       <Zap className="w-3.5 h-3.5 fill-current" />
-                      <span>Execute</span>
+                      <span>{isPreMarketPending ? "Standby (Pre-Mkt)" : isPreMarketDiscovery ? "Awaiting Open" : isFormingORB ? "ORB Forming" : "Execute"}</span>
                     </button>
                   </div>
                 </div>
+
+                {/* Pre-Market Standby Banner */}
+                {isPreMarketPending && (
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-cyan-500/10 border border-amber-500/40 flex items-start gap-3 shadow-[0_0_25px_rgba(245,158,11,0.12)]">
+                    <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0 mt-0.5">
+                      <Clock className="w-4 h-4 animate-pulse" />
+                    </div>
+                    <div className="space-y-1 text-xs font-mono">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-black text-amber-300 uppercase tracking-wide">
+                          ⏳ Early Pre-Market Standby • Discovery Scanner Activates 08:00 AM ET
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          Pre-Market Gate
+                        </span>
+                      </div>
+                      <p className="text-slate-300 text-[11px] leading-relaxed">
+                        Today&apos;s confirmed <strong className="text-white">Top 2 Opportunities</strong> unlock dynamically between <strong className="text-amber-300">08:00 AM – 09:15 AM ET</strong> once institutional pre-market relative volume (RVOL &ge; 2.8x), morning gap shelves, and breaking news catalysts are scanned. 
+                        The tickers below (<span className="text-white font-bold">{availableSymbols[0]}</span> & <span className="text-white font-bold">{availableSymbols[1]}</span>) are <strong className="text-slate-200">preliminary baseline candidates</strong> on technical watch carryover, <strong className="text-amber-300/90">not confirmed today&apos;s trades</strong>.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {isPreMarketDiscovery && (
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-500/15 via-slate-900 to-indigo-500/10 border border-cyan-500/40 flex items-start gap-3 shadow-[0_0_25px_rgba(6,182,212,0.12)]">
+                    <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4 animate-spin" />
+                    </div>
+                    <div className="space-y-1 text-xs font-mono">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-black text-cyan-300 uppercase tracking-wide">
+                          📡 Pre-Market Discovery Active (08:00–09:30 AM ET)
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                          Gameplan Locks 09:15 AM
+                        </span>
+                      </div>
+                      <p className="text-slate-300 text-[11px] leading-relaxed">
+                        Scanning pre-market tape, RVOL momentum, and catalysts. Official Top 2 triggers lock at <strong className="text-cyan-300">09:15 AM ET</strong>, and breakout trade execution begins strictly upon <strong className="text-emerald-300">09:35 AM ORB confirmation</strong>.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Hyper-Trading Interactive Filtered Ticker Bar — Strictly Top 2 Opportunities */}
                 <div className="flex flex-wrap items-center justify-between gap-2 overflow-x-auto custom-scrollbar pb-1">
@@ -4247,7 +4357,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     {availableSymbols.map((sym, idx) => {
                       const q = liveQuotes[sym];
                       const prospect = prospectiveStocksList.find(s => s.symbol === sym);
-                      const p = q?.price || prospect?.price || (sym === "TSLA" ? 354.81 : sym === "NVDA" ? 228.38 : 0);
+                      const p = q?.price || prospect?.price || (sym === "TSLA" ? 354.81 : sym === "NVDA" ? 228.38 : sym === "META" ? 751.66 : 0);
                       const chg = q ? q.changePercent : (prospect?.changePercent ?? 0);
                       const isSelected = selectedSignalTicker === sym;
                       const isPrimary = idx === 0;
@@ -4267,9 +4377,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         >
                           <span className="font-black text-slate-100 flex items-center gap-1.5">
                             {isPrimary ? (
-                              <span className="text-amber-400 text-xs font-black">🏆 #1</span>
+                              <span className="text-amber-400 text-xs font-black">
+                                {isPreMarketPending ? "🏆 #1 Baseline" : isPreMarketDiscovery ? "🏆 #1 Focus" : "🏆 #1"}
+                              </span>
                             ) : (
-                              <span className="text-indigo-400 text-xs font-black">🥈 #2</span>
+                              <span className="text-indigo-400 text-xs font-black">
+                                {isPreMarketPending ? "🥈 #2 Baseline" : isPreMarketDiscovery ? "🥈 #2 Watch" : "🥈 #2"}
+                              </span>
                             )}
                             <span className="text-white font-extrabold">{sym}</span>
                           </span>
@@ -4291,7 +4405,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   {/* Gatekeeper Filter Status Indicator */}
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-[10px] font-mono text-slate-300 whitespace-nowrap shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">Top 2 Institutional Focus</strong> (#{1}: {availableSymbols[0]} • #{2}: {availableSymbols[1]})</span>
+                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">{isPreMarketPending ? "Preliminary Baseline" : "Top 2 Focus"}</strong> (#{1}: {availableSymbols[0]} • #{2}: {availableSymbols[1]}){isPreMarketPending ? " • Scan at 08:00 AM" : ""}</span>
                   </div>
                 </div>
 
@@ -4305,20 +4419,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {contract}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40" title="Peak option contract value achieved today">
-                        Peak Option: ${peakOptionEst.toFixed(2)} (+{peakGainPct}%)
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40" title={isPreMarketPending ? "Target 1 Profit Objective" : "Peak option contract value achieved today"}>
+                        {isPreMarketPending || isPreMarketDiscovery ? `Target 1: $${target1.toFixed(2)} (+30%)` : `Peak Option: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
                       </span>
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${liveGainPct >= 0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/15 text-rose-300 border-rose-500/40'}`}>
-                        Live Est: ${liveOptionEst.toFixed(2)} ({liveGainPct >= 0 ? '+' : ''}{liveGainPct}%)
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${isPreMarketPending || isPreMarketDiscovery ? 'bg-slate-900 text-slate-300 border-slate-700' : liveGainPct >= 0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/15 text-rose-300 border-rose-500/40'}`}>
+                        {isPreMarketPending || isPreMarketDiscovery ? `Planned Ask: $${entryAsk.toFixed(2)}` : `Live Est: $${liveOptionEst.toFixed(2)} (${liveGainPct >= 0 ? '+' : ''}{liveGainPct}%)`}
                       </span>
-                      <span className="px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                        ORB BREAKOUT
+                      <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider border ${
+                        isPreMarketPending
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                          : isPreMarketDiscovery
+                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                          : isFormingORB
+                          ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40"
+                          : isBreakoutTriggered
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                          : "bg-slate-800 text-slate-300 border-slate-700"
+                      }`}>
+                        {isPreMarketPending ? "STANDBY (SCAN 08:00 AM)" : isPreMarketDiscovery ? "PRE-MARKET VETTING" : isFormingORB ? "ORB FORMING (9:30-9:35)" : isBreakoutTriggered ? "ORB BREAKOUT" : "WAITING FOR ORB"}
                       </span>
                     </div>
                   </div>
                   <div className="text-xs font-mono text-cyan-400 flex items-center justify-between">
                     <span>{name} • Spot: ${price.toFixed(2)}</span>
-                    <span className="text-slate-400">High: ${dayHigh.toFixed(2)} / Low: ${dayLow.toFixed(2)}</span>
+                    <span className="text-slate-400">{isPreMarketPending ? `Friday Range: $${dayLow.toFixed(2)} - $${dayHigh.toFixed(2)}` : `High: $${dayHigh.toFixed(2)} / Low: $${dayLow.toFixed(2)}`}</span>
                   </div>
                 </div>
 
@@ -4338,20 +4462,28 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                           ? "bg-gradient-to-r from-emerald-500 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]"
                           : tradePhase === "PULLBACK_RETEST" || tradePhase === "EXTENDED_NO_CHASE"
                           ? "bg-gradient-to-r from-amber-500 to-rose-400 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                          : isPreMarketPending
+                          ? "bg-amber-500/40"
                           : "bg-gradient-to-r from-slate-700 via-amber-500 to-emerald-500"
                       }`}
-                      style={{ width: `${isBreakoutTriggered ? 100 : Math.min(100, Math.max(5, ((price - dayLow) / Math.max(1, dayHigh - dayLow)) * 100))}%` }}
+                      style={{ width: `${isBreakoutTriggered ? 100 : isPreMarketPending ? 25 : Math.min(100, Math.max(5, ((price - dayLow) / Math.max(1, dayHigh - dayLow)) * 100))}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono">
                     <span className="text-slate-500">Support Floor: {invalidationStop}</span>
                     <span className={
+                      tradePhase === "PRE_MARKET_STANDBY" ? "text-amber-400 font-bold" :
+                      tradePhase === "PRE_MARKET_DISCOVERY" ? "text-cyan-400 font-bold" :
+                      tradePhase === "FORMING_ORB" ? "text-indigo-400 font-bold" :
                       tradePhase === "BUY_ZONE" ? "text-emerald-400 font-black" :
                       tradePhase === "TARGET_1_HIT" ? "text-cyan-400 font-black" :
                       tradePhase === "TARGET_2_HIT" ? "text-fuchsia-400 font-black" :
                       tradePhase === "PULLBACK_RETEST" ? "text-amber-400 font-bold" :
                       "text-amber-400 font-bold"
                     }>
+                      {tradePhase === "PRE_MARKET_STANDBY" && `⏳ Early Pre-Market • Scan Activates at 08:00 AM ET`}
+                      {tradePhase === "PRE_MARKET_DISCOVERY" && `📡 Discovery Active • Locks at 09:15 AM ET`}
+                      {tradePhase === "FORMING_ORB" && `🕒 09:30–09:35 AM Opening Range Forming (No Early Entries)`}
                       {tradePhase === "BUY_ZONE" && `🔥 +$${breakoutSpread.toFixed(2)} Past Trigger Shelf (Optimal Buy)`}
                       {tradePhase === "TARGET_1_HIT" && `🎯 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 1 Reached)`}
                       {tradePhase === "TARGET_2_HIT" && `🚀 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 2 Smashed)`}
@@ -4365,7 +4497,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
                 {/* ACTIONABLE TRADE LIFECYCLE PANEL */}
                 <div className={`p-4 rounded-2xl border-2 space-y-2.5 transition-all shadow-[0_0_30px_rgba(0,0,0,0.4)] ${
-                  tradePhase === "BUY_ZONE" 
+                  tradePhase === "PRE_MARKET_STANDBY"
+                    ? "border-amber-500/60 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 shadow-[0_0_25px_rgba(245,158,11,0.15)]"
+                    : tradePhase === "PRE_MARKET_DISCOVERY"
+                    ? "border-cyan-500/60 bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.15)]"
+                    : tradePhase === "FORMING_ORB"
+                    ? "border-indigo-500/60 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-950 shadow-[0_0_25px_rgba(99,102,241,0.15)]"
+                    : tradePhase === "BUY_ZONE" 
                     ? "border-emerald-500/70 bg-gradient-to-r from-emerald-950/50 via-emerald-900/20 to-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
                     : tradePhase === "TARGET_1_HIT"
                     ? "border-cyan-500/70 bg-gradient-to-r from-cyan-950/50 via-cyan-900/20 to-slate-950 shadow-[0_0_30px_rgba(6,182,212,0.2)]"
@@ -4381,6 +4519,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 }`}>
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-mono font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                      tradePhase === "PRE_MARKET_STANDBY" ? "text-amber-300" :
+                      tradePhase === "PRE_MARKET_DISCOVERY" ? "text-cyan-300" :
+                      tradePhase === "FORMING_ORB" ? "text-indigo-300" :
                       tradePhase === "BUY_ZONE" ? "text-emerald-300" :
                       tradePhase === "TARGET_1_HIT" ? "text-cyan-300" :
                       tradePhase === "TARGET_2_HIT" ? "text-fuchsia-300" :
@@ -4389,6 +4530,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       tradePhase === "STOPPED_OUT" ? "text-rose-300" : "text-slate-400"
                     }`}>
                       <span className={`w-2.5 h-2.5 rounded-full ${
+                        tradePhase === "PRE_MARKET_STANDBY" ? "bg-amber-400" :
+                        tradePhase === "PRE_MARKET_DISCOVERY" ? "bg-cyan-400 animate-pulse" :
+                        tradePhase === "FORMING_ORB" ? "bg-indigo-400 animate-pulse" :
                         tradePhase === "BUY_ZONE" ? "bg-emerald-400 animate-ping" :
                         tradePhase === "TARGET_1_HIT" ? "bg-cyan-400 animate-ping" :
                         tradePhase === "TARGET_2_HIT" ? "bg-fuchsia-400 animate-ping" :
@@ -4396,6 +4540,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         tradePhase === "EXTENDED_NO_CHASE" ? "bg-amber-400 animate-pulse" :
                         tradePhase === "STOPPED_OUT" ? "bg-rose-400 animate-ping" : "bg-slate-500"
                       }`}></span>
+                      {tradePhase === "PRE_MARKET_STANDBY" && "⏳ PRE-MARKET STANDBY — SCAN ACTIVATES 08:00 AM ET"}
+                      {tradePhase === "PRE_MARKET_DISCOVERY" && "📡 PRE-MARKET DISCOVERY — LOCKS 09:15 AM ET"}
+                      {tradePhase === "FORMING_ORB" && "🕒 09:30–09:35 AM ORB FORMING (NO EARLY ENTRIES)"}
                       {tradePhase === "BUY_ZONE" && "🔥 ENTER TRADE NOW (OPTIMAL BUY ZONE)"}
                       {tradePhase === "TARGET_1_HIT" && "🎯 TARGET 1 HIT (+30%) — SCALE 50% PROFIT"}
                       {tradePhase === "TARGET_2_HIT" && "🚀 TARGET 2 HIT (+75%) — HARVEST RUNNERS"}
@@ -4405,6 +4552,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {tradePhase === "WAITING" && "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)"}
                     </span>
                     <span className="text-xs font-mono font-black text-slate-200">
+                      {tradePhase === "PRE_MARKET_STANDBY" && "Awaiting 08:00 AM Scan"}
+                      {tradePhase === "PRE_MARKET_DISCOVERY" && "Vetting Volume & Tape"}
+                      {tradePhase === "FORMING_ORB" && "Awaiting 09:35 AM Close"}
                       {tradePhase === "BUY_ZONE" && `Ask Fill: $${entryAsk.toFixed(2)}`}
                       {tradePhase === "TARGET_1_HIT" && `Scalp Fill: $${target1.toFixed(2)} (+30%)`}
                       {tradePhase === "TARGET_2_HIT" && `Peak Option: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
@@ -4419,6 +4569,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Execution Directive</span>
                       <span className="font-black text-slate-100 text-[11px] block mt-0.5 line-clamp-2">
+                        {tradePhase === "PRE_MARKET_STANDBY" && `Early pre-market session. Institutional volume (RVOL) and news catalysts will be scanned at 08:00 AM ET to confirm today's Top 2 setups.`}
+                        {tradePhase === "PRE_MARKET_DISCOVERY" && `Pre-market tape and gap momentum are being scanned. Official gameplan locks at 09:15 AM ET. Live entry unlocks strictly on 09:35 AM ORB breakout.`}
+                        {tradePhase === "FORMING_ORB" && `Opening 5-minute range is currently establishing. Early market wicks are quarantined until 09:35:00 candle close.`}
                         {tradePhase === "BUY_ZONE" && `Confirmed breakout above $${triggerLevel.toFixed(2)}! Spot $${price.toFixed(2)} is inside buy zone.`}
                         {tradePhase === "TARGET_1_HIT" && `Target 1 achieved! Scale 50% profits, move stop to breakeven ($${triggerLevel.toFixed(2)}).`}
                         {tradePhase === "TARGET_2_HIT" && `Touched $${dayHigh.toFixed(2)} peak! Harvest 75-100% of runners. DO NOT BUY AT MARKET.`}
@@ -4428,6 +4581,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         {tradePhase === "WAITING" && `Breakout above $${triggerLevel.toFixed(2)} resistance shelf.`}
                       </span>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">
+                        {tradePhase === "PRE_MARKET_STANDBY" && "Zero-hindsight rule: No entries prior to 09:35 AM ORB close"}
+                        {tradePhase === "PRE_MARKET_DISCOVERY" && "Vetting pre-market volume (RVOL >= 2.8x)"}
+                        {tradePhase === "FORMING_ORB" && "Quarantine 09:30–09:35 AM opening candle traps"}
                         {tradePhase === "BUY_ZONE" && "Momentum expanding • Execute now"}
                         {tradePhase === "TARGET_1_HIT" && "Lock 50% • Guaranteed green trade"}
                         {tradePhase === "TARGET_2_HIT" && "Maximum extension • Protect gains"}
@@ -4439,15 +4595,19 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     </div>
 
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">Option Return Profile</span>
+                      <span className="text-[9.5px] text-slate-400 uppercase block font-bold">
+                        {isPreMarketPending || isPreMarketDiscovery ? "Planned Target Profile" : "Option Return Profile"}
+                      </span>
                       <div className="flex items-baseline gap-2 mt-0.5">
-                        <span className="font-black text-emerald-300 text-xl">${liveOptionEst.toFixed(2)}</span>
-                        <span className={`text-[10px] font-bold ${liveGainPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          ({liveGainPct >= 0 ? "+" : ""}{liveGainPct}%)
+                        <span className="font-black text-emerald-300 text-xl">
+                          {isPreMarketPending || isPreMarketDiscovery ? `$${target1.toFixed(2)}` : `$${liveOptionEst.toFixed(2)}`}
+                        </span>
+                        <span className={`text-[10px] font-bold ${isPreMarketPending || isPreMarketDiscovery ? "text-cyan-400" : liveGainPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {isPreMarketPending || isPreMarketDiscovery ? "(+30.0% Target)" : `(${liveGainPct >= 0 ? "+" : ""}{liveGainPct}%)`}
                         </span>
                       </div>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">
-                        Entry: ${entryAsk.toFixed(2)} • Day Peak: ${peakOptionEst.toFixed(2)} (+{peakGainPct}%)
+                        Planned Entry: ${entryAsk.toFixed(2)} • Target 2: ${target2.toFixed(2)} (+65%)
                       </span>
                     </div>
                   </div>
