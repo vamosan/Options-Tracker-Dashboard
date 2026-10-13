@@ -90,6 +90,7 @@ async function handleCron(request: Request) {
     }
 
     const actionsTriggered: string[] = [];
+    const recordedTrades: any[] = [];
     const testStep = searchParams.get('step') || 'all';
 
     // ==============================================================
@@ -220,6 +221,33 @@ async function handleCron(request: Request) {
                             });
                             setCache(entryKey);
                             actionsTriggered.push(`ORB_ENTRY_${sym}`);
+                            recordedTrades.push({
+                                id: `trade_${todayStr.replace(/-/g, '')}_${sym.toLowerCase()}`,
+                                date: todayStr,
+                                timestamp: new Date().toISOString(),
+                                symbol: sym,
+                                name: sym === "TSLA" ? "Tesla Inc." : sym === "NVDA" ? "NVIDIA Corp." : sym,
+                                contract: setup.contract,
+                                action: `BUY ${setup.contract}`,
+                                time: timeDisplay,
+                                entryTime: timeDisplay,
+                                exitTime: "Active Position",
+                                duration: "Live",
+                                session: "MORNING_ORB",
+                                entryPrice: setup.entryAsk,
+                                target1: setup.target1,
+                                target2: setup.target2,
+                                stopLoss: setup.stopLoss,
+                                peakPrice: currentPrice,
+                                outcome: "OPEN_LIVE",
+                                pnlPerContract: 0,
+                                percentGain: "0.0%",
+                                rationale: setup.catalyst,
+                                catalyst: setup.catalyst,
+                                rvol: setup.rvol,
+                                confidenceScore: setup.convictionScore,
+                                winStatus: "PENDING"
+                            });
                             logs.push(`[Breakout Entry] Fresh Breakout dispatched for ${sym} @ $${currentPrice.toFixed(2)} (Safe zone up to $${maxChase.toFixed(2)})`);
                         } else if (isOverextended && !isCached(overextKey)) {
                             logs.push(`[Chase Guard] ${sym} @ $${currentPrice.toFixed(2)} is overextended past max safe entry $${maxChase.toFixed(2)}. Entry suppressed.`);
@@ -400,6 +428,7 @@ async function handleCron(request: Request) {
         timeET: timeDisplay,
         today: todayStr,
         actionsTriggered,
+        recordedTrades,
         logs
     });
 }

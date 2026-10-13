@@ -1,94 +1,92 @@
 const path = require('path');
+const fs = require('fs');
 
-const isVercel = process.env.VERCEL === '1' || process.env.VERCEL;
-let db = null;
+const LEDGER_FILE = path.resolve(process.cwd(), 'data', 'live-ledger.json');
+const RAW_GITHUB_URL = "https://raw.githubusercontent.com/vamosan/Options-Tracker-Dashboard/main/data/live-ledger.json";
 
-// Mock data for Vercel (Historical audited setups)
-let mockLedger = [
-    { id: 1, timestamp: '2026-10-01T13:35:00.000Z', symbol: 'NVDA', action: 'CALL 230', rationale: 'Explosive upside flow > 500k premium', entry_price: 225.50, max_profit_pct: 22.4, win_status: 'WIN', confidence_score: 95 },
-    { id: 2, timestamp: '2026-10-01T13:35:00.000Z', symbol: 'TSLA', action: 'CALL 375', rationale: 'Institutional sweep above key resistance', entry_price: 360.20, max_profit_pct: 20.8, win_status: 'WIN', confidence_score: 88 }
-];
+function readLocalLedger() {
+    try {
+        if (fs.existsSync(LEDGER_FILE)) {
+            const raw = fs.readFileSync(LEDGER_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (e) {
+        console.warn("Failed to read local ledger file:", e.message);
+    }
+    return [];
+}
 
-if (!isVercel) {
-    const sqlite3 = require('sqlite3').verbose();
-    const dbPath = path.resolve(process.cwd(), 'ledger.sqlite');
-    db = new sqlite3.Database(dbPath);
-
-    // Initialize table
-    db.serialize(() => {
-        db.run(`
-            CREATE TABLE IF NOT EXISTS signals (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                symbol TEXT,
-                action TEXT,
-                rationale TEXT,
-                entry_price REAL,
-                max_profit_pct REAL DEFAULT 0,
-                win_status TEXT DEFAULT 'PENDING',
-                confidence_score REAL DEFAULT 0
-            )
-        `);
-    });
+function writeLocalLedger(data) {
+    try {
+        fs.writeFileSync(LEDGER_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        return true;
+    } catch (e) {
+        console.warn("Failed to write local ledger file:", e.message);
+        return false;
+    }
 }
 
 /**
  * Log a new signal to the ledger
  */
-function logSignal(symbol, action, rationale, entryPrice, confidenceScore = 0) {
-    if (isVercel) {
-        return Promise.resolve(mockLedger.length + 1);
-    }
-    return new Promise((resolve, reject) => {
-        const stmt = db.prepare(`INSERT INTO signals (symbol, action, rationale, entry_price, confidence_score) VALUES (?, ?, ?, ?, ?)`);
-        stmt.run([symbol, action, rationale, entryPrice, confidenceScore], function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-        });
-        stmt.finalize();
-    });
+async function logSignal(symbol, action, rationale, entryPrice, confidenceScore = 0) {
+    const list = readLocalLedger();
+    const newEntry = {
+        id: `sig_${Date.now()}_${symbol}`,
+        timestamp: new Date().toISOString(),
+        symbol,
+        action,
+        rationale,
+        entry_price: entryPrice,
+        max_profit_pct: 0,
+        win_status: 'OPEN_LIVE',
+        confidence_score: confidenceScore
+    };
+    list.unshift(newEntry);
+    writeLocalLedger(list);
+    return newEntry.id;
 }
 
 /**
- * Fetch all signals
+ * Fetch all signals (attempts live GitHub raw source first on serverless to bypass build cache)
  */
-function getSignals() {
-    if (isVercel) {
-        return Promise.resolve(mockLedger);
+async function getSignals() {
+    try {
+        if (process.env.VERCEL) {
+            const res = await fetch(`${RAW_GITHUB_URL}?_t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                const liveData = await res.json();
+                if (Array.isArray(liveData)) return liveData;
+            }
+        }
+    } catch (err) {
+        console.warn("Failed to fetch live ledger from GitHub raw:", err.message);
     }
-    return new Promise((resolve, reject) => {
-        db.all("SELECT * FROM signals ORDER BY timestamp DESC", [], (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
+    return readLocalLedger();
 }
 
 /**
  * Update the backtest result (max_profit_pct and win_status)
  */
-function updateSignalResult(id, maxProfitPct, winStatus) {
-    if (isVercel) {
-        const signal = mockLedger.find(s => s.id === id);
-        if (signal) {
-            signal.max_profit_pct = maxProfitPct;
-            signal.win_status = winStatus;
-            return Promise.resolve(1);
-        }
-        return Promise.resolve(0);
+async function updateSignalResult(id, maxProfitPct, winStatus) {
+    const list = readLocalLedger();
+    const target = list.find(s => s.id === id || s.symbol === id);
+    if (target) {
+        target.max_profit_pct = maxProfitPct;
+        target.win_status = winStatus;
+        writeLocalLedger(list);
+        return 1;
     }
-    return new Promise((resolve, reject) => {
-        const stmt = db.prepare(`UPDATE signals SET max_profit_pct = ?, win_status = ? WHERE id = ?`);
-        stmt.run([maxProfitPct, winStatus, id], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-        });
-        stmt.finalize();
-    });
+    return 0;
 }
 
 module.exports = {
     logSignal,
     getSignals,
-    updateSignalResult
+    updateSignalResult,
+    readLocalLedger,
+    writeLocalLedger
 };

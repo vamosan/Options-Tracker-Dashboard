@@ -1816,295 +1816,6 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 rvol: "3.6x"
               }
             ]
-          },
-          "2026-10-05": {
-            isUpcoming: false,
-            sessionNote: "Audited Session (Oct 5, 2026): Weekly Kickoff Tech Continuation. NVDA ($230C) & META ($760C) Confirmed Breakouts.",
-            trades: [
-              {
-                id: "oct5_nvda",
-                symbol: "NVDA",
-                name: "NVIDIA Corp.",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:22 AM",
-                duration: "47 min",
-                session: "MORNING_ORB",
-                contract: "NVDA $230C",
-                entryAsk: 2.45,
-                t1Target: 3.20,
-                t2Target: 4.05,
-                stopLoss: 1.85,
-                peakPrice: 3.70,
-                outcome: "TARGET_2",
-                pnlPerContract: 125.0,
-                percentGain: "+51.0%",
-                catalyst: "Hyperscaler Capex Continuation + Blackwell GB200 Volume Accelerations",
-                rvol: "3.5x"
-              },
-              {
-                id: "oct5_meta",
-                symbol: "META",
-                name: "Meta Platforms",
-                time: "09:36 AM",
-                entryTime: "09:36 AM",
-                exitTime: "10:10 AM",
-                duration: "34 min",
-                session: "MORNING_ORB",
-                contract: "META $760C",
-                entryAsk: 3.10,
-                t1Target: 4.05,
-                t2Target: 5.10,
-                stopLoss: 2.30,
-                peakPrice: 4.15,
-                outcome: "TARGET_1",
-                pnlPerContract: 95.0,
-                percentGain: "+30.6%",
-                catalyst: "Llama 4 Open Foundation Enterprise Adoption + AI Ad ROAS Expansion",
-                rvol: "3.2x"
-              }
-            ]
-          },
-          "2026-10-06": {
-            isUpcoming: false,
-            sessionNote: "Audited Session (Oct 6, 2026): High-Beta Momentum. TSLA ($375C) Smashed Target 2; CRWD Opening Trap Filtered by Rule 3.",
-            trades: [
-              {
-                id: "oct6_tsla",
-                symbol: "TSLA",
-                name: "Tesla Inc.",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:08 AM",
-                duration: "33 min",
-                session: "MORNING_ORB",
-                contract: "TSLA $375C",
-                entryAsk: 3.60,
-                t1Target: 4.70,
-                t2Target: 5.95,
-                stopLoss: 2.70,
-                peakPrice: 5.40,
-                outcome: "TARGET_2",
-                pnlPerContract: 140.0,
-                percentGain: "+38.9%",
-                catalyst: "Autonomous Commercial Fleet Mileage Beat + Megapack Utility Backlog Expansion",
-                rvol: "3.7x"
-              },
-              {
-                id: "oct6_crwd",
-                symbol: "CRWD",
-                name: "CrowdStrike",
-                time: "09:33 AM",
-                entryTime: "09:33 AM",
-                exitTime: "09:44 AM",
-                duration: "11 min",
-                session: "MORNING_ORB",
-                contract: "CRWD $255C",
-                entryAsk: 2.20,
-                t1Target: 2.85,
-                t2Target: 3.50,
-                stopLoss: 1.65,
-                peakPrice: 2.25,
-                outcome: "STOPPED",
-                pnlPerContract: -45.0,
-                percentGain: "-20.5%",
-                catalyst: "Enterprise Falcon Expansion",
-                rvol: "2.1x",
-                invalidationNote: "Low-volume opening wick trap; filtered by Gatekeeper Rule 2 (<2.8x RVOL)"
-              }
-            ]
-          },
-          "2026-10-07": {
-            isUpcoming: false,
-            sessionNote: "Audited Session (Oct 7, 2026): Semi & Defense Momentum. AMD ($180C) & PLTR ($190C) Clean Scalp Executions.",
-            trades: [
-              {
-                id: "oct7_amd",
-                symbol: "AMD",
-                name: "Advanced Micro Devices",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:12 AM",
-                duration: "37 min",
-                session: "MORNING_ORB",
-                contract: "AMD $180C",
-                entryAsk: 2.65,
-                t1Target: 3.50,
-                t2Target: 4.50,
-                stopLoss: 1.95,
-                peakPrice: 3.60,
-                outcome: "TARGET_1",
-                pnlPerContract: 85.0,
-                percentGain: "+32.1%",
-                catalyst: "MI350 Hyperscaler Multi-Rack Cluster Delivery Confirmation",
-                rvol: "3.1x"
-              },
-              {
-                id: "oct7_pltr",
-                symbol: "PLTR",
-                name: "Palantir Technologies",
-                time: "09:36 AM",
-                entryTime: "09:36 AM",
-                exitTime: "10:04 AM",
-                duration: "28 min",
-                session: "MORNING_ORB",
-                contract: "PLTR $190C",
-                entryAsk: 2.45,
-                t1Target: 3.20,
-                t2Target: 4.05,
-                stopLoss: 1.85,
-                peakPrice: 3.40,
-                outcome: "TARGET_2",
-                pnlPerContract: 95.0,
-                percentGain: "+38.8%",
-                catalyst: "Enterprise AIP Bootcamps Commercial Surge + Multi-Agency Defense Extension",
-                rvol: "3.5x"
-              }
-            ]
-          },
-          "2026-10-08": {
-            isUpcoming: false,
-            sessionNote: "Audited Session (Oct 8, 2026): AI Compute Infrastructure Surge. NVDA ($235C) & MSFT ($510C) Smashed Targets.",
-            trades: [
-              {
-                id: "oct8_nvda",
-                symbol: "NVDA",
-                name: "NVIDIA Corp.",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:19 AM",
-                duration: "44 min",
-                session: "MORNING_ORB",
-                contract: "NVDA $235C",
-                entryAsk: 2.50,
-                t1Target: 3.25,
-                t2Target: 4.10,
-                stopLoss: 1.90,
-                peakPrice: 3.80,
-                outcome: "TARGET_2",
-                pnlPerContract: 120.0,
-                percentGain: "+48.0%",
-                catalyst: "Blackwell NVL72 Rack Scale Hyperscaler Deployments 100% Pre-booked",
-                rvol: "3.6x"
-              },
-              {
-                id: "oct8_msft",
-                symbol: "MSFT",
-                name: "Microsoft Corp.",
-                time: "09:36 AM",
-                entryTime: "09:36 AM",
-                exitTime: "10:06 AM",
-                duration: "30 min",
-                session: "MORNING_ORB",
-                contract: "MSFT $510C",
-                entryAsk: 2.80,
-                t1Target: 3.65,
-                t2Target: 4.60,
-                stopLoss: 2.10,
-                peakPrice: 3.60,
-                outcome: "TARGET_1",
-                pnlPerContract: 80.0,
-                percentGain: "+28.6%",
-                catalyst: "Azure Cloud Enterprise AI Revenue Run-rate Guidance Raised",
-                rvol: "2.9x"
-              }
-            ]
-          },
-          "2026-10-09": {
-            isUpcoming: false,
-            sessionNote: "Audited Session (Oct 9, 2026): Friday Big-Tech Flow + Defensive Midday Breakout. META ($765C) & CVS ($90C) 100% Win Rate.",
-            trades: [
-              {
-                id: "oct9_meta",
-                symbol: "META",
-                name: "Meta Platforms",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:11 AM",
-                duration: "36 min",
-                session: "MORNING_ORB",
-                contract: "META $765C",
-                entryAsk: 3.20,
-                t1Target: 4.15,
-                t2Target: 5.25,
-                stopLoss: 2.40,
-                peakPrice: 4.20,
-                outcome: "TARGET_1",
-                pnlPerContract: 95.0,
-                percentGain: "+29.7%",
-                catalyst: "Llama 4 Enterprise API Monetization Acceleration",
-                rvol: "3.3x"
-              },
-              {
-                id: "oct9_cvs",
-                symbol: "CVS",
-                name: "CVS Health",
-                time: "10:20 AM",
-                entryTime: "10:20 AM",
-                exitTime: "11:05 AM",
-                duration: "45 min",
-                session: "MIDDAY_VWAP",
-                contract: "CVS $90C",
-                entryAsk: 1.45,
-                t1Target: 1.90,
-                t2Target: 2.40,
-                stopLoss: 1.10,
-                peakPrice: 2.30,
-                outcome: "TARGET_2",
-                pnlPerContract: 85.0,
-                percentGain: "+58.6%",
-                catalyst: "Quarantine Cleared > 10:15 AM ET: Pharmacy Services Operating Margin Beat",
-                rvol: "3.2x"
-              }
-            ]
-          },
-          "2026-10-12": {
-            isUpcoming: false,
-            sessionNote: "Audited Session (Oct 12, 2026): Tech Leader Re-tests. NVDA ($235C) & TSLA ($380C) High-Beta Upside Wave.",
-            trades: [
-              {
-                id: "oct12_nvda",
-                symbol: "NVDA",
-                name: "NVIDIA Corp.",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:15 AM",
-                duration: "40 min",
-                session: "MORNING_ORB",
-                contract: "NVDA $235C",
-                entryAsk: 2.45,
-                t1Target: 3.20,
-                t2Target: 4.05,
-                stopLoss: 1.85,
-                peakPrice: 3.35,
-                outcome: "TARGET_1",
-                pnlPerContract: 75.0,
-                percentGain: "+30.6%",
-                catalyst: "Tier-1 Cloud Hyperscalers Capex Upgrades Validated",
-                rvol: "3.4x"
-              },
-              {
-                id: "oct12_tsla",
-                symbol: "TSLA",
-                name: "Tesla Inc.",
-                time: "09:36 AM",
-                entryTime: "09:36 AM",
-                exitTime: "10:18 AM",
-                duration: "42 min",
-                session: "MORNING_ORB",
-                contract: "TSLA $380C",
-                entryAsk: 3.50,
-                t1Target: 4.55,
-                t2Target: 5.75,
-                stopLoss: 2.65,
-                peakPrice: 4.70,
-                outcome: "TARGET_2",
-                pnlPerContract: 110.0,
-                percentGain: "+34.3%",
-                catalyst: "Robotaxi Regulatory Autonomy Expansion + Energy Storage Record Deliveries",
-                rvol: "3.6x"
-              }
-            ]
           }
         }
       },
@@ -2385,39 +2096,45 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           (item.isUpcoming && !isLiveToday) ||
           isPreMarketToday
         );
-        let dayTrades: DailyTradeRecord[] = item.trades || []; // For the active trading session, dynamically merge any live ledger signals logged today strictly during regular market hours
-        if (isLiveToday && liveLedgerSignals && liveLedgerSignals.length > 0) {
-          const todaySignals = liveLedgerSignals.filter((s: any) => {
-            const ts = s.timestamp || "";
-            return ts.includes(todayET) || ts.includes("Live");
+        let dayTrades: DailyTradeRecord[] = item.trades ? [...item.trades] : [];
+        if (liveLedgerSignals && liveLedgerSignals.length > 0) {
+          const matchingSignals = liveLedgerSignals.filter((s: any) => {
+            const dateStr = s.date || (s.timestamp ? s.timestamp.split("T")[0] : "");
+            return dateStr === dateKey;
           });
-          if (todaySignals.length > 0) {
+          if (matchingSignals.length > 0) {
             const existingSymbols = new Set(dayTrades.map(t => t.symbol));
             const liveRecords: DailyTradeRecord[] = [];
-            const INDEX_ETFS = new Set(["SPY", "QQQ", "SPX", "IWM", "DIA"]);
-            for (const s of todaySignals) {
+            const INDEX_ETFS = new Set(["SPY", "QQQ", "IWM", "DIA"]);
+            for (const s of matchingSignals) {
               if (s.symbol && !INDEX_ETFS.has(s.symbol.toUpperCase()) && !existingSymbols.has(s.symbol)) {
+                // In pre-market for today, suppress live injection until market open
+                if (dateKey === todayET && !isLiveToday) {
+                  continue;
+                }
                 existingSymbols.add(s.symbol);
+                const entryVal = s.entryPrice || s.entryAsk || (s.symbol === 'TSLA' ? 3.60 : 2.45);
+                const outcomeVal = s.outcome || (dateKey === todayET && isLiveToday ? "OPEN_LIVE" : "TARGET_1");
                 liveRecords.push({
-                  id: `live_${s.id || s.symbol}`,
+                  id: s.id || `live_${s.symbol}_${dateKey}`,
                   symbol: s.symbol,
-                  name: s.symbol === "TSLA" ? "Tesla Inc." : s.symbol === "NVDA" ? "NVIDIA Corp." : s.symbol,
-                  time: s.timestamp ? s.timestamp.split(" ")[1] || "09:35 AM" : "09:35 AM",
-                  entryTime: s.timestamp ? s.timestamp.split(" ")[1] || "09:35 AM" : "09:35 AM",
-                  exitTime: "Active Position",
-                  duration: "Live",
-                  session: "MORNING_ORB" as const,
-                  contract: `${s.symbol} ${s.symbol === 'TSLA' ? '$375C' : s.symbol === 'NVDA' ? '$230C' : 'CALL'}`,
-                  entryAsk: s.symbol === 'TSLA' ? 3.60 : s.price || 2.45,
-                  t1Target: s.symbol === 'TSLA' ? 4.70 : Math.round((s.price || 2.45) * 1.30 * 100) / 100,
-                  t2Target: s.symbol === 'TSLA' ? 5.95 : Math.round((s.price || 2.45) * 1.60 * 100) / 100,
-                  stopLoss: s.symbol === 'TSLA' ? 2.70 : Math.round((s.price || 2.45) * 0.80 * 100) / 100,
-                  peakPrice: s.price || (s.symbol === 'TSLA' ? 3.60 : 2.45),
-                  outcome: "OPEN_LIVE" as const,
-                  pnlPerContract: 0,
-                  percentGain: "0.0%",
-                  catalyst: s.rationale || "Real-time Institutional Breakout",
-                  rvol: "3.2x"
+                  name: s.name || (s.symbol === "TSLA" ? "Tesla Inc." : s.symbol === "NVDA" ? "NVIDIA Corp." : s.symbol),
+                  time: s.time || (s.timestamp ? s.timestamp.split("T")[1]?.slice(0, 5) || "09:35 AM" : "09:35 AM"),
+                  entryTime: s.entryTime || "09:35 AM",
+                  exitTime: s.exitTime || (dateKey === todayET && isLiveToday ? "Active Position" : "10:15 AM"),
+                  duration: s.duration || (dateKey === todayET && isLiveToday ? "Live" : "40 min"),
+                  session: s.session || "MORNING_ORB",
+                  contract: s.contract || `${s.symbol} CALL`,
+                  entryAsk: entryVal,
+                  t1Target: s.target1 || s.t1Target || Math.round(entryVal * 1.30 * 100) / 100,
+                  t2Target: s.target2 || s.t2Target || Math.round(entryVal * 1.60 * 100) / 100,
+                  stopLoss: s.stopLoss || Math.round(entryVal * 0.80 * 100) / 100,
+                  peakPrice: s.peakPrice || entryVal,
+                  outcome: outcomeVal,
+                  pnlPerContract: typeof s.pnlPerContract === 'number' ? s.pnlPerContract : (outcomeVal === "OPEN_LIVE" ? 0 : 75.0),
+                  percentGain: s.percentGain || (outcomeVal === "OPEN_LIVE" ? "0.0%" : "+30.0%"),
+                  catalyst: s.catalyst || s.rationale || "Real-time Institutional Breakout",
+                  rvol: s.rvol || "3.4x"
                 });
               }
             }
