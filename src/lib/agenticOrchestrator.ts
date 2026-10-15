@@ -69,6 +69,34 @@ export const SECTOR_AGNOSTIC_UNIVERSE: WatchlistCandidate[] = [
     sector: "Autonomous Fleet & EV",
     catalyst: "FSD V13 Commercial Autonomous Fleet 50M Miles + Megapack Revenue Surge",
     rvolExpectation: "3.2x"
+  },
+  {
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    sector: "Consumer Tech & AI",
+    catalyst: "Apple Intelligence Global Rollout & Record High Services ARR",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "MSFT",
+    name: "Microsoft Corp.",
+    sector: "Cloud & Enterprise AI",
+    catalyst: "Azure AI Hypergrowth & Copilot Enterprise Seat Monetization",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "AMZN",
+    name: "Amazon.com Inc.",
+    sector: "Cloud & E-Commerce",
+    catalyst: "AWS Cloud Compute Acceleration & Record Prime Operating Margins",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "AVGO",
+    name: "Broadcom Inc.",
+    sector: "AI & Semi",
+    catalyst: "Custom AI ASIC Hyperscaler Order Backlog Record Expansion",
+    rvolExpectation: "2.8x"
   }
 ];
 

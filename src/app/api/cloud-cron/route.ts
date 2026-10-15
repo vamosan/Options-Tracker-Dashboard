@@ -153,10 +153,9 @@ async function handleCron(request: Request) {
             // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
             const consensus = await runAgenticDailyConsensus(timeVal);
             
-            // Focus on top cleared setups (cleared by Adversarial Risk Officer)
+            // Focus on all qualified setups cleared by Adversarial Risk Officer across the entire universe
             const activeSetups = consensus.allRanked
-                .filter(s => s.riskOfficer.status !== "VETOED")
-                .slice(0, 2); // Top 2 highest conviction opportunities of the day
+                .filter(s => s.riskOfficer.status !== "VETOED");
 
             for (const setup of activeSetups) {
                 const sym = setup.symbol;

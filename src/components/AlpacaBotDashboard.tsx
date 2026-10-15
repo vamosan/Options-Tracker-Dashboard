@@ -851,9 +851,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     }
 
     const todayStr = getTodayET();
-    const top1 = agenticConsensusData?.topOpportunity?.symbol || prospectiveStocksList[0]?.symbol || "NVDA";
-    const top2 = agenticConsensusData?.secondaryOpportunity?.symbol || prospectiveStocksList[1]?.symbol || "META";
-    const targets = [top1, top2].filter(Boolean);
+    const targets = Array.from(new Set([
+      ...(agenticConsensusData?.allRanked?.filter(s => s.riskOfficer?.status !== "VETOED")?.map(s => s.symbol) || []),
+      ...prospectiveStocksList.map(s => s.symbol)
+    ])).filter(Boolean);
 
     for (const sym of targets) {
       const entryAlertKey = `AUTO_DISCORD_${sym}_ENTRY_${todayStr}`;
