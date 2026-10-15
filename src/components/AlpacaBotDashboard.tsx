@@ -856,44 +856,60 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     const targets = [top1, top2].filter(Boolean);
 
     for (const sym of targets) {
-      const alertKey = `AUTO_DISCORD_${sym}_ENTRY_${todayStr}`;
-      
-      // Check session storage and memory ref to enforce zero spam
-      if (typeof window !== "undefined" && window.sessionStorage.getItem(alertKey)) {
-        continue;
-      }
-      if (dispatchedDiscordAlertsRef.current.has(alertKey)) {
-        continue;
-      }
+      const entryAlertKey = `AUTO_DISCORD_${sym}_ENTRY_${todayStr}`;
+      const t1AlertKey = `AUTO_DISCORD_${sym}_T1_${todayStr}`;
+      const t2AlertKey = `AUTO_DISCORD_${sym}_T2_${todayStr}`;
+      const trailAlertKey = `AUTO_DISCORD_${sym}_TRAIL_${todayStr}`;
+
+      const hasEntryFired = dispatchedDiscordAlertsRef.current.has(entryAlertKey) || 
+        (typeof window !== "undefined" && Boolean(window.sessionStorage.getItem(entryAlertKey)));
+      const hasT1Fired = dispatchedDiscordAlertsRef.current.has(t1AlertKey) || 
+        (typeof window !== "undefined" && Boolean(window.sessionStorage.getItem(t1AlertKey)));
+      const hasT2Fired = dispatchedDiscordAlertsRef.current.has(t2AlertKey) || 
+        (typeof window !== "undefined" && Boolean(window.sessionStorage.getItem(t2AlertKey)));
+      const hasTrailFired = dispatchedDiscordAlertsRef.current.has(trailAlertKey) || 
+        (typeof window !== "undefined" && Boolean(window.sessionStorage.getItem(trailAlertKey)));
 
       const q = liveQuotes[sym];
       const liveSetup = setups.find(s => s.symbol === sym);
       const prospect = prospectiveStocksList.find(s => s.symbol === sym);
 
       const spotPrice = q?.price || liveSetup?.price || prospect?.price || 0;
-      const dayHigh = q?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : spotPrice * 1.012);
-      
-      const fixedShelf = sym === "NVDA" ? 226.50 : 375.00;
-      const shelfMatch = prospect?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
-      const triggerShelf = fixedShelf || (shelfMatch ? parseFloat(shelfMatch[1]) : 0);
+      if (spotPrice <= 0) continue;
 
+      const dayHigh = q?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : spotPrice * 1.012);
+
+      // Parse trigger shelf dynamically from prospect definition or fallback to calibrated level
+      const shelfMatch = prospect?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
+      const parsedShelf = shelfMatch ? parseFloat(shelfMatch[1]) : 0;
+      const staticShelf = sym === "NVDA" ? 226.50 : sym === "TSLA" ? 375.00 : sym === "META" ? 758.00 : sym === "LLY" ? 1190.00 : sym === "CVS" ? 89.50 : 0;
+      const triggerShelf = parsedShelf || staticShelf || (liveSetup?.orb?.high ? liveSetup.orb.high : Math.round(spotPrice * 1.008 * 100) / 100);
+
+      // Dynamically select sensible strike based on underlying price
+      const contractStrike = prospect?.suggestedOption?.strike || liveSetup?.contract?.strike || (
+        spotPrice > 1000 ? Math.ceil(spotPrice / 10) * 10 :
+        spotPrice > 400 ? Math.ceil(spotPrice / 5) * 5 :
+        spotPrice > 100 ? Math.ceil(spotPrice / 2.5) * 2.5 :
+        Math.ceil(spotPrice)
+      );
+      const contractSym = `${sym} $${contractStrike} Call`;
+
+      // Dynamic contract pricing
+      const entryAsk = liveSetup?.contract?.ask || prospect?.suggestedOption?.estimatedAsk || Math.round(spotPrice * 0.014 * 100) / 100;
+      const target1 = liveSetup?.targets?.target1 || prospect?.suggestedOption?.target1 || Math.round(entryAsk * 1.30 * 100) / 100;
+      const target2 = liveSetup?.targets?.target2 || prospect?.suggestedOption?.target2 || Math.round(entryAsk * 1.65 * 100) / 100;
+      const stopLoss = liveSetup?.targets?.stopLoss || prospect?.suggestedOption?.stopLoss || Math.round(entryAsk * 0.75 * 100) / 100;
+      const trailWinPrice = Math.round(entryAsk * 1.20 * 100) / 100;
+      const catalystHeadline = liveSetup?.catalyst?.headline || prospect?.catalystHeadline || "Tier-1 Institutional Breakout";
+
+      // 1. Fresh Breakout Entry Alert
       const isBreakout = (triggerShelf > 0 && (spotPrice >= triggerShelf || dayHigh >= triggerShelf)) || (liveSetup?.signal?.state === "BREAKOUT");
 
-      if (isBreakout && spotPrice > 0) {
-        // Mark as sent immediately to prevent any duplicate dispatch
-        dispatchedDiscordAlertsRef.current.add(alertKey);
+      if (!hasEntryFired && isBreakout) {
+        dispatchedDiscordAlertsRef.current.add(entryAlertKey);
         if (typeof window !== "undefined") {
-          window.sessionStorage.setItem(alertKey, "1");
+          window.sessionStorage.setItem(entryAlertKey, "1");
         }
-
-        // Lock contract strike to setup anchor (strictly 230 for NVDA, 375 for TSLA)
-        const contractStrike = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : (prospect?.suggestedOption?.strike || liveSetup?.contract?.strike || 230));
-        const contractSym = `${sym} $${contractStrike} Call`;
-        const entryAsk = liveSetup?.contract?.ask || prospect?.suggestedOption?.estimatedAsk || (sym === "NVDA" ? 2.45 : 3.60);
-        const target1 = liveSetup?.targets?.target1 || prospect?.suggestedOption?.target1 || (sym === "NVDA" ? 3.20 : 4.70);
-        const target2 = liveSetup?.targets?.target2 || prospect?.suggestedOption?.target2 || (sym === "NVDA" ? 4.05 : 5.95);
-        const stopLoss = liveSetup?.targets?.stopLoss || prospect?.suggestedOption?.stopLoss || (sym === "NVDA" ? 1.85 : 2.70);
-        const catalystHeadline = liveSetup?.catalyst?.headline || prospect?.catalystHeadline || "Tier-1 Institutional Breakout";
 
         fetch("/api/discord", {
           method: "POST",
@@ -930,16 +946,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       }
 
       // 2. Automated Target 1 Hit Alert (+30% Scalp)
+      // Anti-hindsight rule: Requires confirmed entry first
       const t1StockLevel = triggerShelf * 1.015;
-      const t1AlertKey = `AUTO_DISCORD_${sym}_T1_${todayStr}`;
-      if ((spotPrice >= t1StockLevel || dayHigh >= t1StockLevel) &&
-          !dispatchedDiscordAlertsRef.current.has(t1AlertKey) &&
-          !(typeof window !== "undefined" && window.sessionStorage.getItem(t1AlertKey))) {
-        
+      if (hasEntryFired && !hasT1Fired && (spotPrice >= t1StockLevel || dayHigh >= t1StockLevel)) {
         dispatchedDiscordAlertsRef.current.add(t1AlertKey);
         if (typeof window !== "undefined") window.sessionStorage.setItem(t1AlertKey, "1");
 
-        const strikeNum = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : 230);
         fetch("/api/discord", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -947,31 +959,27 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             action: "target-scale",
             payload: {
               symbol: sym,
-              contract: `${sym} $${strikeNum} Call`,
+              contract: contractSym,
               stage: "TARGET_1_HIT",
               currentPrice: spotPrice,
               highPrice: dayHigh,
-              entryPrice: sym === "NVDA" ? 2.45 : 3.60,
-              targetPrice: sym === "NVDA" ? 3.20 : 4.70,
-              pnlPercent: "+30.6%",
-              actionMessage: `Underlying reached $${t1StockLevel.toFixed(2)}. Target 1 achieved!`,
+              entryPrice: entryAsk,
+              targetPrice: target1,
+              pnlPercent: "+30.0%",
+              actionMessage: `Underlying reached $${t1StockLevel.toFixed(2)}. Target 1 achieved! Scale 50% profit.`,
               stopAdjustment: `Move stop loss to breakeven ($${triggerShelf.toFixed(2)})`
             }
           })
         }).catch(err => console.error("T1 dispatch error:", err));
       }
 
-      // 3. Automated Target 2 Hit Alert (+65%–+80% Runner Extension)
-      const t2StockLevel = triggerShelf * 1.024;
-      const t2AlertKey = `AUTO_DISCORD_${sym}_T2_${todayStr}`;
-      if ((spotPrice >= t2StockLevel || dayHigh >= t2StockLevel) &&
-          !dispatchedDiscordAlertsRef.current.has(t2AlertKey) &&
-          !(typeof window !== "undefined" && window.sessionStorage.getItem(t2AlertKey))) {
-        
+      // 3. Automated Target 2 Hit Alert (+65% Runner Extension)
+      // Anti-hindsight rule: Requires confirmed Target 1 first
+      const t2StockLevel = triggerShelf * 1.025;
+      if (hasT1Fired && !hasT2Fired && (spotPrice >= t2StockLevel || dayHigh >= t2StockLevel)) {
         dispatchedDiscordAlertsRef.current.add(t2AlertKey);
         if (typeof window !== "undefined") window.sessionStorage.setItem(t2AlertKey, "1");
 
-        const strikeNum = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : 230);
         fetch("/api/discord", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -979,13 +987,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             action: "target-scale",
             payload: {
               symbol: sym,
-              contract: `${sym} $${strikeNum} Call`,
+              contract: contractSym,
               stage: "TARGET_2_HIT",
               currentPrice: spotPrice,
               highPrice: dayHigh,
-              entryPrice: sym === "NVDA" ? 2.45 : 3.60,
-              targetPrice: sym === "NVDA" ? 4.25 : 5.95,
-              pnlPercent: "+73.5%",
+              entryPrice: entryAsk,
+              targetPrice: target2,
+              pnlPercent: "+65.0%",
               actionMessage: `Peak extension touched $${dayHigh.toFixed(2)}! Target 2 smashed. Harvest profits!`,
               stopAdjustment: `Trail runners behind 5-min EMA9. DO NOT ENTER AT MARKET.`
             }
@@ -993,17 +1001,14 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
         }).catch(err => console.error("T2 dispatch error:", err));
       }
 
-      // 4. Automated Trailing Stop Alert on Pullback from High
-      const trailAlertKey = `AUTO_DISCORD_${sym}_TRAIL_${todayStr}`;
-      const hasPeakedAndPulled = dayHigh >= t2StockLevel && spotPrice <= (dayHigh - 2.5);
-      if (hasPeakedAndPulled &&
-          !dispatchedDiscordAlertsRef.current.has(trailAlertKey) &&
-          !(typeof window !== "undefined" && window.sessionStorage.getItem(trailAlertKey))) {
-        
+      // 4. Automated Trailing Stop Alert on Pullback from Peak
+      // Anti-hindsight rule: Requires Target 2 touched, then price pulled back by scaled threshold
+      const pullThreshold = Math.max(1.0, triggerShelf * 0.0075);
+      const hasPeakedAndPulled = hasT2Fired && dayHigh >= t2StockLevel && spotPrice <= (dayHigh - pullThreshold);
+      if (hasPeakedAndPulled && !hasTrailFired) {
         dispatchedDiscordAlertsRef.current.add(trailAlertKey);
         if (typeof window !== "undefined") window.sessionStorage.setItem(trailAlertKey, "1");
 
-        const strikeNum = (sym === "NVDA" ? 230 : sym === "TSLA" ? 375 : 230);
         fetch("/api/discord", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1011,13 +1016,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             action: "target-scale",
             payload: {
               symbol: sym,
-              contract: `${sym} $${strikeNum} Call`,
+              contract: contractSym,
               stage: "TRAILING_STOP_EXIT",
               currentPrice: spotPrice,
               highPrice: dayHigh,
-              entryPrice: sym === "NVDA" ? 2.45 : 3.60,
-              targetPrice: sym === "NVDA" ? 2.95 : 4.10,
-              pnlPercent: "+20.4% Trailing Win",
+              entryPrice: entryAsk,
+              targetPrice: trailWinPrice,
+              pnlPercent: "+20.0% Trailing Win",
               actionMessage: `Stock pulled back from $${dayHigh.toFixed(2)} peak to $${spotPrice.toFixed(2)}. Trailing stop triggered on runners.`,
               stopAdjustment: `All positions closed. Overall trade secured in heavy green.`
             }
@@ -4148,24 +4153,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const name = liveSetup?.name || prospective?.name || symbol;
 
             // Live high-frequency price resolution
-            const price = quote?.price || liveSetup?.price || prospective?.price || (currentSym === "META" ? 751.66 : 225.07);
+            const price = quote?.price || liveSetup?.price || prospective?.price || 0;
             const changePct = quote ? quote.changePercent : (liveSetup?.changePercent ?? prospective?.changePercent ?? 0.22);
             const dayHigh = quote?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : price * 1.012);
             const dayLow = quote?.dayLow || (liveSetup?.orb?.low ? liveSetup.orb.low * 0.992 : price * 0.988);
 
             // Strict Strike Anchor Rule: Lock to planned setup strike (never drift to higher OTM strikes on live price)
-            const strike = (currentSym === "NVDA" ? 230 : currentSym === "TSLA" ? 375 : currentSym === "META" ? 760 : (prospective?.suggestedOption.strike || liveSetup?.contract.strike || 230));
+            const dynamicStrike = prospective?.suggestedOption?.strike || liveSetup?.contract?.strike || (
+              price > 1000 ? Math.ceil(price / 10) * 10 :
+              price > 400 ? Math.ceil(price / 5) * 5 :
+              price > 100 ? Math.ceil(price / 2.5) * 2.5 :
+              Math.ceil(price || 100)
+            );
+            const strike = (currentSym === "NVDA" ? 230 : currentSym === "TSLA" ? 375 : currentSym === "META" ? 760 : dynamicStrike);
             const contract = `${symbol} $${strike} Call`;
-            const entryAsk = liveSetup?.contract.ask || prospective?.suggestedOption.estimatedAsk || (currentSym === "META" ? 3.10 : 2.45);
-            const target1 = liveSetup?.targets.target1 || prospective?.suggestedOption.target1 || (currentSym === "META" ? 4.05 : 3.20);
-            const target2 = liveSetup?.targets.target2 || prospective?.suggestedOption.target2 || (currentSym === "META" ? 5.10 : 4.05);
-            const stopLoss = liveSetup?.targets.stopLoss || prospective?.suggestedOption.stopLoss || (currentSym === "META" ? 2.30 : 1.85);
+            const entryAsk = liveSetup?.contract?.ask || prospective?.suggestedOption?.estimatedAsk || (price > 0 ? Math.round(price * 0.014 * 100) / 100 : 2.45);
+            const target1 = liveSetup?.targets?.target1 || prospective?.suggestedOption?.target1 || Math.round(entryAsk * 1.30 * 100) / 100;
+            const target2 = liveSetup?.targets?.target2 || prospective?.suggestedOption?.target2 || Math.round(entryAsk * 1.65 * 100) / 100;
+            const stopLoss = liveSetup?.targets?.stopLoss || prospective?.suggestedOption?.stopLoss || Math.round(entryAsk * 0.75 * 100) / 100;
             
             // Primary Institutional Trigger Shelf:
             const shelfMatch = prospective?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
             const parsedShelf = shelfMatch ? parseFloat(shelfMatch[1]) : 0;
-            const staticShelf = currentSym === "NVDA" ? 226.50 : currentSym === "TSLA" ? 375.00 : currentSym === "META" ? 758.00 : 0;
-            const triggerLevel = staticShelf || parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : price * 0.995);
+            const staticShelf = currentSym === "NVDA" ? 226.50 : currentSym === "TSLA" ? 375.00 : currentSym === "META" ? 758.00 : currentSym === "LLY" ? 1190.00 : currentSym === "CVS" ? 89.50 : 0;
+            const triggerLevel = parsedShelf || staticShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100);
 
             // Active Breakout latch & Anchors
             // CRITICAL: Intraday breakout can ONLY be true during regular market hours (after 09:35 AM ET)

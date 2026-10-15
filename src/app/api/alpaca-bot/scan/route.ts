@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
+import { PROSPECTIVE_STOCKS } from '@/lib/prospectiveStocks';
 
 const ALPACA_API_KEY = process.env.ALPACA_API_KEY || 'PKWRCURWLNXPT2TBFR3WKS3U44';
 const ALPACA_SECRET_KEY = process.env.ALPACA_SECRET_KEY || 'HddJhbAp2r9mSRs8GpNTgMPTYHzmJc9zjWwyKhJyRCX2';
@@ -135,8 +136,10 @@ export async function POST() {
 
             // Forward-Looking Trigger Shelf:
             // Institutional defined trigger shelves for core picks, otherwise calibrated morning ORB High
-            const fixedTriggerShelf = asset.symbol === 'NVDA' ? 226.50 : asset.symbol === 'TSLA' ? 375.00 : 0;
-            const triggerShelf = fixedTriggerShelf || morningOrbHigh;
+            const benchmarkProspect = PROSPECTIVE_STOCKS.find(p => p.symbol === asset.symbol);
+            const prospectShelfMatch = benchmarkProspect?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
+            const prospectShelf = prospectShelfMatch ? parseFloat(prospectShelfMatch[1]) : 0;
+            const triggerShelf = prospectShelf > 0 ? prospectShelf : morningOrbHigh;
             const isBreakout = (livePrice >= triggerShelf || dayHigh >= triggerShelf);
             const rangeLow = morningOrbLow;
             const rangeWidth = Math.round((triggerShelf - rangeLow) * 100) / 100;
@@ -148,10 +151,14 @@ export async function POST() {
 
             // 4. Strict Options Chain Selection (Anchor strike to setup trigger shelf, NEVER drift on live price)
             const strikeStep = triggerShelf > 200 ? 5 : triggerShelf > 100 ? 2.5 : 1;
-            const targetStrike = asset.symbol === 'NVDA' ? 230 : asset.symbol === 'TSLA' ? 375 : Math.round((triggerShelf * 1.01) / strikeStep) * strikeStep;
+            const targetStrike = benchmarkProspect?.suggestedOption?.strike || (
+                triggerShelf > 1000 ? Math.ceil(triggerShelf / 10) * 10 :
+                triggerShelf > 400 ? Math.ceil(triggerShelf / 5) * 5 :
+                Math.round((triggerShelf * 1.01) / strikeStep) * strikeStep
+            );
             let contractSymbol = `${asset.symbol}${todayStr.replace(/-/g, '').slice(2)}C00${Math.round(targetStrike * 1000)}`;
-            let liveAsk = 2.30;
-            let liveBid = 2.25;
+            let liveAsk = benchmarkProspect?.suggestedOption?.estimatedAsk || (livePrice > 0 ? Math.round(livePrice * 0.014 * 100) / 100 : 2.30);
+            let liveBid = Math.round((liveAsk - 0.05) * 100) / 100;
             let spread = 0.05;
 
             try {
