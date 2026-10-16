@@ -133,6 +133,7 @@ export interface AgenticSetupStructured {
   sector: string;
   rank: number;
   isTopPick: boolean;
+  direction?: "CALL" | "PUT";
   convictionScore: number; // 0 to 100
   underlyingPrice: number;
   trigger: number;
@@ -186,27 +187,33 @@ export interface AgenticConsensusDossier {
 }
 
 /**
- * 1. Macro & Regime Agent: Evaluates SPY, QQQ, VIX
+ * 1. Macro & Regime Agent: Evaluates SPY, QQQ, VIX & Intraday Index Delta
  */
 export async function runMacroRegimeAgent(yf: any): Promise<AgenticMacroRegime> {
   try {
     const quotes = await yf.quote(['SPY', 'QQQ', '^VIX']).catch(() => []);
-    const spy = quotes.find((q: any) => q.symbol === 'SPY')?.regularMarketPrice || 769.64;
-    const qqq = quotes.find((q: any) => q.symbol === 'QQQ')?.regularMarketPrice || 744.50;
-    const vix = quotes.find((q: any) => q.symbol === '^VIX')?.regularMarketPrice || 16.39;
+    const spyObj = quotes.find((q: any) => q.symbol === 'SPY');
+    const qqqObj = quotes.find((q: any) => q.symbol === 'QQQ');
+    const vixObj = quotes.find((q: any) => q.symbol === '^VIX');
+
+    const spy = spyObj?.regularMarketPrice || 765.10;
+    const qqq = qqqObj?.regularMarketPrice || 730.50;
+    const vix = vixObj?.regularMarketPrice || 17.50;
+    const spyChg = spyObj?.regularMarketChangePercent ?? 0;
+    const qqqChg = qqqObj?.regularMarketChangePercent ?? 0;
 
     let score = 1;
     let regime: AgenticMacroRegime["regime"] = "BULLISH_RISK_ON";
-    let summary = `SPY @ $${spy.toFixed(2)} and QQQ @ $${qqq.toFixed(2)} holding above moving average shelves. VIX at ${vix.toFixed(2)} favors clean directional breakout momentum.`;
+    let summary = `SPY @ $${spy.toFixed(2)} (${spyChg >= 0 ? '+' : ''}${spyChg.toFixed(2)}%) and QQQ @ $${qqq.toFixed(2)} (${qqqChg >= 0 ? '+' : ''}${qqqChg.toFixed(2)}%) holding above moving average shelves. VIX at ${vix.toFixed(2)} favors clean directional breakout momentum.`;
 
-    if (vix > 24) {
+    if (vix > 24 || spyChg <= -0.60 || qqqChg <= -0.85) {
       score = -2;
       regime = "DEFENSIVE_PULLBACK";
-      summary = `High Volatility Tape (VIX ${vix.toFixed(2)} > 24). Elevated macro risk; favor tight stops and defensive allocation.`;
-    } else if (vix > 19) {
+      summary = `Bearish Distribution Tape (SPY ${spyChg.toFixed(2)}%, QQQ ${qqqChg.toFixed(2)}%, VIX ${vix.toFixed(2)}). Call breakouts locked out; favor high-beta Breakdown PUTs below opening range support.`;
+    } else if (vix > 19 || spyChg < -0.20 || qqqChg < -0.30) {
       score = 0;
       regime = "VOLATILE_ROTATION";
-      summary = `Moderate Volatility Tape (VIX ${vix.toFixed(2)}). Sector rotation underway; demand strict volume confirmation before entry.`;
+      summary = `Two-Way Rotational Tape (SPY ${spyChg.toFixed(2)}%, VIX ${vix.toFixed(2)}). Sector dispersion elevated; demand strict volume confirmation before entry.`;
     } else {
       score = 1;
       regime = "BULLISH_RISK_ON";
@@ -226,9 +233,15 @@ export async function runMacroRegimeAgent(yf: any): Promise<AgenticMacroRegime> 
 }
 
 /**
- * 2. Helper to round strike sensibly based on underlying price
+ * 2. Helper to round strike sensibly based on underlying price & direction
  */
-function calculateSensibleStrike(price: number): number {
+function calculateSensibleStrike(price: number, direction: "CALL" | "PUT" = "CALL"): number {
+  if (direction === "PUT") {
+    if (price > 1000) return Math.floor(price / 10) * 10;
+    if (price > 400) return Math.floor(price / 5) * 5;
+    if (price > 100) return Math.floor(price / 2.5) * 2.5;
+    return Math.floor(price);
+  }
   if (price > 1000) {
     return Math.ceil(price / 10) * 10;
   } else if (price > 400) {
@@ -346,30 +359,50 @@ export function structureSetup(
     changePercent?: number;
   }
 ): AgenticSetupStructured {
-  // Baseline matching benchmark stock if exists
   const benchmark = PROSPECTIVE_STOCKS.find(p => p.symbol === candidate.symbol);
   
-  // Non-Repainting Session Anchor: Anchor trigger shelf to today's actual Open / Previous Close
-  // so the trigger shelf NEVER repaints lower when a stock drops intraday.
   const dayOpen = quoteMetrics?.dayOpen && quoteMetrics.dayOpen > 0 ? quoteMetrics.dayOpen : currentPrice;
   const prevClose = quoteMetrics?.prevClose && quoteMetrics.prevClose > 0 ? quoteMetrics.prevClose : currentPrice;
-  const baseAnchor = Math.max(dayOpen, prevClose);
+  const changePct = quoteMetrics?.changePercent ?? 0;
+  const sessionHigh = quoteMetrics?.dayHigh || currentPrice;
+  const rejectedOffHighs = sessionHigh > 0 && currentPrice < sessionHigh * 0.985;
+
+  // Determine whether this stock/session is a BEARISH BREAKDOWN PUT or BULLISH BREAKOUT CALL
+  const isBearishBreakdown =
+    changePct <= -1.0 ||
+    (macroScore < 0 && (changePct < 0 || currentPrice < dayOpen * 0.996)) ||
+    (rejectedOffHighs && currentPrice < dayOpen);
+
+  const direction: "CALL" | "PUT" = isBearishBreakdown ? "PUT" : "CALL";
+
+  // Non-Repainting Session Anchor:
+  // For CALL: Anchor trigger shelf above max(dayOpen, prevClose)
+  // For PUT: Anchor breakdown shelf below min(dayOpen, prevClose)
+  const baseAnchor = direction === "CALL"
+    ? Math.max(dayOpen, prevClose)
+    : Math.min(dayOpen, prevClose);
 
   const parsedBenchShelf = parseFloat(benchmark?.triggerShelf?.match(/\$([0-9.]+)/)?.[1] || "0");
   const isBenchShelfValidForSession =
-    parsedBenchShelf >= baseAnchor * 1.003 && parsedBenchShelf <= baseAnchor * 1.025;
+    direction === "CALL" &&
+    parsedBenchShelf >= baseAnchor * 1.003 &&
+    parsedBenchShelf <= baseAnchor * 1.025;
 
-  const trigger = isBenchShelfValidForSession
+  const trigger = direction === "PUT"
+    ? Math.round(baseAnchor * 0.992 * 100) / 100
+    : isBenchShelfValidForSession
     ? parsedBenchShelf
     : Math.round(baseAnchor * 1.010 * 100) / 100;
 
-  // Anti-Hindsight Safe Zone: Max Chase buffer is strictly capped
+  // Anti-Hindsight Safe Zone
   const chaseBuffer = Math.min(2.20, Math.max(0.65, trigger * 0.0065));
-  const maxChase = Math.round((trigger + chaseBuffer) * 100) / 100;
+  const maxChase = direction === "PUT"
+    ? Math.round((trigger - chaseBuffer) * 100) / 100
+    : Math.round((trigger + chaseBuffer) * 100) / 100;
 
-  // Option strike
-  const strike = calculateSensibleStrike(trigger);
-  const contract = `${candidate.symbol} $${strike}C`;
+  // Option strike & contract
+  const strike = calculateSensibleStrike(direction === "PUT" ? currentPrice : trigger, direction);
+  const contract = `${candidate.symbol} $${strike}${direction === "PUT" ? "P" : "C"}`;
 
   // Estimate option ask: ~1.2% - 1.8% of spot
   const rawAsk = (benchmark?.suggestedOption?.estimatedAsk && Math.abs(currentPrice - benchmark.price) / benchmark.price < 0.05)
@@ -387,12 +420,9 @@ export function structureSetup(
   const exhaustionCount = flags.exhaustion.length;
   const bearishCount = flags.bearish.length;
   const isDeathCross = flags.death_cross;
-  const changePct = quoteMetrics?.changePercent ?? 0;
-  const sessionHigh = quoteMetrics?.dayHigh || currentPrice;
-  const rejectedOffHighs = sessionHigh > 0 && currentPrice < sessionHigh * 0.982;
 
   let riskStatus: "CLEARED" | "LEASH_WARNING" | "VETOED" = "CLEARED";
-  let riskBadge = "GATEKEEPER QUALIFIED (96.6% WIN RATE)";
+  let riskBadge = direction === "PUT" ? "BEARISH BREAKDOWN PUT QUALIFIED" : "GATEKEEPER QUALIFIED (96.6% WIN RATE)";
   let devilsAdvocateCritique = "";
 
   // Check timing quarantine
@@ -400,10 +430,20 @@ export function structureSetup(
     riskStatus = "VETOED";
     riskBadge = `QUARANTINE ENFORCED (< ${candidate.quarantineBeforeTimeVal >= 1000 ? `${candidate.quarantineBeforeTimeVal.toString().slice(0, 2)}:${candidate.quarantineBeforeTimeVal.toString().slice(2)}` : candidate.quarantineBeforeTimeVal} AM ET)`;
     devilsAdvocateCritique = `Defensive Stock Quarantine: Historical failure mode when entered before 10:15 AM ET. 100% win rate requires waiting for midday consolidation box breach with confirmed RVOL >= 3.0x.`;
-  } else if (changePct <= -1.2 || (rejectedOffHighs && changePct < 0)) {
-    riskStatus = "VETOED";
-    riskBadge = "VETOED: NEGATIVE INTRADAY TAPE DELTA";
-    devilsAdvocateCritique = `Devil's Advocate Veto: ${candidate.symbol} is trading down ${changePct.toFixed(2)}% on the session ($${currentPrice.toFixed(2)} vs session high $${sessionHigh.toFixed(2)}). Call breakouts are strictly prohibited on negative volume delta / distribution days.`;
+  } else if (direction === "PUT") {
+    if (changePct <= -1.2 && currentPrice < trigger) {
+      riskStatus = "CLEARED";
+      riskBadge = "BEARISH BREAKDOWN PUT QUALIFIED";
+      devilsAdvocateCritique = `Devil's Advocate Clearance (PUT): ${candidate.symbol} broke below its $${trigger.toFixed(2)} morning support shelf (${changePct.toFixed(2)}% intraday distribution). High-conviction bearish trend continuation aligned with negative index tape.`;
+    } else {
+      riskStatus = "LEASH_WARNING";
+      riskBadge = "BEARISH WATCH: AWAIT SUPPORT BREAK";
+      devilsAdvocateCritique = `Devil's Advocate Advisory (PUT): ${candidate.symbol} rejected off $${sessionHigh.toFixed(2)} highs. Wait for confirmed breakdown below $${trigger.toFixed(2)} floor support.`;
+    }
+  } else if (macroScore < 0 && changePct < 1.0) {
+    riskStatus = "LEASH_WARNING";
+    riskBadge = "BEARISH TAPE LOCKOUT: NO LATE CALLS";
+    devilsAdvocateCritique = `Devil's Advocate Warning: Broader market is in distribution (Macro Score: ${macroScore}). Calls have low expectancy in a falling market; favor Bearish Breakdown PUTs.`;
   } else if (exhaustionCount >= 2 || stretch >= 10.0) {
     riskStatus = "VETOED";
     riskBadge = "VETOED: EXTREME OVEREXTENSION";
@@ -423,18 +463,21 @@ export function structureSetup(
   }
 
   // Conviction Score (0 to 100)
-  let conviction = 80;
-  conviction += scoreResult.pillars.trend.score * 5; // -10 to +10
-  conviction += scoreResult.pillars.momentum.score * 5; // -10 to +10
-  conviction += macroScore * 3; // -6 to +6
-  if (flags.rebound.length >= 2) conviction += 5;
-  if (changePct >= 0.5) conviction += 4;
+  let conviction = 82;
+  if (direction === "PUT") {
+    conviction += Math.min(12, Math.round(Math.abs(changePct) * 2.5));
+    if (macroScore < 0) conviction += 5;
+  } else {
+    conviction += scoreResult.pillars.trend.score * 5;
+    conviction += scoreResult.pillars.momentum.score * 5;
+    conviction += macroScore * 3;
+    if (changePct >= 0.5) conviction += 4;
+  }
   if (riskStatus === "CLEARED") conviction += 5;
   if (riskStatus === "VETOED") conviction -= 25;
   if (riskStatus === "LEASH_WARNING") conviction -= 10;
   conviction = Math.max(40, Math.min(98, conviction));
 
-  // Fractional Kelly Capital Sizing (from JEV quantitative architecture)
   const kellySizing = calculateQuarterKellySizing(conviction, entryAsk, target1, target2, stopLoss);
 
   return {
@@ -443,6 +486,7 @@ export function structureSetup(
     sector: candidate.sector,
     rank: 0,
     isTopPick: false,
+    direction,
     convictionScore: conviction,
     underlyingPrice: currentPrice,
     trigger,
@@ -544,6 +588,9 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
     const weightA = statusWeight[a.riskOfficer.status];
     const weightB = statusWeight[b.riskOfficer.status];
     if (weightA !== weightB) return weightB - weightA;
+    if (macro.score < 0 && a.direction !== b.direction) {
+      return a.direction === "PUT" ? -1 : 1;
+    }
     if (b.convictionScore !== a.convictionScore) return b.convictionScore - a.convictionScore;
     return b.pillars.composite - a.pillars.composite;
   });
@@ -557,12 +604,13 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
   const topOpportunity = evaluatedSetups[0];
   const secondaryOpportunity = evaluatedSetups[1] || evaluatedSetups[0];
 
+  const isTopPut = topOpportunity.direction === "PUT";
   // Synthesize Agentic Debate
-  const hunterThesis = `Sector-Agnostic Hunter crowned **${topOpportunity.symbol}** (${topOpportunity.sector}) as the #1 Best Opportunity of the Day with a Conviction Score of **${topOpportunity.convictionScore}%** and Composite Pillar Total of **+${topOpportunity.pillars.composite}** (Trend: +${topOpportunity.pillars.trend}, Momentum: +${topOpportunity.pillars.momentum}, Macro: ${topOpportunity.pillars.macro >= 0 ? '+' : ''}${topOpportunity.pillars.macro}). Catalyst: ${topOpportunity.catalyst}.`;
+  const hunterThesis = `Sector-Agnostic Hunter crowned **${topOpportunity.symbol} (${isTopPut ? 'BEARISH PUT' : 'BULLISH CALL'})** (${topOpportunity.sector}) as the #1 Best Opportunity of the Day with a Conviction Score of **${topOpportunity.convictionScore}%** and Target Contract **${topOpportunity.contract}**. Catalyst: ${topOpportunity.catalyst}.`;
   
   const riskOfficerAudit = `Adversarial Risk Officer Verdict: **${topOpportunity.riskOfficer.badge}**. ${topOpportunity.riskOfficer.devilsAdvocateCritique}`;
   
-  const quantExecutionBracket = `Quant Structurer Bracket: Breakout Trigger: **$${topOpportunity.trigger.toFixed(2)}** | Anti-Hindsight Safe Entry Ceiling: **$${topOpportunity.maxChase.toFixed(2)}** | Target Contract: **${topOpportunity.contract}** @ $${topOpportunity.entryAsk.toFixed(2)} | Target 1: $${topOpportunity.target1.toFixed(2)} (+30%) | Target 2: $${topOpportunity.target2.toFixed(2)} (+65%) | Stop Loss: $${topOpportunity.stopLoss.toFixed(2)} (-25%).`;
+  const quantExecutionBracket = `Quant Structurer Bracket: ${isTopPut ? 'Breakdown Support Trigger' : 'Breakout Trigger'}: **$${topOpportunity.trigger.toFixed(2)}** | ${isTopPut ? 'Safe Entry Floor' : 'Safe Entry Ceiling'}: **$${topOpportunity.maxChase.toFixed(2)}** | Target Contract: **${topOpportunity.contract}** @ $${topOpportunity.entryAsk.toFixed(2)} | Target 1: $${topOpportunity.target1.toFixed(2)} (+30%) | Target 2: $${topOpportunity.target2.toFixed(2)} (+65%) | Stop Loss: $${topOpportunity.stopLoss.toFixed(2)} (-25%).`;
 
   const todayStr = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York" });
   const calibration = calculateBrierCalibration();

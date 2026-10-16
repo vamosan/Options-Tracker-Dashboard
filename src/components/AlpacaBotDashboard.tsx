@@ -3952,64 +3952,103 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             
             const liveSetup = setups.find(s => s.symbol === currentSym);
             const prospective = prospectiveStocksList.find(s => s.symbol === currentSym);
+            const agenticSetup = agenticConsensusData?.allRanked?.find((s: any) => s.symbol === currentSym);
 
             const symbol = currentSym;
             const quote = liveQuotes[symbol];
-            const name = liveSetup?.name || prospective?.name || symbol;
+            const name = agenticSetup?.name || liveSetup?.name || prospective?.name || symbol;
 
             // Live high-frequency price resolution
-            const price = quote?.price || liveSetup?.price || prospective?.price || 0;
+            const price = quote?.price || agenticSetup?.underlyingPrice || liveSetup?.price || prospective?.price || 0;
             const changePct = quote ? quote.changePercent : (liveSetup?.changePercent ?? prospective?.changePercent ?? 0.22);
             const dayHigh = quote?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : price * 1.012);
             const dayLow = quote?.dayLow || (liveSetup?.orb?.low ? liveSetup.orb.low * 0.992 : price * 0.988);
 
-            // Strict Strike Anchor Rule: Lock to planned setup strike (never drift to higher OTM strikes on live price)
-            const dynamicStrike = prospective?.suggestedOption?.strike || liveSetup?.contract?.strike || (
-              price > 1000 ? Math.ceil(price / 10) * 10 :
-              price > 400 ? Math.ceil(price / 5) * 5 :
-              price > 100 ? Math.ceil(price / 2.5) * 2.5 :
-              Math.ceil(price || 100)
-            );
+            // Bidirectional CALL / PUT Detection:
+            // Pivot to Bearish Breakdown PUT when Agentic Desk flags PUT, or stock is down <= -0.80%, or SPX is in distribution (<= -0.50%) while stock is red/rejected
+            const isBearishTape = (spxPowerHourState?.dayChangePct ?? 0) <= -0.50 || (agenticConsensusData?.macro?.score ?? 0) < 0;
+            const isPutSetup =
+              agenticSetup?.direction === "PUT" ||
+              changePct <= -0.80 ||
+              (isBearishTape && (changePct < 0 || price < dayHigh * 0.988));
+
+            // Strict Strike Anchor Rule: Round down for PUTs, round up/lock for CALLs
+            const dynamicStrike = isPutSetup
+              ? ((agenticSetup?.direction === "PUT" && agenticSetup?.strike) ? agenticSetup.strike : (
+                  price > 1000 ? Math.floor(price / 10) * 10 :
+                  price > 400 ? Math.floor(price / 5) * 5 :
+                  price > 100 ? Math.floor(price / 2.5) * 2.5 :
+                  Math.floor(price || 100)
+                ))
+              : ((agenticSetup?.direction === "CALL" && agenticSetup?.strike) ? agenticSetup.strike : (
+                  prospective?.suggestedOption?.strike || liveSetup?.contract?.strike || (
+                    price > 1000 ? Math.ceil(price / 10) * 10 :
+                    price > 400 ? Math.ceil(price / 5) * 5 :
+                    price > 100 ? Math.ceil(price / 2.5) * 2.5 :
+                    Math.ceil(price || 100)
+                  )
+                ));
             const strike = dynamicStrike;
-            const contract = `${symbol} $${strike} Call`;
-            const entryAsk = liveSetup?.contract?.ask || prospective?.suggestedOption?.estimatedAsk || (price > 0 ? Math.round(price * 0.014 * 100) / 100 : 2.45);
-            const target1 = liveSetup?.targets?.target1 || prospective?.suggestedOption?.target1 || Math.round(entryAsk * 1.30 * 100) / 100;
-            const target2 = liveSetup?.targets?.target2 || prospective?.suggestedOption?.target2 || Math.round(entryAsk * 1.65 * 100) / 100;
-            const stopLoss = liveSetup?.targets?.stopLoss || prospective?.suggestedOption?.stopLoss || Math.round(entryAsk * 0.75 * 100) / 100;
+            const contract = `${symbol} $${strike} ${isPutSetup ? "Put" : "Call"}`;
+            const entryAsk = agenticSetup?.entryAsk || liveSetup?.contract?.ask || prospective?.suggestedOption?.estimatedAsk || (price > 0 ? Math.round(price * 0.014 * 100) / 100 : 2.45);
+            const target1 = agenticSetup?.target1 || liveSetup?.targets?.target1 || prospective?.suggestedOption?.target1 || Math.round(entryAsk * 1.30 * 100) / 100;
+            const target2 = agenticSetup?.target2 || liveSetup?.targets?.target2 || prospective?.suggestedOption?.target2 || Math.round(entryAsk * 1.65 * 100) / 100;
+            const stopLoss = agenticSetup?.stopLoss || liveSetup?.targets?.stopLoss || prospective?.suggestedOption?.stopLoss || Math.round(entryAsk * 0.75 * 100) / 100;
             
-            // Primary Institutional Trigger Shelf:
+            // Primary Institutional Trigger Shelf (Breakdown Support Shelf for PUTs, Breakout Resistance Shelf for CALLs):
             const shelfMatch = prospective?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
             const parsedShelf = shelfMatch ? parseFloat(shelfMatch[1]) : 0;
-            const triggerLevel = parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100);
+            const triggerLevel = isPutSetup
+              ? ((agenticSetup?.direction === "PUT" && agenticSetup?.trigger > 0)
+                  ? agenticSetup.trigger
+                  : Math.round(Math.max(price * 1.006, dayHigh * 0.990) * 100) / 100)
+              : ((agenticSetup?.direction === "CALL" && agenticSetup?.trigger > 0)
+                  ? agenticSetup.trigger
+                  : (parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100)));
 
-            // Active Breakout latch & Anchors
-            // CRITICAL: Intraday breakout can ONLY be true during regular market hours (after 09:35 AM ET)
-            // Pre-market and off-hours prices NEVER trigger active breakout signals
-            const isBreakoutTriggered = isRegularMarketActive && (
-              (triggerLevel > 0 && (price >= triggerLevel || dayHigh >= triggerLevel)) || (liveSetup?.signal?.state === "BREAKOUT")
+            // Active Breakout/Breakdown latch & Anchors
+            // CRITICAL: Requires LIVE price to currently be beyond triggerLevel (never triggers on stale morning wick if price is back inside range)
+            const isBreakoutTriggered = isRegularMarketActive && triggerLevel > 0 && (
+              isPutSetup ? price <= triggerLevel : price >= triggerLevel
             );
-            const distancePts = triggerLevel - price;
-            const distancePct = triggerLevel > 0 ? ((triggerLevel - price) / triggerLevel) * 100 : 0;
-            const breakoutSpread = Math.max(price, dayHigh) - triggerLevel;
-            const invalidationStop = liveSetup ? `$${liveSetup.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (ORB Low)` : prospective?.invalidationLevel || `Underlying Stop: $${(price - 2.5).toFixed(2)}`;
+            const distancePts = isPutSetup
+              ? Math.max(0, price - triggerLevel)
+              : Math.max(0, triggerLevel - price);
+            const distancePct = triggerLevel > 0 ? (distancePts / triggerLevel) * 100 : 0;
+            const breakoutSpread = isPutSetup
+              ? Math.max(0, triggerLevel - price)
+              : Math.max(0, price - triggerLevel);
+            const invalidationStop = isPutSetup
+              ? `$${(triggerLevel * 1.010).toFixed(2)} (Shelf Reclaim)`
+              : (liveSetup ? `$${liveSetup.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (ORB Low)` : prospective?.invalidationLevel || `Underlying Stop: $${(price - 2.5).toFixed(2)}`);
 
             // Institutional Anchors for Targets & Invalidation (scaled for mega-cap price levels)
             const isHighPriceStock = triggerLevel >= 500;
-            const chaseLimit = triggerLevel * (isHighPriceStock ? 1.005 : 1.008);
-            const t1StockLevel = triggerLevel * (isHighPriceStock ? 1.007 : 1.012);
-            const t2StockLevel = triggerLevel * (isHighPriceStock ? 1.011 : 1.020);
-            const stopStockLevel = triggerLevel * 0.988;
+            const chaseLimit = isPutSetup
+              ? triggerLevel * (isHighPriceStock ? 0.990 : 0.985)
+              : triggerLevel * (isHighPriceStock ? 1.005 : 1.008);
+            const t1StockLevel = isPutSetup
+              ? triggerLevel * (isHighPriceStock ? 0.992 : 0.988)
+              : triggerLevel * (isHighPriceStock ? 1.007 : 1.012);
+            const t2StockLevel = isPutSetup
+              ? triggerLevel * (isHighPriceStock ? 0.986 : 0.978)
+              : triggerLevel * (isHighPriceStock ? 1.011 : 1.020);
+            const stopStockLevel = isPutSetup
+              ? triggerLevel * 1.010
+              : triggerLevel * 0.988;
 
-            // Dynamic Option Mark-to-Market Estimation
+            // Dynamic Option Mark-to-Market Estimation (Bidirectional Delta)
             const deltaEst = 0.48;
-            const liveStockSpread = price - triggerLevel;
-            const peakStockSpread = Math.max(0, dayHigh - triggerLevel);
+            const liveStockSpread = isPutSetup ? (triggerLevel - price) : (price - triggerLevel);
+            const peakStockSpread = isPutSetup
+              ? Math.max(0, triggerLevel - dayLow)
+              : Math.max(0, dayHigh - triggerLevel);
             const liveOptionEst = Math.max(0.40, Math.round((entryAsk + (liveStockSpread * deltaEst)) * 100) / 100);
             const peakOptionEst = Math.max(entryAsk, Math.round((entryAsk + (peakStockSpread * deltaEst * 1.1)) * 100) / 100);
             const peakGainPct = Math.round(((peakOptionEst - entryAsk) / entryAsk) * 100);
             const liveGainPct = Math.round(((liveOptionEst - entryAsk) / entryAsk) * 100);
 
-            // Lifecycle Trade Phase Engine
+            // Lifecycle Trade Phase Engine (Zero-False-Extension State Machine)
             type TradePhase = "PRE_MARKET_STANDBY" | "PRE_MARKET_DISCOVERY" | "FORMING_ORB" | "WAITING" | "BUY_ZONE" | "EXTENDED_NO_CHASE" | "TARGET_1_HIT" | "TARGET_2_HIT" | "PULLBACK_RETEST" | "STOPPED_OUT";
             let tradePhase: TradePhase = "WAITING";
 
@@ -4019,91 +4058,113 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
               tradePhase = "PRE_MARKET_DISCOVERY";
             } else if (isFormingORB) {
               tradePhase = "FORMING_ORB";
-            } else if (price < triggerLevel && dayHigh < triggerLevel) {
-              tradePhase = "WAITING";
-            } else if (price < stopStockLevel) {
-              tradePhase = "STOPPED_OUT";
-            } else if (dayHigh >= t2StockLevel) {
-              if (price >= t2StockLevel * 0.995) {
-                tradePhase = "TARGET_2_HIT";
-              } else {
-                tradePhase = "PULLBACK_RETEST";
-              }
-            } else if (dayHigh >= t1StockLevel) {
-              if (price >= t1StockLevel * 0.995) {
+            } else if (isPutSetup) {
+              if (price > stopStockLevel && dayLow <= triggerLevel) {
+                tradePhase = "STOPPED_OUT";
+              } else if (price > triggerLevel) {
+                if (dayLow <= t1StockLevel) {
+                  tradePhase = "PULLBACK_RETEST";
+                } else {
+                  tradePhase = "WAITING";
+                }
+              } else if (dayLow <= t2StockLevel) {
+                if (price <= t2StockLevel * 1.005) {
+                  tradePhase = "TARGET_2_HIT";
+                } else {
+                  tradePhase = "TARGET_1_HIT";
+                }
+              } else if (dayLow <= t1StockLevel) {
                 tradePhase = "TARGET_1_HIT";
+              } else if (price <= triggerLevel && price >= chaseLimit) {
+                tradePhase = "BUY_ZONE";
               } else {
-                tradePhase = "PULLBACK_RETEST";
+                tradePhase = "EXTENDED_NO_CHASE";
               }
-            } else if (price >= triggerLevel && price <= chaseLimit) {
-              tradePhase = "BUY_ZONE";
             } else {
-              tradePhase = "EXTENDED_NO_CHASE";
+              // Bullish CALL Lifecycle
+              if (price < stopStockLevel && dayHigh >= triggerLevel) {
+                tradePhase = "STOPPED_OUT";
+              } else if (price < triggerLevel) {
+                // CRITICAL FIX: When price is BELOW triggerLevel, it can NEVER be EXTENDED_NO_CHASE
+                if (dayHigh >= t1StockLevel) {
+                  tradePhase = "PULLBACK_RETEST";
+                } else {
+                  tradePhase = "WAITING";
+                }
+              } else if (dayHigh >= t2StockLevel) {
+                if (price >= t2StockLevel * 0.995) {
+                  tradePhase = "TARGET_2_HIT";
+                } else {
+                  tradePhase = "PULLBACK_RETEST";
+                }
+              } else if (dayHigh >= t1StockLevel) {
+                if (price >= t1StockLevel * 0.995) {
+                  tradePhase = "TARGET_1_HIT";
+                } else {
+                  tradePhase = "PULLBACK_RETEST";
+                }
+              } else if (price >= triggerLevel && price <= chaseLimit) {
+                tradePhase = "BUY_ZONE";
+              } else {
+                tradePhase = "EXTENDED_NO_CHASE";
+              }
             }
 
             const executeCurrentSignal = () => {
-              if (liveSetup) {
-                handleExecutePaperTrade(liveSetup, 3);
-              } else if (prospective) {
-                const syntheticSetup = {
-                  symbol: prospective.symbol,
-                  name: prospective.name,
-                  contract: {
-                    symbol: `${prospective.symbol} ${prospective.suggestedOption.strike}C`,
-                    strike: prospective.suggestedOption.strike,
-                    ask: prospective.suggestedOption.estimatedAsk,
-                  },
-                  targets: {
-                    stopLoss: prospective.suggestedOption.stopLoss,
-                    target1: prospective.suggestedOption.target1,
-                    target2: prospective.suggestedOption.target2,
-                  }
-                };
-                handleExecutePaperTrade(syntheticSetup as any, 3);
-              }
+              const syntheticSetup = {
+                symbol,
+                name,
+                contract: {
+                  symbol: `${symbol} ${strike}${isPutSetup ? "P" : "C"}`,
+                  strike,
+                  ask: entryAsk,
+                },
+                targets: {
+                  stopLoss,
+                  target1,
+                  target2,
+                }
+              };
+              handleExecutePaperTrade(syntheticSetup as any, 3);
             };
 
             const alertCurrentSignal = () => {
-              if (liveSetup) {
-                triggerDiscordLiveEntry(liveSetup);
-              } else if (prospective) {
-                const syntheticSetup = {
-                  symbol: prospective.symbol,
-                  name: prospective.name,
-                  price,
-                  signal: {
-                    state: isBreakoutTriggered ? "BREAKOUT" : "WAITING",
-                    message: prospective.triggerShelf,
-                    action: isBreakoutTriggered ? "ENTER_LONG" : "MONITOR",
-                    timestamp: "09:35 AM"
-                  },
-                  rvol: prospective.gatekeeperStatus?.rvolExpectation || "3.4x",
-                  contract: {
-                    symbol: contract,
-                    strike,
-                    ask: entryAsk,
-                    expiration: "Weekly"
-                  },
-                  targets: {
-                    entry: entryAsk,
-                    stopLoss,
-                    target1,
-                    target2,
-                    riskReward: "1:2.4"
-                  },
-                  gatekeeper: {
-                    badge: "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
-                    reason: prospective.gatekeeperStatus?.rulesMessage || "Rule 1-4 Passed: Tech Momentum Tier + Institutional RVOL >= 2.8x"
-                  },
-                  catalyst: {
-                    headline: prospective.catalystHeadline
-                  },
-                  confidence: {
-                    score: prospective.probabilityScore || 95
-                  }
-                };
-                triggerDiscordLiveEntry(syntheticSetup);
-              }
+              const syntheticSetup = {
+                symbol,
+                name,
+                price,
+                signal: {
+                  state: isBreakoutTriggered ? "BREAKOUT" : "WAITING",
+                  message: `${isPutSetup ? "Breakdown below" : "Breakout above"} $${triggerLevel.toFixed(2)}`,
+                  action: isBreakoutTriggered ? (isPutSetup ? "ENTER_PUT" : "ENTER_LONG") : "MONITOR",
+                  timestamp: "LIVE"
+                },
+                rvol: agenticSetup?.rvol || prospective?.gatekeeperStatus?.rvolExpectation || "3.4x",
+                contract: {
+                  symbol: contract,
+                  strike,
+                  ask: entryAsk,
+                  expiration: "Weekly"
+                },
+                targets: {
+                  entry: entryAsk,
+                  stopLoss,
+                  target1,
+                  target2,
+                  riskReward: "1:2.4"
+                },
+                gatekeeper: {
+                  badge: isPutSetup ? "BEARISH BREAKDOWN PUT QUALIFIED" : "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
+                  reason: agenticSetup?.riskOfficer?.devilsAdvocateCritique || prospective?.gatekeeperStatus?.rulesMessage || "Rule 1-4 Passed: Institutional RVOL >= 2.8x"
+                },
+                catalyst: {
+                  headline: agenticSetup?.catalyst || prospective?.catalystHeadline || `${symbol} Institutional Momentum`
+                },
+                confidence: {
+                  score: agenticSetup?.convictionScore || prospective?.probabilityScore || 95
+                }
+              };
+              triggerDiscordLiveEntry(syntheticSetup);
             };
 
             return (
@@ -4238,7 +4299,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       const prospect = prospectiveStocksList.find(s => s.symbol === sym);
                       const p = q?.price || prospect?.price || (sym === "TSLA" ? 354.81 : sym === "NVDA" ? 228.38 : sym === "META" ? 751.66 : 0);
                       const chg = q ? q.changePercent : (prospect?.changePercent ?? 0);
-                      const isSelected = selectedSignalTicker === sym;
+                      const isSelected = currentSym === sym;
                       const isPrimary = idx === 0;
 
                       return (
@@ -4284,7 +4345,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                   {/* Gatekeeper Filter Status Indicator */}
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/30 text-[10px] font-mono text-slate-300 whitespace-nowrap shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">{isPreMarketPending ? "Preliminary Baseline" : "Top 2 Focus"}</strong> (#{1}: {availableSymbols[0]} • #{2}: {availableSymbols[1]}){isPreMarketPending ? " • Scan at 08:00 AM" : ""}</span>
+                    <span>Gatekeeper: <strong className="text-emerald-400 font-bold">{isPreMarketPending ? "Preliminary Baseline" : isPutSetup ? "Bearish Put Focus" : "Top 2 Focus"}</strong> (#{1}: {availableSymbols[0]} • #{2}: {availableSymbols[1]}){isPreMarketPending ? " • Scan at 08:00 AM" : ""}</span>
                   </div>
                 </div>
 
@@ -4298,6 +4359,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {contract}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-black uppercase border ${
+                        isPutSetup
+                          ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                          : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      }`}>
+                        {isPutSetup ? "⚡ BEARISH PUT" : "⚡ BULLISH CALL"}
+                      </span>
                       <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40" title={isPreMarketPending ? "Target 1 Profit Objective" : "Peak option contract value achieved today"}>
                         {isPreMarketPending || isPreMarketDiscovery ? `Target 1: $${target1.toFixed(2)} (+30%)` : `Peak Option: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
                       </span>
@@ -4330,7 +4398,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                           : tradePhase === "PULLBACK_RETEST"
                           ? "MORNING T2 HIT • CLOSED"
                           : isBreakoutTriggered
-                          ? "ORB BREAKOUT"
+                          ? (isPutSetup ? "BEARISH BREAKDOWN" : "ORB BREAKOUT")
+                          : isPutSetup
+                          ? "AWAITING BREAKDOWN"
                           : timeVal >= 1330
                           ? "NO LATE CALLS (LOCKED)"
                           : "WAITING FOR ORB"}
@@ -4347,7 +4417,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800/80 space-y-1.5">
                   <div className="flex items-center justify-between text-[10.5px] font-mono">
                     <span className="text-slate-400">Day Low: ${dayLow.toFixed(2)}</span>
-                    <span className="font-bold text-amber-300">Trigger Shelf: ${triggerLevel.toFixed(2)}</span>
+                    <span className="font-bold text-amber-300">{isPutSetup ? "Breakdown Shelf" : "Trigger Shelf"}: ${triggerLevel.toFixed(2)}</span>
                     <span className="text-slate-400">Day High: ${dayHigh.toFixed(2)}</span>
                   </div>
                   <div className="relative h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800">
@@ -4367,7 +4437,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono">
-                    <span className="text-slate-500">Support Floor: {invalidationStop}</span>
+                    <span className="text-slate-500">{isPutSetup ? "Invalidation Ceiling" : "Support Floor"}: {invalidationStop}</span>
                     <span className={
                       tradePhase === "PRE_MARKET_STANDBY" ? "text-amber-400 font-bold" :
                       tradePhase === "PRE_MARKET_DISCOVERY" ? "text-cyan-400 font-bold" :
@@ -4381,13 +4451,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {tradePhase === "PRE_MARKET_STANDBY" && `⏳ Early Pre-Market • Scan Activates at 08:00 AM ET`}
                       {tradePhase === "PRE_MARKET_DISCOVERY" && `📡 Discovery Active • Locks at 09:15 AM ET`}
                       {tradePhase === "FORMING_ORB" && `🕒 09:30–09:35 AM Opening Range Forming (No Early Entries)`}
-                      {tradePhase === "BUY_ZONE" && `🔥 +$${breakoutSpread.toFixed(2)} Past Trigger Shelf (Optimal Buy)`}
-                      {tradePhase === "TARGET_1_HIT" && `🎯 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 1 Reached)`}
-                      {tradePhase === "TARGET_2_HIT" && `🚀 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 2 Smashed)`}
-                      {tradePhase === "PULLBACK_RETEST" && `✅ Morning T2 Hit @ $${dayHigh.toFixed(2)} • Closed Before Pullback ($${price.toFixed(2)})`}
-                      {tradePhase === "EXTENDED_NO_CHASE" && `⚠️ +$${breakoutSpread.toFixed(2)} Extended (Do Not Chase)`}
-                      {tradePhase === "STOPPED_OUT" && `🛑 Stop Floor Breached`}
-                      {tradePhase === "WAITING" && (timeVal >= 1330 ? `🛑 Afternoon Call Lockout Active (Do Not Enter Calls)` : `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`)}
+                      {tradePhase === "BUY_ZONE" && (isPutSetup ? `🔥 -$${breakoutSpread.toFixed(2)} Below Breakdown Shelf (Optimal Put Entry)` : `🔥 +$${breakoutSpread.toFixed(2)} Past Trigger Shelf (Optimal Buy)`)}
+                      {tradePhase === "TARGET_1_HIT" && (isPutSetup ? `🎯 -$${breakoutSpread.toFixed(2)} Below Shelf (Put Target 1 Reached)` : `🎯 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 1 Reached)`)}
+                      {tradePhase === "TARGET_2_HIT" && (isPutSetup ? `🚀 -$${breakoutSpread.toFixed(2)} Below Shelf (Put Target 2 Smashed)` : `🚀 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 2 Smashed)`)}
+                      {tradePhase === "PULLBACK_RETEST" && (isPutSetup ? `✅ Put T2 Hit @ $${dayLow.toFixed(2)} • Bounced to $${price.toFixed(2)}` : `✅ Morning T2 Hit @ $${dayHigh.toFixed(2)} • Closed Before Pullback ($${price.toFixed(2)})`)}
+                      {tradePhase === "EXTENDED_NO_CHASE" && `⚠️ ${isPutSetup ? '-' : '+'}$${breakoutSpread.toFixed(2)} Extended (Do Not Chase)`}
+                      {tradePhase === "STOPPED_OUT" && `🛑 Stop Level Breached`}
+                      {tradePhase === "WAITING" && (isPutSetup ? `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) Above Breakdown Shelf` : timeVal >= 1330 ? `🛑 Afternoon Call Lockout Active (Do Not Enter Calls)` : `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`)}
                     </span>
                   </div>
                 </div>
@@ -4440,13 +4510,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {tradePhase === "PRE_MARKET_STANDBY" && "⏳ PRE-MARKET STANDBY — SCAN ACTIVATES 08:00 AM ET"}
                       {tradePhase === "PRE_MARKET_DISCOVERY" && "📡 PRE-MARKET DISCOVERY — LOCKS 09:15 AM ET"}
                       {tradePhase === "FORMING_ORB" && "🕒 09:30–09:35 AM ORB FORMING (NO EARLY ENTRIES)"}
-                      {tradePhase === "BUY_ZONE" && "🔥 ENTER TRADE NOW (OPTIMAL BUY ZONE)"}
+                      {tradePhase === "BUY_ZONE" && (isPutSetup ? "🔥 ENTER PUT TRADE NOW (OPTIMAL BREAKDOWN ZONE)" : "🔥 ENTER TRADE NOW (OPTIMAL BUY ZONE)")}
                       {tradePhase === "TARGET_1_HIT" && "🎯 TARGET 1 HIT (+30%) — SCALE 50% PROFIT"}
                       {tradePhase === "TARGET_2_HIT" && "🚀 TARGET 2 HIT (+75%) — HARVEST RUNNERS"}
-                      {tradePhase === "PULLBACK_RETEST" && "✅ MORNING TRADE HARVESTED — DO NOT ENTER LATE CALLS"}
+                      {tradePhase === "PULLBACK_RETEST" && "✅ TRADE HARVESTED — DO NOT RE-ENTER"}
                       {tradePhase === "EXTENDED_NO_CHASE" && "⚠️ EXTENDED (+2.0%+) — DO NOT CHASE"}
                       {tradePhase === "STOPPED_OUT" && "🛑 HARD STOP LOSS TRIGGERED — CUT TRADE"}
-                      {tradePhase === "WAITING" && (timeVal >= 1330 ? "🛑 AFTERNOON CALL LOCKOUT — DO NOT ENTER CALLS" : "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)")}
+                      {tradePhase === "WAITING" && (isPutSetup ? "⏳ WAIT FOR BREAKDOWN BELOW SUPPORT SHELF" : timeVal >= 1330 ? "🛑 AFTERNOON CALL LOCKOUT — DO NOT ENTER CALLS" : "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)")}
                     </span>
                     <span className="text-xs font-mono font-black text-slate-200">
                       {tradePhase === "PRE_MARKET_STANDBY" && "Awaiting 08:00 AM Scan"}
@@ -4469,25 +4539,25 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         {tradePhase === "PRE_MARKET_STANDBY" && `Early pre-market session. Institutional volume (RVOL) and news catalysts will be scanned at 08:00 AM ET to confirm today's Top 2 setups.`}
                         {tradePhase === "PRE_MARKET_DISCOVERY" && `Pre-market tape and gap momentum are being scanned. Official gameplan locks at 09:15 AM ET. Live entry unlocks strictly on 09:35 AM ORB breakout.`}
                         {tradePhase === "FORMING_ORB" && `Opening 5-minute range is currently establishing. Early market wicks are quarantined until 09:35:00 candle close.`}
-                        {tradePhase === "BUY_ZONE" && `Confirmed breakout above $${triggerLevel.toFixed(2)}! Spot $${price.toFixed(2)} is inside buy zone.`}
+                        {tradePhase === "BUY_ZONE" && (isPutSetup ? `Confirmed bearish breakdown below $${triggerLevel.toFixed(2)}! Spot $${price.toFixed(2)} is in optimal Put entry zone.` : `Confirmed breakout above $${triggerLevel.toFixed(2)}! Spot $${price.toFixed(2)} is inside buy zone.`)}
                         {tradePhase === "TARGET_1_HIT" && `Target 1 achieved! Scale 50% profits, move stop to breakeven ($${triggerLevel.toFixed(2)}).`}
-                        {tradePhase === "TARGET_2_HIT" && `Touched $${dayHigh.toFixed(2)} peak! Harvest 75-100% of runners. DO NOT BUY AT MARKET.`}
-                        {tradePhase === "PULLBACK_RETEST" && `Morning breakout peaked at $${dayHigh.toFixed(2)} (Target 2 hit) and pulled back to $${price.toFixed(2)}. Trade is CLOSED — do NOT buy Calls in afternoon pullback.`}
-                        {tradePhase === "EXTENDED_NO_CHASE" && `Price is +$${breakoutSpread.toFixed(2)} past trigger shelf. High mean-reversion risk.`}
-                        {tradePhase === "STOPPED_OUT" && `Underlying violated stop floor $${stopStockLevel.toFixed(2)}. Hard cut executed.`}
-                        {tradePhase === "WAITING" && (timeVal >= 1330 ? `Morning ORB Call window is closed. Focus on SPX 0DTE Power Hour (Left Panel) for late-session bearish Put momentum.` : `Breakout above $${triggerLevel.toFixed(2)} resistance shelf.`)}
+                        {tradePhase === "TARGET_2_HIT" && (isPutSetup ? `Dropped to $${dayLow.toFixed(2)} session low! Harvest 75-100% of Put runners. DO NOT CHASE.` : `Touched $${dayHigh.toFixed(2)} peak! Harvest 75-100% of runners. DO NOT BUY AT MARKET.`)}
+                        {tradePhase === "PULLBACK_RETEST" && (isPutSetup ? `Breakdown peaked at $${dayLow.toFixed(2)} (Target 2 hit) and bounced to $${price.toFixed(2)}. Trade is CLOSED.` : `Morning breakout peaked at $${dayHigh.toFixed(2)} (Target 2 hit) and pulled back to $${price.toFixed(2)}. Trade is CLOSED — do NOT buy Calls in afternoon pullback.`)}
+                        {tradePhase === "EXTENDED_NO_CHASE" && `Price is ${isPutSetup ? '-' : '+'}$${breakoutSpread.toFixed(2)} past shelf. High mean-reversion risk.`}
+                        {tradePhase === "STOPPED_OUT" && `Underlying violated stop level $${stopStockLevel.toFixed(2)}. Hard cut executed.`}
+                        {tradePhase === "WAITING" && (isPutSetup ? `Await breakdown below $${triggerLevel.toFixed(2)} support shelf for Put entry.` : timeVal >= 1330 ? `Morning ORB Call window is closed. Focus on SPX 0DTE Power Hour (Left Panel) or Bearish Puts.` : `Breakout above $${triggerLevel.toFixed(2)} resistance shelf.`)}
                       </span>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">
                         {tradePhase === "PRE_MARKET_STANDBY" && "Zero-hindsight rule: No entries prior to 09:35 AM ORB close"}
                         {tradePhase === "PRE_MARKET_DISCOVERY" && "Vetting pre-market volume (RVOL >= 2.8x)"}
                         {tradePhase === "FORMING_ORB" && "Quarantine 09:30–09:35 AM opening candle traps"}
-                        {tradePhase === "BUY_ZONE" && "Momentum expanding • Execute now"}
+                        {tradePhase === "BUY_ZONE" && (isPutSetup ? "Bearish momentum expanding • Execute Put now" : "Momentum expanding • Execute now")}
                         {tradePhase === "TARGET_1_HIT" && "Lock 50% • Guaranteed green trade"}
                         {tradePhase === "TARGET_2_HIT" && "Maximum extension • Protect gains"}
-                        {tradePhase === "PULLBACK_RETEST" && "Morning move complete • Focus on SPX Power Hour"}
+                        {tradePhase === "PULLBACK_RETEST" && "Move complete • Protect realized profit"}
                         {tradePhase === "EXTENDED_NO_CHASE" && "Wait for re-test of shelf"}
                         {tradePhase === "STOPPED_OUT" && "Strict loss discipline adhered to"}
-                        {tradePhase === "WAITING" && (timeVal >= 1330 ? "Late-day equity Call entries locked out" : `Needs +$${Math.max(0, distancePts).toFixed(2)} to trigger shelf`)}
+                        {tradePhase === "WAITING" && (isPutSetup ? `Needs -$${Math.max(0, distancePts).toFixed(2)} drop to trigger breakdown` : timeVal >= 1330 ? "Late-day equity Call entries locked out" : `Needs +$${Math.max(0, distancePts).toFixed(2)} to trigger shelf`)}
                       </span>
                     </div>
 
