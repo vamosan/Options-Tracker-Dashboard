@@ -138,26 +138,33 @@ async function handleCron(request: Request) {
     }
 
     // ==============================================================
-    // 1. EQUITIES REAL-TIME INTRADAY SESSION (9:30 AM - 3:55 PM ET)
+    // 1. EQUITIES REAL-TIME INTRADAY SESSION (9:35 AM - 3:55 PM ET)
     // DYNAMIC SECTOR-AGNOSTIC AGENTIC DESK EXECUTION
-    // ANTI-HINDSIGHT GUARDS:
-    // 1. PROXIMITY ALERT: Fires 60s ahead when price is testing shelf
-    // 2. ENTRY: ONLY fires if price is actively within the safe breakout zone
-    // 3. CHASE GUARD: If price ran past max safe chase, SUPPRESS entry to prevent FOMO trap
-    // 4. SEQUENTIAL TARGETS: T1 & T2 require prior confirmed entry + time delay
-    // 5. DEVIL'S ADVOCATE GATEKEEPER: Zero trades taken if Risk Officer issued a VETO
+    // ANTI-BARRAGE & ZERO-HINDSIGHT INSTITUTIONAL GUARDS:
+    // 1. 09:35 AM CANDLE CLOSE GATE: Zero equity entries before 09:35 AM ET
+    // 2. NON-REPAINTING SESSION SHELF: Trigger anchored above max(dayOpen, prevClose)
+    // 3. GREEN TAPE & NEAR-HIGH MANDATE: Stock must be green (>= +0.4%) & within 0.6% of session high
+    // 4. ANTI-BARRAGE CAP: Max 1 new Entry per cron tick, Max 3 elite Entries per day
+    // 5. SEQUENTIAL STAGE GATING: Entry -> T1 -> T2 -> Trail strictly mutually exclusive per tick with 10m spacing
     // ==============================================================
-    if ((timeVal >= 930 && timeVal <= 1555) || (forceTest && testStep !== 'plan' && testStep !== 'spx')) {
+    if ((timeVal >= 935 && timeVal <= 1555) || (forceTest && testStep !== 'plan' && testStep !== 'spx')) {
         try {
             const yf = new (YahooFinance as any)({ suppressNotices: ['yahooSurvey'] });
             const cache = getCache();
+            const existingTodaySignals = getSignals().filter((s: any) => s.date === todayStr);
+
+            // Count how many entries have already fired today across cache + persistent ledger
+            const cachedEntryCount = Object.keys(cache).filter(k => k.startsWith(`ORB_ENTRY_`) && k.endsWith(`_${todayStr}`)).length;
+            let totalEntriesToday = Math.max(cachedEntryCount, existingTodaySignals.length);
+            let entriesDispatchedThisTick = 0;
+            const MAX_DAILY_ENTRIES = 3;
 
             // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
             const consensus = await runAgenticDailyConsensus(timeVal);
             
-            // Focus on all qualified setups cleared by Adversarial Risk Officer across the entire universe
+            // Strictly filter to CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
             const activeSetups = consensus.allRanked
-                .filter(s => s.riskOfficer.status !== "VETOED");
+                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88);
 
             for (const setup of activeSetups) {
                 const sym = setup.symbol;
@@ -168,37 +175,60 @@ async function handleCron(request: Request) {
                 const trailKey = `TRAIL_EXIT_${sym}_${todayStr}`;
                 const overextKey = `OVEREXT_${sym}_${todayStr}`;
 
+                const ledgerTrade = existingTodaySignals.find((t: any) => t.symbol === sym);
+                const hasEntryFired = isCached(entryKey) || Boolean(ledgerTrade);
+                const hasT1Fired = isCached(t1Key) || Boolean(ledgerTrade && ["TARGET_1", "TARGET_2", "TRAILING_WIN"].includes(ledgerTrade.outcome));
+                const hasT2Fired = isCached(t2Key) || Boolean(ledgerTrade && ["TARGET_2", "TRAILING_WIN"].includes(ledgerTrade.outcome));
+                const hasTrailFired = isCached(trailKey) || Boolean(ledgerTrade && ledgerTrade.outcome === "TRAILING_WIN");
+
                 try {
                     const q = await yf.quote(sym);
                     const currentPrice = q?.regularMarketPrice || setup.underlyingPrice;
                     const dayHigh = q?.regularMarketDayHigh || currentPrice;
+                    const dayOpen = q?.regularMarketOpen || currentPrice;
+                    const prevClose = q?.regularMarketPreviousClose || currentPrice;
+                    const changePercent = q?.regularMarketChangePercent ?? ((currentPrice - prevClose) / prevClose) * 100;
                     const trigger = setup.trigger;
                     const maxChase = setup.maxChase;
 
-                    // 1. Proximity Alert (Within 50¢ of shelf before trigger)
-                    if ((!isCached(proxKey) && !isCached(entryKey)) || (forceTest && testStep === 'prox')) {
-                        if ((currentPrice >= (trigger - 0.55) && currentPrice < trigger) || (forceTest && testStep === 'prox')) {
-                            await sendProximityAlert({
-                                symbol: sym,
-                                contract: setup.contract,
-                                currentPrice,
-                                triggerPrice: trigger,
-                                gapDollars: Math.max(0.35, trigger - currentPrice),
-                                timeET: timeDisplay,
-                                catalyst: `Testing $${trigger.toFixed(2)} morning shelf. ${setup.catalyst.slice(0, 70)}...`
-                            });
-                            setCache(proxKey);
-                            actionsTriggered.push(`PROXIMITY_${sym}`);
-                            logs.push(`[Proximity Alert] ${sym} testing shelf @ $${currentPrice.toFixed(2)} (Trigger: $${trigger.toFixed(2)})`);
-                        }
+                    // Optional Proximity Alert (ONLY when explicitly requested via testStep === 'prox' to prevent Discord chatter)
+                    if (forceTest && testStep === 'prox' && !isCached(proxKey)) {
+                        await sendProximityAlert({
+                            symbol: sym,
+                            contract: setup.contract,
+                            currentPrice,
+                            triggerPrice: trigger,
+                            gapDollars: Math.max(0.35, trigger - currentPrice),
+                            timeET: timeDisplay,
+                            catalyst: `Testing $${trigger.toFixed(2)} morning shelf. ${setup.catalyst.slice(0, 70)}...`
+                        });
+                        setCache(proxKey);
+                        actionsTriggered.push(`PROXIMITY_${sym}`);
+                        logs.push(`[Proximity Alert] ${sym} testing shelf @ $${currentPrice.toFixed(2)} (Trigger: $${trigger.toFixed(2)})`);
                     }
 
-                    // 2. Breakout Entry (Safe Entry Zone ONLY: trigger <= price <= maxChase)
-                    const isSafeEntry = currentPrice >= trigger && currentPrice <= maxChase;
+                    // Strict Live-Price-Only Breakout Conditions (Zero Hindsight)
+                    const isGreenOnSession = changePercent >= 0.40 && currentPrice > dayOpen && currentPrice > prevClose;
+                    const isPushingSessionHigh = currentPrice >= dayHigh * 0.994;
+                    const isSafeEntry =
+                        currentPrice >= trigger &&
+                        currentPrice <= maxChase &&
+                        isGreenOnSession &&
+                        isPushingSessionHigh;
                     const isOverextended = currentPrice > maxChase;
 
-                    if (!isCached(entryKey)) {
-                        if (isSafeEntry || (forceTest && testStep === 'entry')) {
+                    const t1Level = trigger * 1.015;
+                    const t2Level = trigger * 1.025;
+                    const entryAgeMs = cache[entryKey] ? (Date.now() - cache[entryKey]) : 0;
+                    const t1AgeMs = cache[t1Key] ? (Date.now() - cache[t1Key]) : 0;
+                    const t2AgeMs = cache[t2Key] ? (Date.now() - cache[t2Key]) : 0;
+
+                    // MUTUALLY EXCLUSIVE STAGE EXECUTION PER TICK (Never fires Entry + T1 + T2 together)
+                    if (!hasEntryFired) {
+                        if (
+                            (isSafeEntry && entriesDispatchedThisTick < 1 && totalEntriesToday < MAX_DAILY_ENTRIES) ||
+                            (forceTest && testStep === 'entry' && entriesDispatchedThisTick < 1)
+                        ) {
                             await sendTradeEntryCallout({
                                 symbol: sym,
                                 contract: setup.contract,
@@ -221,13 +251,15 @@ async function handleCron(request: Request) {
                                 kellySizing: setup.kellySizing
                             });
                             setCache(entryKey);
+                            entriesDispatchedThisTick += 1;
+                            totalEntriesToday += 1;
                             actionsTriggered.push(`ORB_ENTRY_${sym}`);
                             recordedTrades.push({
                                 id: `trade_${todayStr.replace(/-/g, '')}_${sym.toLowerCase()}`,
                                 date: todayStr,
                                 timestamp: new Date().toISOString(),
                                 symbol: sym,
-                                name: sym === "TSLA" ? "Tesla Inc." : sym === "NVDA" ? "NVIDIA Corp." : sym,
+                                name: setup.name || sym,
                                 contract: setup.contract,
                                 action: `BUY ${setup.contract}`,
                                 time: timeDisplay,
@@ -249,19 +281,17 @@ async function handleCron(request: Request) {
                                 confidenceScore: setup.convictionScore,
                                 winStatus: "PENDING"
                             });
-                            logs.push(`[Breakout Entry] Fresh Breakout dispatched for ${sym} @ $${currentPrice.toFixed(2)} (Safe zone up to $${maxChase.toFixed(2)})`);
+                            logs.push(`[Breakout Entry] Fresh A+ Breakout dispatched for ${sym} @ $${currentPrice.toFixed(2)} (Trigger: $${trigger.toFixed(2)}, Safe ceiling: $${maxChase.toFixed(2)}, Daily Count: ${totalEntriesToday}/${MAX_DAILY_ENTRIES})`);
                         } else if (isOverextended && !isCached(overextKey)) {
                             logs.push(`[Chase Guard] ${sym} @ $${currentPrice.toFixed(2)} is overextended past max safe entry $${maxChase.toFixed(2)}. Entry suppressed.`);
                             setCache(overextKey);
                         }
-                    }
-
-                    // 3. Sequential Target 1 Scale Alert (+30%)
-                    const t1Level = trigger * 1.015;
-                    const entryAgeMs = cache[entryKey] ? (Date.now() - cache[entryKey]) : 0;
-                    const canCheckT1 = isCached(entryKey) && (entryAgeMs >= 120000 || (forceTest && testStep === 't1'));
-
-                    if (canCheckT1 && !isCached(t1Key) && (currentPrice >= t1Level || dayHigh >= t1Level)) {
+                    } else if (
+                        hasEntryFired &&
+                        !hasT1Fired &&
+                        ((entryAgeMs >= 600000 && currentPrice >= t1Level) || (forceTest && testStep === 't1'))
+                    ) {
+                        // 3. Sequential Target 1 Scale Alert (+30%) — requires >=10 mins after Entry & live currentPrice >= t1Level
                         await sendTargetScaleAlert({
                             symbol: sym,
                             contract: setup.contract,
@@ -271,7 +301,7 @@ async function handleCron(request: Request) {
                             entryPrice: setup.entryAsk,
                             targetPrice: setup.target1,
                             pnlPercent: "+30.0%",
-                            actionMessage: `Underlying reached $${t1Level.toFixed(2)}. Target 1 achieved! Scale 50% profit.`,
+                            actionMessage: `Underlying reached $${currentPrice.toFixed(2)} (above $${t1Level.toFixed(2)} T1 level). Target 1 achieved! Scale 50% profit.`,
                             stopAdjustment: `Move stop loss to breakeven ($${trigger.toFixed(2)})`
                         });
                         setCache(t1Key);
@@ -281,21 +311,19 @@ async function handleCron(request: Request) {
                             date: todayStr,
                             symbol: sym,
                             contract: setup.contract,
-                            peakPrice: dayHigh,
+                            peakPrice: Math.max(dayHigh, currentPrice),
                             outcome: "TARGET_1",
                             pnlPerContract: Math.round((setup.target1 - setup.entryAsk) * 100),
                             percentGain: "+30.0%",
                             winStatus: "WIN"
                         });
                         logs.push(`[Target Scale] Target 1 Hit dispatched for ${sym} @ $${currentPrice.toFixed(2)}`);
-                    }
-
-                    // 4. Sequential Target 2 Scale Alert (+65%)
-                    const t2Level = trigger * 1.025;
-                    const t1AgeMs = cache[t1Key] ? (Date.now() - cache[t1Key]) : 0;
-                    const canCheckT2 = isCached(t1Key) && (t1AgeMs >= 120000 || (forceTest && testStep === 't2'));
-
-                    if (canCheckT2 && !isCached(t2Key) && (currentPrice >= t2Level || dayHigh >= t2Level)) {
+                    } else if (
+                        hasT1Fired &&
+                        !hasT2Fired &&
+                        ((t1AgeMs >= 600000 && currentPrice >= t2Level) || (forceTest && testStep === 't2'))
+                    ) {
+                        // 4. Sequential Target 2 Scale Alert (+65%) — requires >=10 mins after T1 & live currentPrice >= t2Level
                         await sendTargetScaleAlert({
                             symbol: sym,
                             contract: setup.contract,
@@ -305,7 +333,7 @@ async function handleCron(request: Request) {
                             entryPrice: setup.entryAsk,
                             targetPrice: setup.target2,
                             pnlPercent: "+65.0%",
-                            actionMessage: `Peak extension touched $${dayHigh.toFixed(2)}! Target 2 smashed. Harvest profits!`,
+                            actionMessage: `Live extension reached $${currentPrice.toFixed(2)} (above $${t2Level.toFixed(2)} T2 level)! Target 2 smashed. Harvest profits!`,
                             stopAdjustment: "Trail runners behind 5-min EMA9. DO NOT ENTER AT MARKET."
                         });
                         setCache(t2Key);
@@ -315,17 +343,20 @@ async function handleCron(request: Request) {
                             date: todayStr,
                             symbol: sym,
                             contract: setup.contract,
-                            peakPrice: dayHigh,
+                            peakPrice: Math.max(dayHigh, currentPrice),
                             outcome: "TARGET_2",
                             pnlPerContract: Math.round((setup.target2 - setup.entryAsk) * 100),
                             percentGain: "+65.0%",
                             winStatus: "WIN"
                         });
                         logs.push(`[Target Scale] Target 2 Hit dispatched for ${sym} @ $${currentPrice.toFixed(2)}`);
-                    }
-
-                    // 5. Trailing Stop on Pullback from Runner Peak
-                    if (isCached(t2Key) && !isCached(trailKey) && currentPrice <= (dayHigh - (trigger * 0.012))) {
+                    } else if (
+                        hasT2Fired &&
+                        !hasTrailFired &&
+                        t2AgeMs >= 300000 &&
+                        currentPrice <= (dayHigh - (trigger * 0.012))
+                    ) {
+                        // 5. Trailing Stop on Pullback from Runner Peak — requires >=5 mins after T2
                         await sendTargetScaleAlert({
                             symbol: sym,
                             contract: setup.contract,

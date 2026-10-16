@@ -338,19 +338,33 @@ export function structureSetup(
   currentPrice: number,
   scoreResult: ScoreSymbolResult,
   macroScore: number,
-  timeVal: number = 930
+  timeVal: number = 930,
+  quoteMetrics?: {
+    dayOpen?: number;
+    prevClose?: number;
+    dayHigh?: number;
+    changePercent?: number;
+  }
 ): AgenticSetupStructured {
   // Baseline matching benchmark stock if exists
   const benchmark = PROSPECTIVE_STOCKS.find(p => p.symbol === candidate.symbol);
   
-  // Calculate dynamic trigger shelf: round up slightly or use benchmark
-  const trigger = benchmark?.suggestedOption?.strike 
-    ? (benchmark.price > 0 ? (currentPrice > benchmark.price * 1.03 ? Math.round(currentPrice * 1.01 * 100) / 100 : parseFloat(benchmark.triggerShelf.match(/\$([0-9.]+)/)?.[1] || `${Math.ceil(currentPrice * 1.01)}`)) : currentPrice * 1.01)
-    : Math.round(currentPrice * 1.008 * 100) / 100;
+  // Non-Repainting Session Anchor: Anchor trigger shelf to today's actual Open / Previous Close
+  // so the trigger shelf NEVER repaints lower when a stock drops intraday.
+  const dayOpen = quoteMetrics?.dayOpen && quoteMetrics.dayOpen > 0 ? quoteMetrics.dayOpen : currentPrice;
+  const prevClose = quoteMetrics?.prevClose && quoteMetrics.prevClose > 0 ? quoteMetrics.prevClose : currentPrice;
+  const baseAnchor = Math.max(dayOpen, prevClose);
+
+  const parsedBenchShelf = parseFloat(benchmark?.triggerShelf?.match(/\$([0-9.]+)/)?.[1] || "0");
+  const isBenchShelfValidForSession =
+    parsedBenchShelf >= baseAnchor * 1.003 && parsedBenchShelf <= baseAnchor * 1.025;
+
+  const trigger = isBenchShelfValidForSession
+    ? parsedBenchShelf
+    : Math.round(baseAnchor * 1.010 * 100) / 100;
 
   // Anti-Hindsight Safe Zone: Max Chase buffer is strictly capped
-  // e.g. for a $190 stock: buffer is ~$1.30; for $230 stock: ~$1.30; for $89 stock: ~$0.80
-  const chaseBuffer = Math.min(1.80, Math.max(0.60, trigger * 0.0065));
+  const chaseBuffer = Math.min(2.20, Math.max(0.65, trigger * 0.0065));
   const maxChase = Math.round((trigger + chaseBuffer) * 100) / 100;
 
   // Option strike
@@ -358,7 +372,9 @@ export function structureSetup(
   const contract = `${candidate.symbol} $${strike}C`;
 
   // Estimate option ask: ~1.2% - 1.8% of spot
-  const rawAsk = benchmark?.suggestedOption?.estimatedAsk || (currentPrice * 0.014);
+  const rawAsk = (benchmark?.suggestedOption?.estimatedAsk && Math.abs(currentPrice - benchmark.price) / benchmark.price < 0.05)
+    ? benchmark.suggestedOption.estimatedAsk
+    : (currentPrice * 0.014);
   const entryAsk = Math.round(rawAsk * 100) / 100;
   const stopLoss = Math.round(entryAsk * 0.75 * 100) / 100; // -25% capital preservation
   const target1 = Math.round(entryAsk * 1.30 * 100) / 100; // +30% scale 50%
@@ -371,6 +387,9 @@ export function structureSetup(
   const exhaustionCount = flags.exhaustion.length;
   const bearishCount = flags.bearish.length;
   const isDeathCross = flags.death_cross;
+  const changePct = quoteMetrics?.changePercent ?? 0;
+  const sessionHigh = quoteMetrics?.dayHigh || currentPrice;
+  const rejectedOffHighs = sessionHigh > 0 && currentPrice < sessionHigh * 0.982;
 
   let riskStatus: "CLEARED" | "LEASH_WARNING" | "VETOED" = "CLEARED";
   let riskBadge = "GATEKEEPER QUALIFIED (96.6% WIN RATE)";
@@ -381,14 +400,18 @@ export function structureSetup(
     riskStatus = "VETOED";
     riskBadge = `QUARANTINE ENFORCED (< ${candidate.quarantineBeforeTimeVal >= 1000 ? `${candidate.quarantineBeforeTimeVal.toString().slice(0, 2)}:${candidate.quarantineBeforeTimeVal.toString().slice(2)}` : candidate.quarantineBeforeTimeVal} AM ET)`;
     devilsAdvocateCritique = `Defensive Stock Quarantine: Historical failure mode when entered before 10:15 AM ET. 100% win rate requires waiting for midday consolidation box breach with confirmed RVOL >= 3.0x.`;
+  } else if (changePct <= -1.2 || (rejectedOffHighs && changePct < 0)) {
+    riskStatus = "VETOED";
+    riskBadge = "VETOED: NEGATIVE INTRADAY TAPE DELTA";
+    devilsAdvocateCritique = `Devil's Advocate Veto: ${candidate.symbol} is trading down ${changePct.toFixed(2)}% on the session ($${currentPrice.toFixed(2)} vs session high $${sessionHigh.toFixed(2)}). Call breakouts are strictly prohibited on negative volume delta / distribution days.`;
   } else if (exhaustionCount >= 2 || stretch >= 10.0) {
     riskStatus = "VETOED";
     riskBadge = "VETOED: EXTREME OVEREXTENSION";
     devilsAdvocateCritique = `Devil's Advocate Veto: Price is stretched ${stretch.toFixed(1)}% above EMA20 with ${exhaustionCount} exhaustion flags (${flags.exhaustion.join(", ")}). Entering here is pure chasing with negative risk/reward.`;
-  } else if (isDeathCross || bearishCount >= 2) {
+  } else if (isDeathCross || bearishCount >= 2 || changePct < 0) {
     riskStatus = "LEASH_WARNING";
-    riskBadge = "AGENTIC LEASH: TACTICAL REBOUND ONLY";
-    devilsAdvocateCritique = `Devil's Advocate Warning: Underlying trend structure is burdened by bearish flags (${flags.bearish.slice(0, 2).join(", ")}). Entry permitted ONLY as a quick tactical scalp with strict stop loss; do NOT hold as a cycle runner.`;
+    riskBadge = "AGENTIC LEASH: WAIT FOR GREEN TAPE";
+    devilsAdvocateCritique = `Devil's Advocate Warning: Intraday tape is slightly soft (${changePct.toFixed(2)}%) or carries bearish flags. Do NOT preemptively enter Calls until price reclaims session trigger shelf ($${trigger.toFixed(2)}) with RVOL >= 2.8x.`;
   } else if (stretch >= 6.0 || exhaustionCount === 1) {
     riskStatus = "LEASH_WARNING";
     riskBadge = "AGENTIC LEASH: ELEVATED STRETCH";
@@ -405,6 +428,7 @@ export function structureSetup(
   conviction += scoreResult.pillars.momentum.score * 5; // -10 to +10
   conviction += macroScore * 3; // -6 to +6
   if (flags.rebound.length >= 2) conviction += 5;
+  if (changePct >= 0.5) conviction += 4;
   if (riskStatus === "CLEARED") conviction += 5;
   if (riskStatus === "VETOED") conviction -= 25;
   if (riskStatus === "LEASH_WARNING") conviction -= 10;
@@ -477,6 +501,12 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
       const q = quoteMap.get(candidate.symbol);
       const fallbackBenchmark = PROSPECTIVE_STOCKS.find(p => p.symbol === candidate.symbol);
       const currentPrice = q?.regularMarketPrice || fallbackBenchmark?.price || 150;
+      const quoteMetrics = {
+        dayOpen: q?.regularMarketOpen || fallbackBenchmark?.prevClose || currentPrice,
+        prevClose: q?.regularMarketPreviousClose || fallbackBenchmark?.prevClose || currentPrice,
+        dayHigh: q?.regularMarketDayHigh || fallbackBenchmark?.dayHigh || currentPrice,
+        changePercent: q?.regularMarketChangePercent ?? fallbackBenchmark?.changePercent ?? 0
+      };
 
       // Fetch historical closes for technical indicators
       let closes: number[] = [];
@@ -495,7 +525,7 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
 
       // Run TypeScript scoring engine
       const scoreResult = scoreSymbol(closes, candidate.symbol, macro.score, false);
-      return structureSetup(candidate, currentPrice, scoreResult, macro.score, timeVal);
+      return structureSetup(candidate, currentPrice, scoreResult, macro.score, timeVal, quoteMetrics);
     } catch (err: any) {
       console.error(`[Agentic Desk] Error evaluating ${candidate.symbol}:`, err?.message);
       return null;
