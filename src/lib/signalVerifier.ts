@@ -312,7 +312,7 @@ export async function runLiveMarketSignalVerification(): Promise<LiveMarketVerif
   ];
 
   // Also include any custom signals from live-ledger.json for yesterday/today not already covered
-  const ledgerSignals = getSignals();
+  const ledgerSignals = (await getSignals()) || [];
   for (const sig of ledgerSignals) {
     if ((sig.date === yesterdayDate || sig.date === todayDate) && symbols.includes(sig.symbol)) {
       const alreadyExists = testCases.some(tc => tc.date === sig.date && tc.symbol === sig.symbol);

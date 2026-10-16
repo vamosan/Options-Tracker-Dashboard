@@ -151,7 +151,8 @@ async function handleCron(request: Request) {
         try {
             const yf = new (YahooFinance as any)({ suppressNotices: ['yahooSurvey'] });
             const cache = getCache();
-            const existingTodaySignals = getSignals().filter((s: any) => s.date === todayStr);
+            const allLedgerSignals = (await getSignals()) || [];
+            const existingTodaySignals = allLedgerSignals.filter((s: any) => s.date === todayStr);
 
             // Count how many entries have already fired today across cache + persistent ledger
             const cachedEntryCount = Object.keys(cache).filter(k => k.startsWith(`ORB_ENTRY_`) && k.endsWith(`_${todayStr}`)).length;
