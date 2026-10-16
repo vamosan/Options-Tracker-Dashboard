@@ -3970,7 +3970,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
               price > 100 ? Math.ceil(price / 2.5) * 2.5 :
               Math.ceil(price || 100)
             );
-            const strike = (currentSym === "NVDA" ? 230 : currentSym === "TSLA" ? 375 : currentSym === "META" ? 760 : dynamicStrike);
+            const strike = dynamicStrike;
             const contract = `${symbol} $${strike} Call`;
             const entryAsk = liveSetup?.contract?.ask || prospective?.suggestedOption?.estimatedAsk || (price > 0 ? Math.round(price * 0.014 * 100) / 100 : 2.45);
             const target1 = liveSetup?.targets?.target1 || prospective?.suggestedOption?.target1 || Math.round(entryAsk * 1.30 * 100) / 100;
@@ -3980,8 +3980,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             // Primary Institutional Trigger Shelf:
             const shelfMatch = prospective?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
             const parsedShelf = shelfMatch ? parseFloat(shelfMatch[1]) : 0;
-            const staticShelf = currentSym === "NVDA" ? 226.50 : currentSym === "TSLA" ? 375.00 : currentSym === "META" ? 758.00 : currentSym === "LLY" ? 1190.00 : currentSym === "CVS" ? 89.50 : 0;
-            const triggerLevel = parsedShelf || staticShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100);
+            const triggerLevel = parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100);
 
             // Active Breakout latch & Anchors
             // CRITICAL: Intraday breakout can ONLY be true during regular market hours (after 09:35 AM ET)
@@ -3994,11 +3993,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const breakoutSpread = Math.max(price, dayHigh) - triggerLevel;
             const invalidationStop = liveSetup ? `$${liveSetup.targets.underlyingStop?.toFixed(2) || (price - 2.5).toFixed(2)} (ORB Low)` : prospective?.invalidationLevel || `Underlying Stop: $${(price - 2.5).toFixed(2)}`;
 
-            // Institutional Anchors for Targets & Invalidation
-            const chaseLimit = triggerLevel * 1.008; // e.g. $228.31 for NVDA (max +0.8% buy zone)
-            const t1StockLevel = triggerLevel * 1.015; // e.g. $229.90 for NVDA (+1.5% target)
-            const t2StockLevel = triggerLevel * 1.024; // e.g. $231.90 for NVDA (+2.4% target)
-            const stopStockLevel = triggerLevel * 0.988; // e.g. $223.80 for NVDA (-1.2% stop)
+            // Institutional Anchors for Targets & Invalidation (scaled for mega-cap price levels)
+            const isHighPriceStock = triggerLevel >= 500;
+            const chaseLimit = triggerLevel * (isHighPriceStock ? 1.005 : 1.008);
+            const t1StockLevel = triggerLevel * (isHighPriceStock ? 1.007 : 1.012);
+            const t2StockLevel = triggerLevel * (isHighPriceStock ? 1.011 : 1.020);
+            const stopStockLevel = triggerLevel * 0.988;
 
             // Dynamic Option Mark-to-Market Estimation
             const deltaEst = 0.48;
@@ -4301,8 +4301,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40" title={isPreMarketPending ? "Target 1 Profit Objective" : "Peak option contract value achieved today"}>
                         {isPreMarketPending || isPreMarketDiscovery ? `Target 1: $${target1.toFixed(2)} (+30%)` : `Peak Option: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
                       </span>
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${isPreMarketPending || isPreMarketDiscovery ? 'bg-slate-900 text-slate-300 border-slate-700' : liveGainPct >= 0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/15 text-rose-300 border-rose-500/40'}`}>
-                        {isPreMarketPending || isPreMarketDiscovery ? `Planned Ask: $${entryAsk.toFixed(2)}` : `Live Est: $${liveOptionEst.toFixed(2)} (${liveGainPct >= 0 ? '+' : ''}{liveGainPct}%)`}
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${isPreMarketPending || isPreMarketDiscovery ? 'bg-slate-900 text-slate-300 border-slate-700' : tradePhase === 'PULLBACK_RETEST' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : liveGainPct >= 0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/15 text-rose-300 border-rose-500/40'}`}>
+                        {isPreMarketPending || isPreMarketDiscovery
+                          ? `Planned Ask: $${entryAsk.toFixed(2)}`
+                          : tradePhase === "PULLBACK_RETEST"
+                          ? `Harvested Peak: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`
+                          : `Live Est: $${liveOptionEst.toFixed(2)} (${liveGainPct >= 0 ? '+' : ''}${liveGainPct}%)`}
                       </span>
                       <span className={`px-3 py-1 rounded-lg text-xs font-mono font-black uppercase tracking-wider border ${
                         isPreMarketPending
@@ -4311,11 +4315,25 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                           ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
                           : isFormingORB
                           ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40"
+                          : tradePhase === "PULLBACK_RETEST"
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
                           : isBreakoutTriggered
                           ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                           : "bg-slate-800 text-slate-300 border-slate-700"
                       }`}>
-                        {isPreMarketPending ? "STANDBY (SCAN 08:00 AM)" : isPreMarketDiscovery ? "PRE-MARKET VETTING" : isFormingORB ? "ORB FORMING (9:30-9:35)" : isBreakoutTriggered ? "ORB BREAKOUT" : "WAITING FOR ORB"}
+                        {isPreMarketPending
+                          ? "STANDBY (SCAN 08:00 AM)"
+                          : isPreMarketDiscovery
+                          ? "PRE-MARKET VETTING"
+                          : isFormingORB
+                          ? "ORB FORMING (9:30-9:35)"
+                          : tradePhase === "PULLBACK_RETEST"
+                          ? "MORNING T2 HIT • CLOSED"
+                          : isBreakoutTriggered
+                          ? "ORB BREAKOUT"
+                          : timeVal >= 1330
+                          ? "NO LATE CALLS (LOCKED)"
+                          : "WAITING FOR ORB"}
                       </span>
                     </div>
                   </div>
@@ -4366,10 +4384,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {tradePhase === "BUY_ZONE" && `🔥 +$${breakoutSpread.toFixed(2)} Past Trigger Shelf (Optimal Buy)`}
                       {tradePhase === "TARGET_1_HIT" && `🎯 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 1 Reached)`}
                       {tradePhase === "TARGET_2_HIT" && `🚀 +$${breakoutSpread.toFixed(2)} Past Shelf (Target 2 Smashed)`}
-                      {tradePhase === "PULLBACK_RETEST" && `🔄 Peaked at $${dayHigh.toFixed(2)} (Pullback to $${price.toFixed(2)})`}
+                      {tradePhase === "PULLBACK_RETEST" && `✅ Morning T2 Hit @ $${dayHigh.toFixed(2)} • Closed Before Pullback ($${price.toFixed(2)})`}
                       {tradePhase === "EXTENDED_NO_CHASE" && `⚠️ +$${breakoutSpread.toFixed(2)} Extended (Do Not Chase)`}
                       {tradePhase === "STOPPED_OUT" && `🛑 Stop Floor Breached`}
-                      {tradePhase === "WAITING" && `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`}
+                      {tradePhase === "WAITING" && (timeVal >= 1330 ? `🛑 Afternoon Call Lockout Active (Do Not Enter Calls)` : `⏳ $${Math.max(0, distancePts).toFixed(2)} (${distancePct.toFixed(1)}%) to Breakout`)}
                     </span>
                   </div>
                 </div>
@@ -4425,10 +4443,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {tradePhase === "BUY_ZONE" && "🔥 ENTER TRADE NOW (OPTIMAL BUY ZONE)"}
                       {tradePhase === "TARGET_1_HIT" && "🎯 TARGET 1 HIT (+30%) — SCALE 50% PROFIT"}
                       {tradePhase === "TARGET_2_HIT" && "🚀 TARGET 2 HIT (+75%) — HARVEST RUNNERS"}
-                      {tradePhase === "PULLBACK_RETEST" && "🔄 PULLBACK AFTER PEAK — RUNNERS TRAILED"}
+                      {tradePhase === "PULLBACK_RETEST" && "✅ MORNING TRADE HARVESTED — DO NOT ENTER LATE CALLS"}
                       {tradePhase === "EXTENDED_NO_CHASE" && "⚠️ EXTENDED (+2.0%+) — DO NOT CHASE"}
                       {tradePhase === "STOPPED_OUT" && "🛑 HARD STOP LOSS TRIGGERED — CUT TRADE"}
-                      {tradePhase === "WAITING" && "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)"}
+                      {tradePhase === "WAITING" && (timeVal >= 1330 ? "🛑 AFTERNOON CALL LOCKOUT — DO NOT ENTER CALLS" : "⏳ WAIT FOR TRIGGER (ARMED ON SHELF)")}
                     </span>
                     <span className="text-xs font-mono font-black text-slate-200">
                       {tradePhase === "PRE_MARKET_STANDBY" && "Awaiting 08:00 AM Scan"}
@@ -4437,7 +4455,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       {tradePhase === "BUY_ZONE" && `Ask Fill: $${entryAsk.toFixed(2)}`}
                       {tradePhase === "TARGET_1_HIT" && `Scalp Fill: $${target1.toFixed(2)} (+30%)`}
                       {tradePhase === "TARGET_2_HIT" && `Peak Option: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
-                      {tradePhase === "PULLBACK_RETEST" && `Locked Net: +$${Math.max(0, peakOptionEst - entryAsk).toFixed(2)}/ct`}
+                      {tradePhase === "PULLBACK_RETEST" && `Realized Peak: $${peakOptionEst.toFixed(2)} (+${peakGainPct}%)`}
                       {tradePhase === "EXTENDED_NO_CHASE" && `Est. Ask: $${liveOptionEst.toFixed(2)}`}
                       {tradePhase === "STOPPED_OUT" && `Cut Price: $${stopLoss.toFixed(2)}`}
                       {tradePhase === "WAITING" && `Est. Ask: $${entryAsk.toFixed(2)}`}
@@ -4454,10 +4472,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         {tradePhase === "BUY_ZONE" && `Confirmed breakout above $${triggerLevel.toFixed(2)}! Spot $${price.toFixed(2)} is inside buy zone.`}
                         {tradePhase === "TARGET_1_HIT" && `Target 1 achieved! Scale 50% profits, move stop to breakeven ($${triggerLevel.toFixed(2)}).`}
                         {tradePhase === "TARGET_2_HIT" && `Touched $${dayHigh.toFixed(2)} peak! Harvest 75-100% of runners. DO NOT BUY AT MARKET.`}
-                        {tradePhase === "PULLBACK_RETEST" && `Stock dropped from $${dayHigh.toFixed(2)} high to $${price.toFixed(2)}. Runners closed in green.`}
+                        {tradePhase === "PULLBACK_RETEST" && `Morning breakout peaked at $${dayHigh.toFixed(2)} (Target 2 hit) and pulled back to $${price.toFixed(2)}. Trade is CLOSED — do NOT buy Calls in afternoon pullback.`}
                         {tradePhase === "EXTENDED_NO_CHASE" && `Price is +$${breakoutSpread.toFixed(2)} past trigger shelf. High mean-reversion risk.`}
                         {tradePhase === "STOPPED_OUT" && `Underlying violated stop floor $${stopStockLevel.toFixed(2)}. Hard cut executed.`}
-                        {tradePhase === "WAITING" && `Breakout above $${triggerLevel.toFixed(2)} resistance shelf.`}
+                        {tradePhase === "WAITING" && (timeVal >= 1330 ? `Morning ORB Call window is closed. Focus on SPX 0DTE Power Hour (Left Panel) for late-session bearish Put momentum.` : `Breakout above $${triggerLevel.toFixed(2)} resistance shelf.`)}
                       </span>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">
                         {tradePhase === "PRE_MARKET_STANDBY" && "Zero-hindsight rule: No entries prior to 09:35 AM ORB close"}
@@ -4466,23 +4484,23 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         {tradePhase === "BUY_ZONE" && "Momentum expanding • Execute now"}
                         {tradePhase === "TARGET_1_HIT" && "Lock 50% • Guaranteed green trade"}
                         {tradePhase === "TARGET_2_HIT" && "Maximum extension • Protect gains"}
-                        {tradePhase === "PULLBACK_RETEST" && "Trade secured • Do not buy falling knife"}
+                        {tradePhase === "PULLBACK_RETEST" && "Morning move complete • Focus on SPX Power Hour"}
                         {tradePhase === "EXTENDED_NO_CHASE" && "Wait for re-test of shelf"}
                         {tradePhase === "STOPPED_OUT" && "Strict loss discipline adhered to"}
-                        {tradePhase === "WAITING" && `Needs +$${Math.max(0, distancePts).toFixed(2)} to trigger shelf`}
+                        {tradePhase === "WAITING" && (timeVal >= 1330 ? "Late-day equity Call entries locked out" : `Needs +$${Math.max(0, distancePts).toFixed(2)} to trigger shelf`)}
                       </span>
                     </div>
 
                     <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
                       <span className="text-[9.5px] text-slate-400 uppercase block font-bold">
-                        {isPreMarketPending || isPreMarketDiscovery ? "Planned Target Profile" : "Option Return Profile"}
+                        {isPreMarketPending || isPreMarketDiscovery ? "Planned Target Profile" : tradePhase === "PULLBACK_RETEST" ? "Realized Morning Peak" : "Option Return Profile"}
                       </span>
                       <div className="flex items-baseline gap-2 mt-0.5">
                         <span className="font-black text-emerald-300 text-xl">
-                          {isPreMarketPending || isPreMarketDiscovery ? `$${target1.toFixed(2)}` : `$${liveOptionEst.toFixed(2)}`}
+                          {isPreMarketPending || isPreMarketDiscovery ? `$${target1.toFixed(2)}` : tradePhase === "PULLBACK_RETEST" ? `$${peakOptionEst.toFixed(2)}` : `$${liveOptionEst.toFixed(2)}`}
                         </span>
-                        <span className={`text-[10px] font-bold ${isPreMarketPending || isPreMarketDiscovery ? "text-cyan-400" : liveGainPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          {isPreMarketPending || isPreMarketDiscovery ? "(+30.0% Target)" : `(${liveGainPct >= 0 ? "+" : ""}{liveGainPct}%)`}
+                        <span className={`text-[10px] font-bold ${isPreMarketPending || isPreMarketDiscovery ? "text-cyan-400" : tradePhase === "PULLBACK_RETEST" ? "text-emerald-400" : liveGainPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {isPreMarketPending || isPreMarketDiscovery ? "(+30.0% Target)" : tradePhase === "PULLBACK_RETEST" ? `(+${peakGainPct}% Harvested @ 11:10 AM)` : `(${liveGainPct >= 0 ? "+" : ""}${liveGainPct}%)`}
                         </span>
                       </div>
                       <span className="text-[9.5px] text-slate-500 block mt-0.5">
