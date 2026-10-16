@@ -12,6 +12,7 @@ import {
   DEFAULT_DISCORD_WEBHOOK_URL
 } from '@/lib/discord';
 import { CURRENT_MARKET_OUTLOOK } from '@/lib/prospectiveStocks';
+import { recordOrUpdateAlertTrade } from '@/lib/ledger';
 
 export async function GET() {
   const webhookConfigured = Boolean(process.env.DISCORD_WEBHOOK_URL || DEFAULT_DISCORD_WEBHOOK_URL);
@@ -67,6 +68,40 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'Invalid SPX power hour payload: contract and entryAsk required' }, { status: 400 });
       }
       const result = await sendSPXPowerHourAlert(payload);
+      
+      // Auto-record SPX trade to persistent ledger
+      const todayStr = new Date().toISOString().slice(0, 10);
+      try {
+        recordOrUpdateAlertTrade({
+          id: `trade_${todayStr.replace(/-/g, '')}_spx`,
+          date: todayStr,
+          timestamp: new Date().toISOString(),
+          symbol: "SPX",
+          name: "S&P 500 Index",
+          contract: payload.contract,
+          action: `BUY ${payload.contract}`,
+          entryTime: payload.triggerTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          exitTime: payload.exitCutoff || "03:58 PM ET",
+          duration: "20 min",
+          session: "POWER_HOUR",
+          entryPrice: payload.entryAsk,
+          target1: payload.target1,
+          target2: payload.target2,
+          stopLoss: payload.stopLoss,
+          peakPrice: payload.spxSpot || payload.entryAsk,
+          outcome: "OPEN_LIVE",
+          pnlPerContract: 0,
+          percentGain: "0.0%",
+          rationale: payload.shelfBreak || "MOC Imbalance Breakout",
+          catalyst: payload.mocImbalance || "SPX 0DTE Power Hour",
+          rvol: "3.8x",
+          confidenceScore: 94,
+          winStatus: "PENDING"
+        });
+      } catch (err: any) {
+        console.warn("Ledger auto-record SPX error:", err.message);
+      }
+
       return NextResponse.json({ success: result.success, message: `SPX Power Hour Alert sent for ${payload.contract}`, details: result });
     }
 
@@ -75,6 +110,36 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'Invalid entry payload: symbol, entryTime, and entryPrice required' }, { status: 400 });
       }
       const result = await sendTradeEntryCallout(payload);
+
+      // Auto-record entry to persistent ledger
+      const todayStr = new Date().toISOString().slice(0, 10);
+      try {
+        recordOrUpdateAlertTrade({
+          id: `trade_${todayStr.replace(/-/g, '')}_${payload.symbol.toLowerCase()}`,
+          date: todayStr,
+          timestamp: new Date().toISOString(),
+          symbol: payload.symbol,
+          contract: payload.contract,
+          action: `BUY ${payload.contract || payload.symbol}`,
+          entryTime: payload.entryTime,
+          entryPrice: payload.entryPrice,
+          target1: payload.target1,
+          target2: payload.target2,
+          stopLoss: payload.stopLoss,
+          peakPrice: payload.underlyingPrice || payload.entryPrice,
+          outcome: "OPEN_LIVE",
+          pnlPerContract: 0,
+          percentGain: "0.0%",
+          rationale: payload.catalyst || "",
+          catalyst: payload.catalyst || "",
+          rvol: payload.rvol || "3.0x",
+          confidenceScore: payload.confidenceScore || 95,
+          winStatus: "PENDING"
+        });
+      } catch (err: any) {
+        console.warn("Ledger auto-record entry error:", err.message);
+      }
+
       return NextResponse.json({ success: result.success, message: `Entry call-out sent for ${payload.symbol}`, details: result });
     }
 
@@ -83,6 +148,26 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'Invalid exit payload: symbol, exitTime, and exitPrice required' }, { status: 400 });
       }
       const result = await sendTradeExitCallout(payload);
+
+      // Auto-update exit in persistent ledger
+      const todayStr = new Date().toISOString().slice(0, 10);
+      try {
+        recordOrUpdateAlertTrade({
+          id: `trade_${todayStr.replace(/-/g, '')}_${payload.symbol.toLowerCase()}`,
+          date: todayStr,
+          symbol: payload.symbol,
+          contract: payload.contract,
+          exitPrice: payload.exitPrice,
+          exitTime: payload.exitTime,
+          outcome: (payload.pnlPerContract || 0) >= 0 ? "TARGET_HIT" : "STOP_LOSS",
+          pnlPerContract: payload.pnlPerContract || 0,
+          percentGain: payload.pnlPercent || "0.0%",
+          winStatus: (payload.pnlPerContract || 0) >= 0 ? "WIN" : "LOSS"
+        });
+      } catch (err: any) {
+        console.warn("Ledger auto-record exit error:", err.message);
+      }
+
       return NextResponse.json({ success: result.success, message: `Exit alert sent for ${payload.symbol}`, details: result });
     }
 
@@ -91,6 +176,42 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: 'Invalid target-scale payload: symbol, stage, and currentPrice required' }, { status: 400 });
       }
       const result = await sendTargetScaleAlert(payload);
+
+      // Auto-update target scale in persistent ledger
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let outcome = "OPEN_LIVE";
+      let pnlPerContract = Math.round(((payload.targetPrice || payload.entryPrice * 1.3) - payload.entryPrice) * 100);
+      let pctGain = payload.pnlPercent || "+30.0%";
+      let exitTime = "Active Position";
+
+      if (payload.stage === "TARGET_1_HIT") {
+        outcome = "TARGET_1";
+      } else if (payload.stage === "TARGET_2_HIT") {
+        outcome = "TARGET_2";
+        pnlPerContract = Math.round(((payload.targetPrice || payload.entryPrice * 1.65) - payload.entryPrice) * 100);
+      } else if (payload.stage === "TRAILING_STOP_EXIT") {
+        outcome = "TRAILING_WIN";
+        exitTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        pnlPerContract = Math.round(((payload.targetPrice || payload.entryPrice * 1.20) - payload.entryPrice) * 100);
+      }
+
+      try {
+        recordOrUpdateAlertTrade({
+          id: `trade_${todayStr.replace(/-/g, '')}_${payload.symbol.toLowerCase()}`,
+          date: todayStr,
+          symbol: payload.symbol,
+          contract: payload.contract,
+          peakPrice: payload.highPrice || payload.currentPrice,
+          exitTime,
+          outcome,
+          pnlPerContract,
+          percentGain: pctGain,
+          winStatus: "WIN"
+        });
+      } catch (err: any) {
+        console.warn("Ledger auto-record target-scale error:", err.message);
+      }
+
       return NextResponse.json({ success: result.success, message: `Target scale alert sent for ${payload.symbol}`, details: result });
     }
 

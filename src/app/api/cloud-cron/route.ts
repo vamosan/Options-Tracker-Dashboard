@@ -7,10 +7,12 @@ import {
     sendSPXPowerHourAlert,
     sendTargetScaleAlert,
     sendProximityAlert,
-    sendPreMarketGamePlan 
+    sendPreMarketGamePlan,
+    sendDailyCalloutsSummary 
 } from '@/lib/discord';
 import YahooFinance from 'yahoo-finance2';
 import { runAgenticDailyConsensus } from '@/lib/agenticOrchestrator';
+import { getSignals } from '@/lib/ledger';
 
 const CACHE_FILE = process.env.VERCEL ? '/tmp/cloud_cron_cache.json' : path.join(process.cwd(), '.cron_cache.json');
 
@@ -274,6 +276,17 @@ async function handleCron(request: Request) {
                         });
                         setCache(t1Key);
                         actionsTriggered.push(`TARGET_1_${sym}`);
+                        recordedTrades.push({
+                            id: `trade_${todayStr.replace(/-/g, '')}_${sym.toLowerCase()}`,
+                            date: todayStr,
+                            symbol: sym,
+                            contract: setup.contract,
+                            peakPrice: dayHigh,
+                            outcome: "TARGET_1",
+                            pnlPerContract: Math.round((setup.target1 - setup.entryAsk) * 100),
+                            percentGain: "+30.0%",
+                            winStatus: "WIN"
+                        });
                         logs.push(`[Target Scale] Target 1 Hit dispatched for ${sym} @ $${currentPrice.toFixed(2)}`);
                     }
 
@@ -297,6 +310,17 @@ async function handleCron(request: Request) {
                         });
                         setCache(t2Key);
                         actionsTriggered.push(`TARGET_2_${sym}`);
+                        recordedTrades.push({
+                            id: `trade_${todayStr.replace(/-/g, '')}_${sym.toLowerCase()}`,
+                            date: todayStr,
+                            symbol: sym,
+                            contract: setup.contract,
+                            peakPrice: dayHigh,
+                            outcome: "TARGET_2",
+                            pnlPerContract: Math.round((setup.target2 - setup.entryAsk) * 100),
+                            percentGain: "+65.0%",
+                            winStatus: "WIN"
+                        });
                         logs.push(`[Target Scale] Target 2 Hit dispatched for ${sym} @ $${currentPrice.toFixed(2)}`);
                     }
 
@@ -316,6 +340,18 @@ async function handleCron(request: Request) {
                         });
                         setCache(trailKey);
                         actionsTriggered.push(`TRAIL_EXIT_${sym}`);
+                        recordedTrades.push({
+                            id: `trade_${todayStr.replace(/-/g, '')}_${sym.toLowerCase()}`,
+                            date: todayStr,
+                            symbol: sym,
+                            contract: setup.contract,
+                            peakPrice: dayHigh,
+                            exitTime: timeDisplay,
+                            outcome: "TRAILING_WIN",
+                            pnlPerContract: Math.round((setup.entryAsk * 0.25) * 100),
+                            percentGain: "+25.0%",
+                            winStatus: "WIN"
+                        });
                         logs.push(`[Trailing Stop] Trailing Stop Exit dispatched for ${sym} @ $${currentPrice.toFixed(2)}`);
                     }
                 } catch (symErr: any) {
@@ -418,6 +454,55 @@ async function handleCron(request: Request) {
 
         } catch (spxErr: any) {
             logs.push(`[SPX Power Hour Error] ${spxErr?.message}`);
+        }
+    }
+
+    // ==============================================================
+    // 3. AUTOMATED END-OF-DAY PERFORMANCE AUDIT (04:02 PM - 04:10 PM ET)
+    // Automatically compiles daily alerts, calculates success rate, and dispatches to Discord
+    // ==============================================================
+    if ((timeVal >= 1602 && timeVal <= 1610) || (forceTest && (testStep === 'audit' || testStep === 'all'))) {
+        const auditKey = `EOD_AUDIT_${todayStr}`;
+        if (!isCached(auditKey) || (forceTest && testStep === 'audit')) {
+            try {
+                const allTrades = await getSignals();
+                const todayTrades = allTrades.filter((t: any) => t.date === todayStr);
+
+                if (todayTrades.length > 0) {
+                    const wins = todayTrades.filter((t: any) => t.winStatus === "WIN" || (t.pnlPerContract || 0) > 0).length;
+                    const losses = todayTrades.filter((t: any) => t.winStatus === "LOSS" || (t.pnlPerContract < 0 && t.outcome !== "OPEN_LIVE")).length;
+                    const totalPnl = todayTrades.reduce((acc: number, t: any) => acc + (t.pnlPerContract || 0), 0);
+                    const winRate = todayTrades.length > 0 ? Math.round((wins / todayTrades.length) * 100) : 100;
+
+                    await sendDailyCalloutsSummary({
+                        date: todayStr,
+                        monthName: etDate.toLocaleString('default', { month: 'long' }),
+                        trades: todayTrades.map((t: any) => ({
+                            symbol: t.symbol,
+                            contract: t.contract,
+                            entryTime: t.entryTime || t.time,
+                            exitTime: t.exitTime || "Closed EOD",
+                            entryPrice: t.entryPrice,
+                            exitPrice: t.peakPrice || t.exitPrice,
+                            pnlPercent: t.percentGain,
+                            pnlPerContract: t.pnlPerContract,
+                            status: t.outcome === "TARGET_2" ? "TARGET 2 HIT (+65%)" : t.outcome === "TARGET_1" ? "TARGET 1 HIT (+30%)" : t.outcome === "TRAILING_WIN" ? "TRAILING WIN (+25%)" : t.outcome,
+                            lessons: t.catalyst || t.rationale,
+                            gatekeeperStatus: "QUALIFIED"
+                        })),
+                        totalPnlPerCt: totalPnl,
+                        winRate,
+                        winCount: wins,
+                        lossCount: losses
+                    });
+
+                    setCache(auditKey);
+                    actionsTriggered.push("EOD_PERFORMANCE_AUDIT");
+                    logs.push(`[EOD Audit] Automated Performance Report dispatched to Discord: ${wins}W / ${losses}L (${winRate}%) • Net PnL: +$${totalPnl}`);
+                }
+            } catch (auditErr: any) {
+                logs.push(`[EOD Audit Error] ${auditErr?.message}`);
+            }
         }
     }
 

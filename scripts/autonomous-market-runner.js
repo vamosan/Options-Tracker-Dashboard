@@ -24,9 +24,9 @@ async function run() {
         return;
     }
 
-    // Guard: Outside market hours (9:15 AM - 4:05 PM ET)
-    if (timeVal < 915 || timeVal > 1605) {
-        console.log("Market closed: Outside regular market hours (9:15 AM - 4:05 PM ET). Exiting cleanly.");
+    // Guard: Outside market hours (9:15 AM - 4:12 PM ET)
+    if (timeVal < 915 || timeVal > 1612) {
+        console.log("Market closed: Outside market & EOD audit window (9:15 AM - 4:12 PM ET). Exiting cleanly.");
         return;
     }
 
