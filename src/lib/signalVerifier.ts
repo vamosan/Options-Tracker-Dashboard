@@ -105,17 +105,17 @@ function evaluateChronologicalWalkForward(
   const forwardBars = dayBars.slice(effectiveIdx);
   if (!forwardBars.length) return null;
 
-  // Underlying thresholds scaled by stock price / beta
-  // High-priced mega-caps (LLY > $1000, META > $700) need ~1.0% for +30% option T1 and ~1.25%+ for +65% option T2
-  // Standard stocks need ~1.1% for T1 and ~1.8% for T2; Stop Loss is -0.80% underlying move
+  // Real weekly option delta/gamma physics & ORB invalidation rules:
+  // +0.80% underlying move = +30% weekly ATM/OTM Call (Target 1)
+  // +1.25% underlying move = +65% weekly ATM/OTM Call (Target 2)
+  // Stop Loss invalidation = 5-min ORB Low (or -1.0% underlying move)
   const isMegaPrice = entryUnderlyingPrice >= 500;
-  const t1StockPct = isMegaPrice ? 0.0085 : 0.0105;
-  const t2StockPct = isMegaPrice ? 0.0125 : 0.0175;
-  const stopStockPct = isMegaPrice ? -0.0065 : -0.0080;
+  const t1StockPct = 0.0080;
+  const t2StockPct = 0.0125;
 
   const t1StockPrice = entryUnderlyingPrice * (1 + t1StockPct);
   const t2StockPrice = entryUnderlyingPrice * (1 + t2StockPct);
-  const stopStockPrice = entryUnderlyingPrice * (1 + stopStockPct);
+  const stopStockPrice = Math.min(orbBar.low, entryUnderlyingPrice * 0.990);
 
   let postEntryHigh = entryUnderlyingPrice;
   let postEntryHighTimeET = entryBar.timeET;
