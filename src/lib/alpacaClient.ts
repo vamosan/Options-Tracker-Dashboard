@@ -62,7 +62,10 @@ export interface AlpacaOrderExecutionResult {
   side?: 'buy' | 'sell';
   status?: string;
   filledAvgPrice?: number | null;
+  bidPrice?: number;
   limitOrAskPrice?: number;
+  spreadPct?: number;
+  maxPayCeiling?: number;
   message: string;
 }
 
@@ -214,14 +217,16 @@ export async function resolveAlpacaOptionContract(
     const snapData = snapRes.ok ? await snapRes.json() : {};
     const snapshots = snapData?.snapshots || {};
 
-    // Pick the contract closest to targetStrike that has a valid live quote/trade
+    // Pick the contract closest to targetStrike that has a liquid live quote and tight bid-ask spread (<= 10%)
     let bestContract = sameExpContracts[0];
     let bestSnap = snapshots[bestContract.symbol];
 
     for (const c of sameExpContracts) {
       const s = snapshots[c.symbol];
       const ap = s?.latestQuote?.ap || s?.latestTrade?.p || s?.dailyBar?.c || 0;
-      if (ap >= 0.35) {
+      const bp = s?.latestQuote?.bp || 0;
+      const spPct = ap > 0 && bp > 0 ? ((ap - bp) / ap) * 100 : 5;
+      if (ap >= 0.40 && spPct <= 10.0) {
         bestContract = c;
         bestSnap = s;
         break;
@@ -351,6 +356,8 @@ export async function placeAlpacaPaperOptionOrder(params: {
       };
     }
 
+    const maxPayCeiling = Math.round(resolved.ask * 1.05 * 100) / 100;
+
     // 3. Submit Paper Market Order (during regular hours) or Limit Order at Ask (if off-hours queued)
     const orderPayload: Record<string, any> = {
       symbol: resolved.occSymbol,
@@ -372,7 +379,10 @@ export async function placeAlpacaPaperOptionOrder(params: {
       return {
         success: false,
         occSymbol: resolved.occSymbol,
+        bidPrice: resolved.bid,
         limitOrAskPrice: resolved.ask,
+        spreadPct: resolved.spreadPct,
+        maxPayCeiling,
         message:
           orderJson?.message ||
           `Alpaca order rejected (${orderRes.status}) for ${resolved.occSymbol}`,
@@ -389,8 +399,11 @@ export async function placeAlpacaPaperOptionOrder(params: {
       filledAvgPrice: orderJson.filled_avg_price
         ? parseFloat(orderJson.filled_avg_price)
         : null,
+      bidPrice: resolved.bid,
       limitOrAskPrice: resolved.ask,
-      message: `Alpaca Paper Order Submitted: BUY ${qty}x ${resolved.occSymbol} (${cleanSym} $${resolved.strike} ${direction} exp ${resolved.expirationDate}) @ ~$${resolved.ask.toFixed(2)} Ask [Status: ${String(orderJson.status).toUpperCase()}]`,
+      spreadPct: resolved.spreadPct,
+      maxPayCeiling,
+      message: `Alpaca Paper Order Submitted: BUY ${qty}x ${resolved.occSymbol} (${cleanSym} $${resolved.strike} ${direction} exp ${resolved.expirationDate}) @ $${resolved.bid.toFixed(2)}×$${resolved.ask.toFixed(2)} (Spread: ${resolved.spreadPct}% | Max Pay: $${maxPayCeiling.toFixed(2)}) [Status: ${String(orderJson.status).toUpperCase()}]`,
     };
   } catch (err: any) {
     return {
@@ -405,15 +418,25 @@ export async function placeAlpacaPaperOptionOrder(params: {
  * Checks all open option positions in Alpaca Paper on every cron tick:
  * - Closes full position at Target 2 (+60% gain)
  * - Trims 50% at Target 1 (+30% gain) if qty >= 2
+ * - Early Tape-Reversal Exit (-14% loss when SPY & QQQ both break VWAP against the position)
  * - Cuts full position at Hard Stop Loss (-25% loss)
  * - Closes intraday positions at 15:55 PM ET before market close
  */
 export async function manageAlpacaPaperPositions(
-  timeVal: number
+  timeVal: number,
+  indexContext?: {
+    spyBelowVwap?: boolean;
+    qqqBelowVwap?: boolean;
+  }
 ): Promise<
   Array<{
     symbol: string;
-    action: 'TARGET_1_TRIM' | 'TARGET_2_EXIT' | 'STOP_LOSS_EXIT' | 'EOD_CLOSE';
+    action:
+      | 'TARGET_1_TRIM'
+      | 'TARGET_2_EXIT'
+      | 'TAPE_REVERSAL_EXIT'
+      | 'STOP_LOSS_EXIT'
+      | 'EOD_CLOSE';
     qty: number;
     avgEntry: number;
     currentPrice: number;
@@ -424,7 +447,12 @@ export async function manageAlpacaPaperPositions(
 > {
   const actionsTaken: Array<{
     symbol: string;
-    action: 'TARGET_1_TRIM' | 'TARGET_2_EXIT' | 'STOP_LOSS_EXIT' | 'EOD_CLOSE';
+    action:
+      | 'TARGET_1_TRIM'
+      | 'TARGET_2_EXIT'
+      | 'TAPE_REVERSAL_EXIT'
+      | 'STOP_LOSS_EXIT'
+      | 'EOD_CLOSE';
     qty: number;
     avgEntry: number;
     currentPrice: number;
@@ -453,6 +481,8 @@ export async function manageAlpacaPaperPositions(
       const pnlDollars = parseFloat(pos.unrealized_pl) || 0;
       const pnlRatio = parseFloat(pos.unrealized_plpc) || 0; // e.g. 0.32 for +32%
       const pnlPct = Math.round(pnlRatio * 1000) / 10;
+      const isCallPos = /\d{6}C\d{8}$/i.test(occSymbol);
+      const isPutPos = /\d{6}P\d{8}$/i.test(occSymbol);
 
       // 1. Target 2 Full Harvest (+60% or higher)
       if (pnlRatio >= 0.60) {
@@ -475,7 +505,41 @@ export async function manageAlpacaPaperPositions(
         continue;
       }
 
-      // 2. Hard Stop-Loss Protection (-25% or worse)
+      // 2. Proactive Early Tape-Reversal Exit (-14% loss when SPY & QQQ both break VWAP against position)
+      const isMarketRollingAgainstCall =
+        isCallPos &&
+        indexContext?.spyBelowVwap === true &&
+        indexContext?.qqqBelowVwap === true;
+      const isMarketSqueezingAgainstPut =
+        isPutPos &&
+        indexContext?.spyBelowVwap === false &&
+        indexContext?.qqqBelowVwap === false;
+
+      if (
+        pnlRatio <= -0.14 &&
+        pnlRatio > -0.25 &&
+        (isMarketRollingAgainstCall || isMarketSqueezingAgainstPut)
+      ) {
+        const closeRes = await fetch(
+          `${ALPACA_PAPER_TRADING_URL}/positions/${encodeURIComponent(occSymbol)}`,
+          { method: 'DELETE', headers }
+        );
+        if (closeRes.ok) {
+          actionsTaken.push({
+            symbol: occSymbol,
+            action: 'TAPE_REVERSAL_EXIT',
+            qty,
+            avgEntry,
+            currentPrice,
+            pnlDollars,
+            pnlPct,
+            summary: `🛡️ POSITION GUARDIAN EARLY EXIT (INDEX VWAP REVERSAL): Closed ${qty}x ${occSymbol} early @ $${currentPrice.toFixed(2)} (${pnlPct}%) because SPY & QQQ reversed against trade direction—saved capital before -25% hard stop!`,
+          });
+        }
+        continue;
+      }
+
+      // 3. Hard Stop-Loss Protection (-25% or worse)
       if (pnlRatio <= -0.25) {
         const closeRes = await fetch(
           `${ALPACA_PAPER_TRADING_URL}/positions/${encodeURIComponent(occSymbol)}`,
@@ -496,7 +560,7 @@ export async function manageAlpacaPaperPositions(
         continue;
       }
 
-      // 3. Target 1 Partial Scale (+30% gain, when holding >= 2 contracts)
+      // 4. Target 1 Partial Scale (+30% gain, when holding >= 2 contracts)
       if (pnlRatio >= 0.30 && qty >= 2) {
         const trimQty = Math.max(1, Math.floor(qty / 2));
         const trimRes = await fetch(`${ALPACA_PAPER_TRADING_URL}/orders`, {
@@ -517,7 +581,8 @@ export async function manageAlpacaPaperPositions(
             qty: trimQty,
             avgEntry,
             currentPrice,
-            pnlDollars: Math.round((currentPrice - avgEntry) * trimQty * 100 * 100) / 100,
+            pnlDollars:
+              Math.round((currentPrice - avgEntry) * trimQty * 100 * 100) / 100,
             pnlPct,
             summary: `🎯 ALPACA PAPER AUTO-SCALE (TARGET 1 +30%): Sold ${trimQty}x of ${qty}x ${occSymbol} @ $${currentPrice.toFixed(2)} (Entry: $${avgEntry.toFixed(2)}, +${pnlPct}%)`,
           });
@@ -525,7 +590,7 @@ export async function manageAlpacaPaperPositions(
         continue;
       }
 
-      // 4. End-of-Day Cash Settlement (15:55 PM ET onwards)
+      // 5. End-of-Day Cash Settlement (15:55 PM ET onwards)
       if (timeVal >= 1555 && timeVal <= 1600) {
         const closeRes = await fetch(
           `${ALPACA_PAPER_TRADING_URL}/positions/${encodeURIComponent(occSymbol)}`,

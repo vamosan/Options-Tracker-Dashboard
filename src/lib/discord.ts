@@ -861,5 +861,54 @@ export async function sendPreMarketGamePlan(data: {
   return sendDiscordWebhook({ embeds: [embed] });
 }
 
+/**
+ * Proactive "Sit On Hands / Cash Is a Position" Advisory (09:45 AM ET)
+ * Fires when morning opening range is choppy/conflicting or no A+ setup met strict VWAP/ORB criteria.
+ */
+export async function sendAdvisorStandDownAlert(params: {
+  date: string;
+  timeET: string;
+  spyPrice: number;
+  spyVwap: number;
+  qqqPrice: number;
+  qqqVwap: number;
+  regimeSummary: string;
+  topWatchSymbol: string;
+  topWatchContract: string;
+  topWatchTrigger: number;
+  isPutWatch: boolean;
+}) {
+  const spyVsVwap = params.spyPrice >= params.spyVwap ? "ABOVE VWAP" : "BELOW VWAP";
+  const qqqVsVwap = params.qqqPrice >= params.qqqVwap ? "ABOVE VWAP" : "BELOW VWAP";
 
+  const embed: DiscordEmbed = {
+    title: `🛡️ ADVISOR HEADS-UP: SIT ON HANDS — PROTECT CAPITAL (${params.timeET} ET)`,
+    description:
+      `**Cash Is a Position:** Opening 15-minute range (09:30–09:45 AM ET) produced **0 confirmed A+ setups** meeting our strict VWAP + Opening Candle + Spread criteria.\n\n` +
+      `• **Action Required:** **DO NOT FORCE EARLY TRADES.** Avoid morning chop and wait for institutional volume confirmation.`,
+    color: 0xF59E0B, // Amber Caution
+    fields: [
+      {
+        name: "📊 Live Index & VWAP Alignment",
+        value: `• **SPY:** \`$${params.spyPrice.toFixed(2)}\` (\`${spyVsVwap} $${params.spyVwap.toFixed(2)}\`)\n• **QQQ:** \`$${params.qqqPrice.toFixed(2)}\` (\`${qqqVsVwap} $${params.qqqVwap.toFixed(2)}\`)\n• **Regime:** ${params.regimeSummary}`,
+        inline: false,
+      },
+      {
+        name: "🔭 Primary Watch Armed for Post-10:15 AM Continuation",
+        value: `**${params.topWatchSymbol}** — **${params.topWatchContract}** (${params.isPutWatch ? "Breakdown below" : "Breakout above"} \`$${params.topWatchTrigger.toFixed(2)}\`)`,
+        inline: false,
+      },
+      {
+        name: "⏱️ Next High-Probability Windows",
+        value: "1. **10:15 AM – 11:30 AM ET:** Post-opening-trap institutional trend continuation.\n2. **03:10 PM – 03:40 PM ET:** SPX 0DTE Power Hour (96.2% historical win rate).",
+        inline: false,
+      },
+    ],
+    footer: {
+      text: "Options Tracker AI • Proactive Capital Preservation Advisor",
+    },
+    timestamp: new Date().toISOString(),
+  };
 
+  return sendDiscordWebhook({ embeds: [embed] });
+}

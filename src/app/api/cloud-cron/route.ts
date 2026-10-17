@@ -8,7 +8,9 @@ import {
     sendTargetScaleAlert,
     sendProximityAlert,
     sendPreMarketGamePlan,
-    sendDailyCalloutsSummary 
+    sendDailyCalloutsSummary,
+    sendAdvisorStandDownAlert,
+    sendDiscordWebhook
 } from '@/lib/discord';
 import YahooFinance from 'yahoo-finance2';
 import { runAgenticDailyConsensus } from '@/lib/agenticOrchestrator';
@@ -18,6 +20,9 @@ import {
     placeAlpacaPaperOptionOrder,
     manageAlpacaPaperPositions,
 } from '@/lib/alpacaClient';
+import {
+    runLiveMarketSignalVerification,
+} from '@/lib/signalVerifier';
 
 const CACHE_FILE = process.env.VERCEL ? '/tmp/cloud_cron_cache.json' : path.join(process.cwd(), '.cron_cache.json');
 
@@ -165,8 +170,24 @@ async function handleCron(request: Request) {
             let entriesDispatchedThisTick = 0;
             const MAX_DAILY_ENTRIES = 3;
 
-            // Step 0: Run Autonomous Alpaca Paper Position Guardian (+30% scale, +60% harvest, -25% hard stop, 15:55 EOD close)
-            const guardianActions = await manageAlpacaPaperPositions(timeVal);
+            // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
+            const consensus = await runAgenticDailyConsensus(timeVal);
+            
+            // Strictly filter to CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
+            const activeSetups = consensus.allRanked
+                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88);
+
+            // Batch-fetch Real-Time Alpaca Stock Snapshots for all active setups + SPY & QQQ tape benchmarks
+            const symbolsToFetch = Array.from(new Set([...activeSetups.map(s => s.symbol), 'SPY', 'QQQ']));
+            const alpacaSnaps = await fetchAlpacaStockSnapshots(symbolsToFetch);
+
+            const spySnap = alpacaSnaps['SPY'];
+            const qqqSnap = alpacaSnaps['QQQ'];
+            const spyBelowVwap = spySnap ? spySnap.price < spySnap.vwap : consensus.macro.spyTrend === 'BEARISH';
+            const qqqBelowVwap = qqqSnap ? qqqSnap.price < qqqSnap.vwap : consensus.macro.qqqTrend === 'BEARISH';
+
+            // Step 0 (Pillar 4): Run Autonomous Alpaca Paper Position Guardian (+30% scale, +60% harvest, -14% early tape-reversal exit, -25% hard stop, 15:55 EOD close)
+            const guardianActions = await manageAlpacaPaperPositions(timeVal, { spyBelowVwap, qqqBelowVwap });
             for (const gAct of guardianActions) {
                 logs.push(gAct.summary);
                 actionsTriggered.push(`ALPACA_${gAct.action}_${gAct.symbol}`);
@@ -183,16 +204,6 @@ async function handleCron(request: Request) {
                     stopAdjustment: gAct.action === 'TARGET_1_TRIM' ? 'Remaining runner stop moved to breakeven in Alpaca Paper' : 'Position closed in Alpaca Paper Account'
                 });
             }
-
-            // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
-            const consensus = await runAgenticDailyConsensus(timeVal);
-            
-            // Strictly filter to CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
-            const activeSetups = consensus.allRanked
-                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88);
-
-            // Batch-fetch Real-Time Alpaca Stock Snapshots for all active setups
-            const alpacaSnaps = await fetchAlpacaStockSnapshots(activeSetups.map(s => s.symbol));
 
             for (const setup of activeSetups) {
                 const sym = setup.symbol;
@@ -238,15 +249,20 @@ async function handleCron(request: Request) {
                         logs.push(`[Proximity Alert] ${sym} testing shelf @ $${currentPrice.toFixed(2)} (Trigger: $${trigger.toFixed(2)})`);
                     }
 
-                    // Strict Live-Price-Only Breakout / Breakdown Conditions (Zero Hindsight, Bidirectional)
+                    // Strict Live-Price-Only Breakout / Breakdown Conditions + Pillar 1 SPY/QQQ Intraday VWAP Alignment Gate
                     const isGreenOnSession = changePercent >= 0.40 && currentPrice > dayOpen && currentPrice > prevClose;
                     const isPushingSessionHigh = currentPrice >= dayHigh * 0.994;
                     const isRedOnSession = changePercent <= -0.80 && currentPrice < dayOpen && currentPrice < prevClose;
                     const isPushingSessionLow = currentPrice <= dayLow * 1.008;
 
+                    // Pillar 1: Block CALL entries if both SPY & QQQ are below intraday VWAP (unless extreme +2% RS decoupled outlier)
+                    // Block PUT entries if both SPY & QQQ are above intraday VWAP (unless extreme -2% breakdown outlier)
+                    const tapeAlignedForCall = !(spyBelowVwap && qqqBelowVwap) || changePercent >= 2.0;
+                    const tapeAlignedForPut = (spyBelowVwap || qqqBelowVwap) || changePercent <= -2.0;
+
                     const isSafeEntry = isPutSetup
-                        ? (currentPrice <= trigger && currentPrice >= maxChase && isRedOnSession && isPushingSessionLow)
-                        : (currentPrice >= trigger && currentPrice <= maxChase && isGreenOnSession && isPushingSessionHigh);
+                        ? (currentPrice <= trigger && currentPrice >= maxChase && isRedOnSession && isPushingSessionLow && tapeAlignedForPut)
+                        : (currentPrice >= trigger && currentPrice <= maxChase && isGreenOnSession && isPushingSessionHigh && tapeAlignedForCall);
 
                     const isOverextended = isPutSetup
                         ? currentPrice < maxChase
@@ -264,7 +280,7 @@ async function handleCron(request: Request) {
                             (isSafeEntry && entriesDispatchedThisTick < 1 && totalEntriesToday < MAX_DAILY_ENTRIES) ||
                             (forceTest && testStep === 'entry' && entriesDispatchedThisTick < 1)
                         ) {
-                            // AUTOMATIC ALPACA PAPER EXECUTION UPON SIGNAL FIRE
+                            // AUTOMATIC ALPACA PAPER EXECUTION UPON SIGNAL FIRE + PILLAR 3 LIVE OPRA SPREAD VERIFICATION
                             const orderQty = setup.kellySizing?.recommendedContracts || 3;
                             const alpacaOrder = await placeAlpacaPaperOptionOrder({
                                 underlying: sym,
@@ -275,9 +291,11 @@ async function handleCron(request: Request) {
                             });
 
                             const verifiedAsk = alpacaOrder.limitOrAskPrice || setup.entryAsk;
+                            const maxPayCeiling = alpacaOrder.maxPayCeiling || Math.round(verifiedAsk * 1.05 * 100) / 100;
                             const verifiedT1 = Math.round(verifiedAsk * 1.30 * 100) / 100;
                             const verifiedT2 = Math.round(verifiedAsk * 1.65 * 100) / 100;
                             const verifiedStop = Math.round(verifiedAsk * 0.75 * 100) / 100;
+                            const spreadText = alpacaOrder.spreadPct !== undefined ? `Spread: ${alpacaOrder.spreadPct}%` : 'OPRA Verified';
 
                             await sendTradeEntryCallout({
                                 symbol: sym,
@@ -289,14 +307,14 @@ async function handleCron(request: Request) {
                                 target2: verifiedT2,
                                 stopLoss: verifiedStop,
                                 rvol: setup.rvol,
-                                gatekeeperBadge: setup.riskOfficer.badge,
-                                gatekeeperReason: `Rule 1-4 Cleared (${isPutSetup ? 'BEARISH PUT' : 'BULLISH CALL'}): ${setup.riskOfficer.devilsAdvocateCritique} | 🤖 ${alpacaOrder.message}`,
+                                gatekeeperBadge: `${setup.riskOfficer.badge} • DO NOT PAY OVER $${maxPayCeiling.toFixed(2)}`,
+                                gatekeeperReason: `Rule 1-4 Cleared (${isPutSetup ? 'BEARISH PUT' : 'BULLISH CALL'} • ${spreadText}): ${setup.riskOfficer.devilsAdvocateCritique} | 🤖 ${alpacaOrder.message}`,
                                 catalyst: setup.catalyst,
                                 confidenceScore: setup.convictionScore,
                                 agenticConsensus: {
                                     scoreBreakdown: `Trend: +${setup.pillars.trend} | Momentum: +${setup.pillars.momentum} | Macro: ${setup.pillars.macro >= 0 ? '+' : ''}${setup.pillars.macro} | Score: ${setup.convictionScore}%`,
-                                    riskOfficerBadge: setup.riskOfficer.badge,
-                                    devilsAdvocateCritique: `${setup.riskOfficer.devilsAdvocateCritique}\n🤖 Alpaca Paper Auto-Execution: ${alpacaOrder.message}`
+                                    riskOfficerBadge: `${setup.riskOfficer.badge} (Ceiling: $${maxPayCeiling.toFixed(2)})`,
+                                    devilsAdvocateCritique: `${setup.riskOfficer.devilsAdvocateCritique}\n🛡️ Hard Max-Pay Ceiling: DO NOT PAY OVER $${maxPayCeiling.toFixed(2)} (${spreadText})\n🤖 Alpaca Paper Auto-Execution: ${alpacaOrder.message}`
                                 },
                                 kellySizing: setup.kellySizing
                             });
@@ -442,6 +460,29 @@ async function handleCron(request: Request) {
                     logs.push(`[${sym} Evaluation Error] ${symErr?.message}`);
                 }
             }
+
+            // Pillar 2: Proactive "Sit On Hands / Cash Is a Position" Advisory at 09:45–09:55 AM ET if 0 confirmed setups have triggered
+            const standDownKey = `STAND_DOWN_${todayStr}`;
+            if (
+                ((timeVal >= 945 && timeVal <= 955 && totalEntriesToday === 0) || (forceTest && testStep === 'standdown')) &&
+                !isCached(standDownKey)
+            ) {
+                const spyText = spySnap ? `$${spySnap.price.toFixed(2)} (${spySnap.changePercent >= 0 ? '+' : ''}${spySnap.changePercent.toFixed(2)}%, ${spyBelowVwap ? 'Below VWAP' : 'Above VWAP'})` : consensus.macro.spyTrend;
+                const qqqText = qqqSnap ? `$${qqqSnap.price.toFixed(2)} (${qqqSnap.changePercent >= 0 ? '+' : ''}${qqqSnap.changePercent.toFixed(2)}%, ${qqqBelowVwap ? 'Below VWAP' : 'Above VWAP'})` : consensus.macro.qqqTrend;
+                const topPick = consensus.topOpportunity;
+                await sendAdvisorStandDownAlert({
+                    date: todayStr,
+                    timeET: timeDisplay,
+                    regime: consensus.macro.regime,
+                    spyStatus: spyText,
+                    qqqStatus: qqqText,
+                    reason: `First 15 minutes completed with 0 confirmed institutional shelf breakouts/breakdowns that passed our strict Green/Red ORB + SPY/QQQ VWAP alignment gate. Rather than forcing low-odds trades into morning chop, the desk is actively protecting capital.`,
+                    watchlistStatus: `Monitoring #1 ${topPick.symbol} (${topPick.contract} @ $${topPick.trigger.toFixed(2)} trigger) & #2 ${consensus.secondaryOpportunity.symbol} ($${consensus.secondaryOpportunity.trigger.toFixed(2)} trigger) for clean post-10:15 AM institutional expansion or the 15:10 PM SPX Power Hour.`
+                });
+                setCache(standDownKey);
+                actionsTriggered.push("ADVISOR_STAND_DOWN_0945");
+                logs.push(`[Proactive Advisor] Dispatched 09:45 AM 'Sit On Hands / Cash Is a Position' Advisory to Discord.`);
+            }
         } catch (orbErr: any) {
             logs.push(`[Agentic Breakout Check Error] ${orbErr?.message}`);
         }
@@ -564,8 +605,8 @@ async function handleCron(request: Request) {
     }
 
     // ==============================================================
-    // 3. AUTOMATED END-OF-DAY PERFORMANCE AUDIT (04:02 PM - 04:10 PM ET)
-    // Automatically compiles daily alerts, calculates success rate, and dispatches to Discord
+    // 3. AUTOMATED END-OF-DAY PERFORMANCE AUDIT & WALK-FORWARD TRUTH SCORECARD (04:02 PM - 04:10 PM ET)
+    // Automatically compiles daily alerts + 5-min walk-forward verification and dispatches to Discord
     // ==============================================================
     if ((timeVal >= 1602 && timeVal <= 1610) || (forceTest && (testStep === 'audit' || testStep === 'all'))) {
         const auditKey = `EOD_AUDIT_${todayStr}`;
@@ -602,10 +643,51 @@ async function handleCron(request: Request) {
                         lossCount: losses
                     });
 
-                    setCache(auditKey);
                     actionsTriggered.push("EOD_PERFORMANCE_AUDIT");
                     logs.push(`[EOD Audit] Automated Performance Report dispatched to Discord: ${wins}W / ${losses}L (${winRate}%) • Net PnL: +$${totalPnl}`);
                 }
+
+                // Pillar 5: Automated 16:05 PM ET 5-Minute Walk-Forward "Truth Scorecard"
+                const verifiedReport = await runLiveMarketSignalVerification();
+                const confirmed = verifiedReport.verifiedSignals.filter(s => s.signalCategory === "CONFIRMED_STRATEGY_SIGNAL");
+                if (confirmed.length > 0) {
+                    const confirmedLines = confirmed.slice(0, 6).map(s => {
+                        const badge = s.chronologicalOutcome === "VERIFIED_T2_WIN"
+                            ? "🏆 **T2 WIN**"
+                            : s.chronologicalOutcome === "VERIFIED_T1_WIN"
+                            ? "✅ **T1 WIN**"
+                            : s.chronologicalOutcome === "VERIFIED_STOP_LOSS"
+                            ? "❌ **STOP**"
+                            : "⚪ **OPEN**";
+                        return `${badge} **${s.symbol}** (${s.date} @ ${s.entryTimeET}) • Entry \`$${s.entryUnderlyingPrice.toFixed(2)}\` ➔ Peak \`$${s.postEntryHigh.toFixed(2)}\` (**+${s.estimatedOptionPnlPct}%** est. option)`;
+                    }).join("\n");
+
+                    await sendDiscordWebhook({
+                        content: `🔬 **AUTOMATED 16:05 PM ET LIVE-TAPE TRUTH SCORECARD (${todayStr})**`,
+                        embeds: [{
+                            title: `📊 5-Minute Walk-Forward Verification (${verifiedReport.confirmedStrategyStats.winRatePct}% Confirmed Win Rate)`,
+                            description: `Every signal was audited bar-by-bar against real 5-minute intraday candles strictly after entry timestamp.\n\n${confirmedLines}`,
+                            color: 0x10b981,
+                            fields: [
+                                {
+                                    name: "🎯 Confirmed Strategy Stats",
+                                    value: `**${verifiedReport.confirmedStrategyStats.wins}/${verifiedReport.confirmedStrategyStats.totalSignals} Wins (${verifiedReport.confirmedStrategyStats.winRatePct}%)** • Avg Option Return: **+${verifiedReport.confirmedStrategyStats.avgOptionGainPct}%**`,
+                                    inline: true
+                                },
+                                {
+                                    name: "🛡️ False Barrages Quarantined",
+                                    value: `**${verifiedReport.barrageComparisonStats.falsePositivesBlockedByFix} Blocked** by Green/Red ORB + VWAP Gate`,
+                                    inline: true
+                                }
+                            ],
+                            timestamp: new Date().toISOString()
+                        }]
+                    });
+                    actionsTriggered.push("EOD_TRUTH_SCORECARD");
+                    logs.push(`[Truth Scorecard] Dispatched 5-minute walk-forward verification (${verifiedReport.confirmedStrategyStats.winRatePct}% win rate).`);
+                }
+
+                setCache(auditKey);
             } catch (auditErr: any) {
                 logs.push(`[EOD Audit Error] ${auditErr?.message}`);
             }
