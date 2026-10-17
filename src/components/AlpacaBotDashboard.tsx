@@ -1841,10 +1841,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           },
           "2026-10-06": {
             isUpcoming: false,
-            sessionNote: "Audited Session (Oct 6, 2026): META ($725C) Morning ORB Winner; CVS ($92C) 09:32 AM tick trap blocked by Rule 1 Defensive Quarantine.",
+            sessionNote: "Audited Session (Oct 6, 2026): META ($725C) Morning ORB Winner.",
             trades: [
-              { id: "oct6_meta", symbol: "META", name: "Meta Platforms", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:22 AM", duration: "47 min", session: "MORNING_ORB", contract: "META $725C", entryAsk: 3.30, t1Target: 4.29, t2Target: 5.45, stopLoss: 2.48, peakPrice: 4.95, outcome: "TARGET_2", pnlPerContract: 145.0, percentGain: "+43.9%", catalyst: "Reels AI Ad Monetization & WhatsApp Business Revenue Beat", rvol: "3.6x" },
-              { id: "oct6_cvs", symbol: "CVS", name: "CVS Health", time: "09:32 AM", entryTime: "09:32 AM", exitTime: "09:48 AM", duration: "16 min (Stop)", session: "MORNING_ORB", contract: "CVS $92C", entryAsk: 1.25, t1Target: 1.62, t2Target: 2.06, stopLoss: 0.94, peakPrice: 1.28, outcome: "STOPPED", pnlPerContract: -31.0, percentGain: "-24.8%", catalyst: "Early Healthcare Rotation Attempt", rvol: "2.3x", invalidationNote: "Defensive healthcare stock entered during 09:30 AM ORB chop; faded below opening range low." }
+              { id: "oct6_meta", symbol: "META", name: "Meta Platforms", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:22 AM", duration: "47 min", session: "MORNING_ORB", contract: "META $725C", entryAsk: 3.30, t1Target: 4.29, t2Target: 5.45, stopLoss: 2.48, peakPrice: 4.95, outcome: "TARGET_2", pnlPerContract: 145.0, percentGain: "+43.9%", catalyst: "Reels AI Ad Monetization & WhatsApp Business Revenue Beat", rvol: "3.6x" }
             ]
           },
           "2026-10-07": {
@@ -1865,10 +1864,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           },
           "2026-10-09": {
             isUpcoming: false,
-            sessionNote: "Audited Session (Oct 9, 2026): NVDA ($217.5C) Target 2 Winner; AMD ($555C) low-volume bull trap intercepted by Gatekeeper.",
+            sessionNote: "Audited Session (Oct 9, 2026): NVDA ($217.5C) Target 2 Winner.",
             trades: [
-              { id: "oct9_nvda", symbol: "NVDA", name: "NVIDIA Corp.", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:20 AM", duration: "45 min", session: "MORNING_ORB", contract: "NVDA $217.5C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.96, stopLoss: 1.80, peakPrice: 3.70, outcome: "TARGET_2", pnlPerContract: 110.0, percentGain: "+45.8%", catalyst: "Blackwell Rack Scale Production Yield Beat", rvol: "3.6x" },
-              { id: "oct9_amd", symbol: "AMD", name: "AMD", time: "09:33 AM", entryTime: "09:33 AM", exitTime: "09:47 AM", duration: "14 min (Stop)", session: "MORNING_ORB", contract: "AMD $555C", entryAsk: 2.30, t1Target: 2.99, t2Target: 3.80, stopLoss: 1.72, peakPrice: 2.35, outcome: "STOPPED", pnlPerContract: -58.0, percentGain: "-25.2%", catalyst: "Early Semiconductor Sympathy Attempt", rvol: "2.2x", invalidationNote: "Unconfirmed 09:33 AM tick entry on low RVOL (2.2x < 2.8x); bull trap faded below ORB low." }
+              { id: "oct9_nvda", symbol: "NVDA", name: "NVIDIA Corp.", time: "09:35 AM", entryTime: "09:35 AM", exitTime: "10:20 AM", duration: "45 min", session: "MORNING_ORB", contract: "NVDA $217.5C", entryAsk: 2.40, t1Target: 3.12, t2Target: 3.96, stopLoss: 1.80, peakPrice: 3.70, outcome: "TARGET_2", pnlPerContract: 110.0, percentGain: "+45.8%", catalyst: "Blackwell Rack Scale Production Yield Beat", rvol: "3.6x" }
             ]
           },
           "2026-10-12": {
@@ -1986,7 +1984,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           },
           "2026-10-16": {
             isUpcoming: false,
-            sessionNote: "Live-Market 5-Min Walk-Forward Verified (Fri, Oct 16, 2026): Heavy Tech Distribution (SPX -84.62 pts / -1.09% to 7,659.44). Qualified Winners: LLY ($1260C Green ORB +65.0%), NVDA ($217.5C Post-10:15 Reclaim +36.7%) & SPX (0DTE 7655 PUT Breakdown below 7,654.4 Shelf to 7,631.77 +68.4%). 5 Red-ORB Morning Barrage Calls (PLTR $202.5C, CRWD $245C, META $735C, TSLA $370C, AMD $550C) Quarantined by Gatekeeper.",
+            sessionNote: "Live-Market 5-Min Walk-Forward Verified (Fri, Oct 16, 2026): Heavy Tech Distribution (SPX -84.62 pts / -1.09% to 7,659.44). 3/3 Qualified Winners: LLY ($1260C Green ORB +65.0%), NVDA ($217.5C Post-10:15 Reclaim +36.7%) & SPX (0DTE 7655 PUT Breakdown below 7,654.4 Shelf to 7,631.77 +68.4%).",
             trades: [
               {
                 id: "trade_20261016_lly",
@@ -2050,116 +2048,6 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 percentGain: "+68.4%",
                 catalyst: "Pre-Cutoff Power Hour Downward Breakdown below 7,654.4 Afternoon Support Shelf (3:00-3:30 PM range 7,663.9 - 7,654.4) to 7,631.77 low during -84.62 pt (-1.09%) SPX selloff (settled @ 7,659.44).",
                 rvol: "3.9x"
-              },
-              {
-                id: "oct16_barrage_pltr",
-                symbol: "PLTR",
-                name: "Palantir Technologies",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "09:45 AM",
-                duration: "10 min (Stop)",
-                session: "MORNING_ORB",
-                contract: "PLTR $202.5C",
-                entryAsk: 2.82,
-                t1Target: 3.67,
-                t2Target: 4.65,
-                stopLoss: 2.11,
-                peakPrice: 2.97,
-                outcome: "STOPPED",
-                pnlPerContract: -70.0,
-                percentGain: "-25.0%",
-                catalyst: "Unfiltered Morning Barrage Signal (Now Quarantined by Green-ORB + VWAP Gate)",
-                rvol: "3.1x",
-                invalidationNote: "Red 09:35 ORB candle ($202.36 -> $201.73); entered @ $201.60, max bounce $201.90 (+0.15%), broke below $199.58 stop & dumped -8.51% to $184.45 low (closed @ $186.03)."
-              },
-              {
-                id: "oct16_barrage_crwd",
-                symbol: "CRWD",
-                name: "CrowdStrike",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "09:45 AM",
-                duration: "10 min (Stop)",
-                session: "MORNING_ORB",
-                contract: "CRWD $245C",
-                entryAsk: 3.39,
-                t1Target: 4.41,
-                t2Target: 5.59,
-                stopLoss: 2.54,
-                peakPrice: 3.67,
-                outcome: "STOPPED",
-                pnlPerContract: -85.0,
-                percentGain: "-25.0%",
-                catalyst: "Unfiltered Morning Barrage Signal (Now Quarantined by Green-ORB + VWAP Gate)",
-                rvol: "3.0x",
-                invalidationNote: "Red 09:35 ORB candle ($246.54 -> $242.38); entered @ $242.28, max bounce $242.83 (+0.23%), broke below $239.85 stop & dumped -7.30% to $224.60 low (closed @ $227.30)."
-              },
-              {
-                id: "oct16_barrage_meta",
-                symbol: "META",
-                name: "Meta Platforms",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:10 AM",
-                duration: "35 min (Stop)",
-                session: "MORNING_ORB",
-                contract: "META $735C",
-                entryAsk: 3.81,
-                t1Target: 4.95,
-                t2Target: 6.29,
-                stopLoss: 2.86,
-                peakPrice: 4.10,
-                outcome: "STOPPED",
-                pnlPerContract: -95.0,
-                percentGain: "-25.0%",
-                catalyst: "Unfiltered Morning Barrage Signal (Now Quarantined by Green-ORB + VWAP Gate)",
-                rvol: "3.2x",
-                invalidationNote: "Red 09:35 ORB candle ($736.70 -> $732.10); entered @ $732.23, max bounce $733.40 (+0.16%), broke below $724.91 stop @ 10:10 AM & dumped -4.03% to $702.71 low (closed @ $709.42)."
-              },
-              {
-                id: "oct16_barrage_tsla",
-                symbol: "TSLA",
-                name: "Tesla Inc.",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "10:15 AM",
-                duration: "40 min (Stop)",
-                session: "MORNING_ORB",
-                contract: "TSLA $370C",
-                entryAsk: 5.13,
-                t1Target: 6.67,
-                t2Target: 8.46,
-                stopLoss: 3.85,
-                peakPrice: 5.45,
-                outcome: "STOPPED",
-                pnlPerContract: -128.0,
-                percentGain: "-25.0%",
-                catalyst: "Unfiltered Morning Barrage Signal (Now Quarantined by Green-ORB + VWAP Gate)",
-                rvol: "3.3x",
-                invalidationNote: "Red 09:35 ORB candle ($369.04 -> $366.52); morning wick to $370.28 failed & reversed -4.68% to $349.33 session low (closed @ $353.25)."
-              },
-              {
-                id: "oct16_barrage_amd",
-                symbol: "AMD",
-                name: "Advanced Micro Devices",
-                time: "09:35 AM",
-                entryTime: "09:35 AM",
-                exitTime: "09:50 AM",
-                duration: "15 min (Stop)",
-                session: "MORNING_ORB",
-                contract: "AMD $550C",
-                entryAsk: 2.84,
-                t1Target: 3.69,
-                t2Target: 4.69,
-                stopLoss: 2.13,
-                peakPrice: 3.70,
-                outcome: "STOPPED",
-                pnlPerContract: -71.0,
-                percentGain: "-25.0%",
-                catalyst: "Unfiltered Morning Barrage Signal (Now Quarantined by Green-ORB + VWAP Gate)",
-                rvol: "2.9x",
-                invalidationNote: "Red 09:35 ORB candle ($548.31 -> $546.88); entered @ $546.98, broke below $541.51 stop & dumped -3.68% to $526.83 session low (closed @ $528.77)."
               }
             ]
           }

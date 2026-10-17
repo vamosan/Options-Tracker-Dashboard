@@ -275,8 +275,54 @@ export async function resolveAlpacaOptionContract(
 }
 
 /**
+ * 2B. Fetch all underlying symbols that have already been traded (BUY order or open position) today on Alpaca Paper.
+ * Acts as a persistent cloud ledger across Vercel serverless cold starts so we NEVER send duplicate Discord alerts.
+ */
+export async function fetchTodayAlpacaTradedUnderlyings(
+  todayStr: string
+): Promise<Set<string>> {
+  const traded = new Set<string>();
+  try {
+    const headers = getAlpacaHeaders();
+    const afterIso = `${todayStr}T04:00:00Z`;
+    const [posRes, ordRes] = await Promise.all([
+      fetch(`${ALPACA_PAPER_TRADING_URL}/positions`, {
+        headers,
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3500),
+      }),
+      fetch(
+        `${ALPACA_PAPER_TRADING_URL}/orders?status=all&after=${encodeURIComponent(afterIso)}&limit=50`,
+        {
+          headers,
+          cache: 'no-store',
+          signal: AbortSignal.timeout(3500),
+        }
+      ),
+    ]);
+
+    const positions: any[] = posRes.ok ? await posRes.json() : [];
+    const orders: any[] = ordRes.ok ? await ordRes.json() : [];
+
+    for (const p of positions) {
+      const m = String(p.symbol || '').match(/^([A-Z]+)/);
+      if (m?.[1]) traded.add(m[1]);
+    }
+    for (const o of orders) {
+      if (o.side === 'buy' && o.status !== 'canceled' && o.status !== 'rejected') {
+        const m = String(o.symbol || '').match(/^([A-Z]+)/);
+        if (m?.[1]) traded.add(m[1]);
+      }
+    }
+  } catch (err: any) {
+    console.warn('[AlpacaClient] fetchTodayAlpacaTradedUnderlyings error:', err?.message);
+  }
+  return traded;
+}
+
+/**
  * 3. Place Automatic Alpaca Paper Option Order Upon Signal Fire
- * Protects against duplicate positions on the same underlying symbol.
+ * Protects against duplicate positions or repeat same-day orders on the same underlying symbol.
  */
 export async function placeAlpacaPaperOptionOrder(params: {
   underlying: string;
@@ -295,23 +341,31 @@ export async function placeAlpacaPaperOptionOrder(params: {
 
   try {
     const headers = getAlpacaHeaders();
+    const estNow = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
+    );
+    const todayStr = `${estNow.getFullYear()}-${String(estNow.getMonth() + 1).padStart(2, '0')}-${String(estNow.getDate()).padStart(2, '0')}`;
+    const afterIso = `${todayStr}T04:00:00Z`;
 
-    // 1. Check existing open positions & open orders to prevent duplicate entries on the same ticker
+    // 1. Check existing open positions & all today's orders to prevent duplicate entries on the same ticker
     const [posRes, ordRes] = await Promise.all([
       fetch(`${ALPACA_PAPER_TRADING_URL}/positions`, {
         headers,
         cache: 'no-store',
         signal: AbortSignal.timeout(3500),
       }),
-      fetch(`${ALPACA_PAPER_TRADING_URL}/orders?status=open`, {
-        headers,
-        cache: 'no-store',
-        signal: AbortSignal.timeout(3500),
-      }),
+      fetch(
+        `${ALPACA_PAPER_TRADING_URL}/orders?status=all&after=${encodeURIComponent(afterIso)}&limit=50`,
+        {
+          headers,
+          cache: 'no-store',
+          signal: AbortSignal.timeout(3500),
+        }
+      ),
     ]);
 
     const positions: any[] = posRes.ok ? await posRes.json() : [];
-    const openOrders: any[] = ordRes.ok ? await ordRes.json() : [];
+    const todayOrders: any[] = ordRes.ok ? await ordRes.json() : [];
 
     const cleanSym = underlying.toUpperCase();
     const alreadyHolding = positions.find((p) =>
@@ -328,17 +382,21 @@ export async function placeAlpacaPaperOptionOrder(params: {
       };
     }
 
-    const alreadyOrdered = openOrders.find((o) =>
-      String(o.symbol || '').startsWith(cleanSym)
+    const alreadyOrderedToday = todayOrders.find(
+      (o) =>
+        String(o.symbol || '').startsWith(cleanSym) &&
+        o.side === 'buy' &&
+        o.status !== 'canceled' &&
+        o.status !== 'rejected'
     );
-    if (alreadyOrdered) {
+    if (alreadyOrderedToday) {
       return {
         success: true,
-        orderId: alreadyOrdered.id,
-        occSymbol: alreadyOrdered.symbol,
-        qty: parseInt(alreadyOrdered.qty, 10) || qty,
-        status: alreadyOrdered.status,
-        message: `Order already working in Alpaca Paper (${alreadyOrdered.symbol}, Status: ${alreadyOrdered.status})`,
+        orderId: alreadyOrderedToday.id,
+        occSymbol: alreadyOrderedToday.symbol,
+        qty: parseInt(alreadyOrderedToday.qty, 10) || qty,
+        status: 'already_traded_today',
+        message: `Order already placed today in Alpaca Paper (${alreadyOrderedToday.symbol}, Status: ${alreadyOrderedToday.status})`,
       };
     }
 

@@ -17,6 +17,7 @@ import { runAgenticDailyConsensus } from '@/lib/agenticOrchestrator';
 import { getSignals, recordOrUpdateAlertTrade } from '@/lib/ledger';
 import {
     fetchAlpacaStockSnapshots,
+    fetchTodayAlpacaTradedUnderlyings,
     placeAlpacaPaperOptionOrder,
     manageAlpacaPaperPositions,
 } from '@/lib/alpacaClient';
@@ -164,18 +165,21 @@ async function handleCron(request: Request) {
             const allLedgerSignals = (await getSignals()) || [];
             const existingTodaySignals = allLedgerSignals.filter((s: any) => s.date === todayStr);
 
-            // Count how many entries have already fired today across cache + persistent ledger
+            // Count how many equity entries have already fired today across cache + persistent ledger + live Alpaca Paper orders
+            const alpacaTradedToday = await fetchTodayAlpacaTradedUnderlyings(todayStr);
+            const alpacaEquityCount = Array.from(alpacaTradedToday).filter(s => s !== 'SPY').length;
             const cachedEntryCount = Object.keys(cache).filter(k => k.startsWith(`ORB_ENTRY_`) && k.endsWith(`_${todayStr}`)).length;
-            let totalEntriesToday = Math.max(cachedEntryCount, existingTodaySignals.length);
+            let totalEntriesToday = Math.max(cachedEntryCount, existingTodaySignals.length, alpacaEquityCount);
             let entriesDispatchedThisTick = 0;
-            const MAX_DAILY_ENTRIES = 3;
+            const MAX_DAILY_ENTRIES = 2; // Strictly Top 1-2 Equity Setups per day (plus 1 SPX Power Hour = 1-3 total)
 
             // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
             const consensus = await runAgenticDailyConsensus(timeVal);
             
-            // Strictly filter to CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
+            // Strictly filter to Top CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
             const activeSetups = consensus.allRanked
-                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88);
+                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88)
+                .slice(0, 3);
 
             // Batch-fetch Real-Time Alpaca Stock Snapshots for all active setups + SPY & QQQ tape benchmarks
             const symbolsToFetch = Array.from(new Set([...activeSetups.map(s => s.symbol), 'SPY', 'QQQ']));
@@ -216,7 +220,7 @@ async function handleCron(request: Request) {
                 const overextKey = `OVEREXT_${sym}_${todayStr}`;
 
                 const ledgerTrade = existingTodaySignals.find((t: any) => t.symbol === sym);
-                const hasEntryFired = isCached(entryKey) || Boolean(ledgerTrade);
+                const hasEntryFired = isCached(entryKey) || Boolean(ledgerTrade) || alpacaTradedToday.has(sym);
                 const hasT1Fired = isCached(t1Key) || Boolean(ledgerTrade && ["TARGET_1", "TARGET_2", "TRAILING_WIN"].includes(ledgerTrade.outcome));
                 const hasT2Fired = isCached(t2Key) || Boolean(ledgerTrade && ["TARGET_2", "TRAILING_WIN"].includes(ledgerTrade.outcome));
                 const hasTrailFired = isCached(trailKey) || Boolean(ledgerTrade && ledgerTrade.outcome === "TRAILING_WIN");
@@ -289,6 +293,17 @@ async function handleCron(request: Request) {
                                 qty: orderQty,
                                 allowZeroDte: false,
                             });
+
+                            const isDuplicateAlpacaOrder =
+                                !forceTest &&
+                                (alpacaOrder.status === 'already_open' ||
+                                    alpacaOrder.status === 'already_traded_today');
+
+                            if (isDuplicateAlpacaOrder) {
+                                setCache(entryKey);
+                                logs.push(`[Deduplication Guard] ${sym} already traded today on Alpaca Paper (${alpacaOrder.occSymbol}). Suppressed duplicate Discord alert.`);
+                                continue;
+                            }
 
                             const verifiedAsk = alpacaOrder.limitOrAskPrice || setup.entryAsk;
                             const maxPayCeiling = alpacaOrder.maxPayCeiling || Math.round(verifiedAsk * 1.05 * 100) / 100;
@@ -536,31 +551,41 @@ async function handleCron(request: Request) {
                             allowZeroDte: true,
                         });
 
-                        await sendSPXPowerHourAlert({
-                            setupType: callSide ? "PRE_CUTOFF_BREAKOUT_CALL" : "PRE_CUTOFF_BREAKOUT_PUT",
-                            triggerTime: timeDisplay,
-                            spxSpot,
-                            contract,
-                            strike: targetStrike,
-                            entryAsk,
-                            target1: Math.round(entryAsk * 2.2 * 100) / 100,
-                            target2: Math.round(entryAsk * 4.5 * 100) / 100,
-                            stopLoss: Math.round(entryAsk * 0.3 * 100) / 100,
-                            maxRiskPerContract: Math.round(entryAsk * 100),
-                            mocImbalance: `${mocImbalance.rawText} | 🤖 ${spyOrder.message}`,
-                            mocImbalanceType: mocImbalance.direction,
-                            morningBias: spxData.morningMomentumBias.bias,
-                            shelfBreak: callSide ? `Broke above $${high30.toFixed(1)}` : `Broke below $${low30.toFixed(1)}`,
-                            exitCutoff: "03:58 PM ET",
-                            brokerCutoffWarning: `${minsRemaining} min remaining before 3:40 PM retail broker cutoff!`
-                        });
+                        const isDuplicateSpyOrder =
+                            !forceTest &&
+                            (spyOrder.status === 'already_open' ||
+                                spyOrder.status === 'already_traded_today');
 
-                        setCache(breakoutKey);
-                        actionsTriggered.push(`SPX_BREAKOUT_${callSide ? 'CALL' : 'PUT'}`);
-                        if (spyOrder.success) {
-                            actionsTriggered.push(`ALPACA_SPY_0DTE_${spyOrder.occSymbol || 'ORDER'}`);
+                        if (!isDuplicateSpyOrder) {
+                            await sendSPXPowerHourAlert({
+                                setupType: callSide ? "PRE_CUTOFF_BREAKOUT_CALL" : "PRE_CUTOFF_BREAKOUT_PUT",
+                                triggerTime: timeDisplay,
+                                spxSpot,
+                                contract,
+                                strike: targetStrike,
+                                entryAsk,
+                                target1: Math.round(entryAsk * 2.2 * 100) / 100,
+                                target2: Math.round(entryAsk * 4.5 * 100) / 100,
+                                stopLoss: Math.round(entryAsk * 0.3 * 100) / 100,
+                                maxRiskPerContract: Math.round(entryAsk * 100),
+                                mocImbalance: `${mocImbalance.rawText} | 🤖 ${spyOrder.message}`,
+                                mocImbalanceType: mocImbalance.direction,
+                                morningBias: spxData.morningMomentumBias.bias,
+                                shelfBreak: callSide ? `Broke above $${high30.toFixed(1)}` : `Broke below $${low30.toFixed(1)}`,
+                                exitCutoff: "03:58 PM ET",
+                                brokerCutoffWarning: `${minsRemaining} min remaining before 3:40 PM retail broker cutoff!`
+                            });
+
+                            setCache(breakoutKey);
+                            actionsTriggered.push(`SPX_BREAKOUT_${callSide ? 'CALL' : 'PUT'}`);
+                            if (spyOrder.success) {
+                                actionsTriggered.push(`ALPACA_SPY_0DTE_${spyOrder.occSymbol || 'ORDER'}`);
+                            }
+                            logs.push(`[SPX Power Hour] Breakout Entry Alert dispatched: ${contract} | ${spyOrder.message}`);
+                        } else {
+                            setCache(breakoutKey);
+                            logs.push(`[SPX Power Hour Deduplication] SPY 0DTE order already placed today on Alpaca (${spyOrder.occSymbol}). Suppressed duplicate alert.`);
                         }
-                        logs.push(`[SPX Power Hour] Breakout Entry Alert dispatched: ${contract} | ${spyOrder.message}`);
                     }
                 }
             }
