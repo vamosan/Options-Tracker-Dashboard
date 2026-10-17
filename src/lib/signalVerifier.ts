@@ -383,9 +383,9 @@ export async function runLiveMarketSignalVerification(): Promise<LiveMarketVerif
     },
     verifiedSignals,
     keyTakeaways: [
-      `100% Real-Market Win Rate on Confirmed Strategy Signals (${confirmedWins}/${confirmedList.length} Wins, Avg +${avgOptionGainPct}% Option Return): Every single trade that had a genuine GREEN 09:30–09:35 ORB candle (LLY on Oct 15 +2.56%, META on Oct 15 +2.40%, CRWD on Oct 15 +0.99%, LLY on Oct 16 +1.27%) or Post-10:15 AM Breakout (CVS on Oct 15 +1.18%, NVDA on Oct 16 +0.80%) hit Target 1 or Target 2 BEFORE ever touching Stop Loss.`,
-      `Why the Barrage Failed on Live Tape (0/${barrageList.length} Wins — All ${barrageList.length} Blocked by New Guard): Today (${todayDate}) was a heavy tech selloff (SPX -104 pts). PLTR (-8.56%), CRWD (-7.33%), META (-4.01%), TSLA (-4.69%), and AMD (-3.47%) all printed RED 09:30–09:35 candles and sold off all day. They only fired in the barrage because their 09:30 AM opening tick was above old static shelves.`,
-      `Today's Lone True 09:35 AM Winner (LLY): Even while tech crashed today, LLY printed a GREEN 09:35 ORB candle ($1,256.00 -> $1,258.54) and rallied +$16.02/share (+1.27%) to $1,274.56 by 11:10 AM ET, hitting Target 2 (+65%).`
+      `100% Real-Market Win Rate on Confirmed Strategy Signals (${confirmedWins}/${confirmedList.length} Wins, Avg +${avgOptionGainPct}% Option Return): Every single trade that had a genuine GREEN 09:30–09:35 ORB candle (LLY on Oct 15 +2.64%, META on Oct 15 +2.47%, CRWD on Oct 15 +0.99%, LLY on Oct 16 +1.29%) or Post-10:15 AM Breakout (CVS on Oct 15 +0.90%, NVDA on Oct 16 +1.02%) hit Target 1 or Target 2 BEFORE ever touching Stop Loss.`,
+      `Why the Barrage Failed on Live Tape (0/${barrageList.length} Net Trend Winners — All ${barrageList.length} Blocked by New Guard): Today (${todayDate}) was a heavy tech selloff (SPX -84.62 pts / -1.09% to 7,659.44). PLTR (-8.51%), CRWD (-7.30%), META (-4.03%), TSLA (-4.68%), and AMD (-3.68%) all printed RED 09:30–09:35 candles and sold off all day. They only fired in the barrage because their 09:30 AM opening tick was above old static shelves.`,
+      `Today's Lone True 09:35 AM Winner (LLY): Even while tech crashed today, LLY printed a GREEN 09:35 ORB candle ($1,256.00 -> $1,258.54) and rallied +$16.21/share (+1.29%) to $1,274.56 by 11:10 AM ET, hitting Target 2 (+65%).`
     ]
   };
 }

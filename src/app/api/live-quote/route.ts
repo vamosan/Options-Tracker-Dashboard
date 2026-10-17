@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
             changePercent: snap.changePercent,
             dayHigh: snap.high,
             dayLow: snap.low,
+            open: snap.open,
             dayOpen: snap.open,
             prevClose: snap.prevClose,
             volume: snap.volume,
