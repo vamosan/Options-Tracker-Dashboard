@@ -25,7 +25,7 @@ const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'alpaca' | 'dashboard' | 'powerhour'>('alpaca');
-  const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
+  const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -284,13 +284,29 @@ export default function Home() {
                 setAlpacaTab("SETUPS");
               }}
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
-                activeTab === "alpaca" && alpacaTab !== "CALENDAR"
+                activeTab === "alpaca" && alpacaTab !== "CALENDAR" && alpacaTab !== "SPY_QQQ"
                   ? "bg-cyan-500/10 border-cyan-500/50 text-cyan-400 font-bold"
                   : "bg-slate-900/50 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-cyan-400"
               }`}
             >
               <BarChart2 className="h-3.5 w-3.5" />
               <span className="text-xs font-black uppercase tracking-tight">Home</span>
+            </button>
+
+            {/* 1B. DEDICATED SPY & QQQ ONLY TACTICAL WINDOW */}
+            <button
+              onClick={() => {
+                setActiveTab("alpaca");
+                setAlpacaTab("SPY_QQQ");
+              }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_10px_rgba(99,102,241,0.18)] ${
+                activeTab === "alpaca" && alpacaTab === "SPY_QQQ"
+                  ? "bg-indigo-500/25 border-2 border-indigo-400 text-indigo-200 font-bold"
+                  : "bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/40 text-indigo-300"
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 fill-current text-indigo-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-black uppercase tracking-tight">SPY &amp; QQQ Only</span>
             </button>
 
             {/* 2. CALENDAR (Direct Access to 3-Month Performance Calendar) */}

@@ -14,7 +14,7 @@ import {
 } from '@/lib/discord';
 import YahooFinance from 'yahoo-finance2';
 import { runAgenticDailyConsensus } from '@/lib/agenticOrchestrator';
-import { getSignals } from '@/lib/ledger';
+import { getSignals, recordOrUpdateAlertTrade } from '@/lib/ledger';
 import {
     fetchAlpacaStockSnapshots,
     placeAlpacaPaperOptionOrder,
@@ -690,6 +690,16 @@ async function handleCron(request: Request) {
                 setCache(auditKey);
             } catch (auditErr: any) {
                 logs.push(`[EOD Audit Error] ${auditErr?.message}`);
+            }
+        }
+    }
+
+    if (recordedTrades.length > 0) {
+        for (const t of recordedTrades) {
+            try {
+                recordOrUpdateAlertTrade(t);
+            } catch {
+                // Non-blocking ledger persistence
             }
         }
     }
