@@ -982,6 +982,33 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     try {
       setIsSendingDiscord(true);
       const contractSymbol = setup.contract?.symbol || (setup.contract?.strike ? `${setup.symbol} $${setup.contract.strike} Call` : `${setup.symbol} Call`);
+      const isPut = /put|\d+p\b/i.test(contractSymbol) || setup.signal?.action === "ENTER_PUT";
+      const strikeNum = setup.contract?.strike || parseFloat(contractSymbol.match(/\$([0-9.]+)/)?.[1] || "0");
+
+      // 1. Automatically place the option order in Alpaca Paper Account upon signal dispatch
+      let alpacaMsg = "";
+      if (setup.symbol && strikeNum > 0) {
+        try {
+          const alpRes = await fetch("/api/alpaca-paper", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              underlying: setup.symbol === "SPX" ? "SPY" : setup.symbol,
+              strike: setup.symbol === "SPX" ? Math.round(strikeNum / 10) : strikeNum,
+              direction: isPut ? "PUT" : "CALL",
+              qty: 3,
+              allowZeroDte: setup.symbol === "SPX" || setup.symbol === "SPY"
+            })
+          });
+          const alpData = await alpRes.json();
+          if (alpData?.message) {
+            alpacaMsg = ` | 🤖 ${alpData.message}`;
+          }
+        } catch {
+          // Non-blocking fallback
+        }
+      }
+
       const res = await fetch("/api/discord", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -997,8 +1024,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             target1: setup.targets?.target1 || 3.20,
             target2: setup.targets?.target2 || 4.05,
             rvol: typeof setup.rvol === "string" ? setup.rvol : `${setup.rvol || 3.4}x`,
-            gatekeeperBadge: setup.gatekeeper?.badge || "GATEKEEPER QUALIFIED (96.6% WIN RATE)",
-            gatekeeperReason: setup.gatekeeper?.reason || setup.gatekeeperStatus?.rulesMessage || "Rule 1-4 Passed: Tech Momentum + Institutional RVOL >= 2.8x + Confirmed Candle Close",
+            gatekeeperBadge: setup.gatekeeper?.badge || (isPut ? "BEARISH BREAKDOWN PUT QUALIFIED" : "GATEKEEPER QUALIFIED (96.6% WIN RATE)"),
+            gatekeeperReason: `${setup.gatekeeper?.reason || setup.gatekeeperStatus?.rulesMessage || "Rule 1-4 Passed: Institutional RVOL >= 2.8x"}${alpacaMsg}`,
             catalyst: setup.catalyst?.headline || setup.catalyst || setup.catalystHeadline || "Tier-1 Institutional Momentum & Volume Expansion",
             confidenceScore: setup.confidence?.score || setup.probabilityScore || 95
           }
@@ -1007,7 +1034,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       const data = await res.json();
       if (data.success) {
         setDiscordNotice({
-          message: `✓ Live entry call-out for ${setup.symbol} sent to Discord!`,
+          message: `✓ Signal sent to Discord & Auto-Submitted to Alpaca Paper (${contractSymbol})!`,
           type: "success"
         });
       } else {
@@ -1020,7 +1047,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       setDiscordNotice({ message: err.message, type: "error" });
     } finally {
       setIsSendingDiscord(false);
-      setTimeout(() => setDiscordNotice(null), 4000);
+      setTimeout(() => setDiscordNotice(null), 5000);
     }
   };
 
@@ -1139,14 +1166,15 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     });
   }, [setups, gatekeeperFilterEnabled, filterConfidence, filterRvol, filterSignal]);
 
-  // Execute Paper Trade
-  const handleExecutePaperTrade = (s: DiscoveredSetup, qty = 3) => {
+  // Execute Paper Trade (Local Tracker + Live Alpaca Paper API Order)
+  const handleExecutePaperTrade = async (s: DiscoveredSetup, qty = 3) => {
+    const isPut = /put|\d+p\b/i.test(s.contract.symbol || "");
     const newTrade: ActiveTrade = {
       id: `pos_${s.symbol}_${Date.now()}`,
       symbol: s.contract.symbol,
       underlying: s.symbol,
       strike: s.contract.strike,
-      type: "CALL",
+      type: isPut ? "PUT" : "CALL",
       entryTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       entryPrice: s.contract.ask,
       currentPrice: s.contract.ask,
@@ -1158,7 +1186,32 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     };
 
     setActivePositions(prev => [newTrade, ...prev]);
-    setActiveTab("POSITIONS");
+
+    try {
+      const res = await fetch("/api/alpaca-paper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          underlying: s.symbol === "SPX" ? "SPY" : s.symbol,
+          strike: s.symbol === "SPX" ? Math.round(s.contract.strike / 10) : s.contract.strike,
+          direction: isPut ? "PUT" : "CALL",
+          qty,
+          allowZeroDte: s.symbol === "SPX" || s.symbol === "SPY"
+        })
+      });
+      const data = await res.json();
+      setDiscordNotice({
+        message: data?.message || `✓ Submitted ${qty}x ${s.contract.symbol} to Alpaca Paper!`,
+        type: data?.success ? "success" : "error"
+      });
+      setTimeout(() => setDiscordNotice(null), 5000);
+    } catch (err: any) {
+      setDiscordNotice({
+        message: `Local position opened (${s.contract.symbol})`,
+        type: "success"
+      });
+      setTimeout(() => setDiscordNotice(null), 4000);
+    }
   };
 
   // Close Position

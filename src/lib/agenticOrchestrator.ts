@@ -1,6 +1,7 @@
 import YahooFinance from 'yahoo-finance2';
 import { scoreSymbol, ScoreSymbolResult } from './agentic-desk/score';
 import { PROSPECTIVE_STOCKS, ProspectiveStock } from './prospectiveStocks';
+import { fetchAlpacaStockSnapshots, resolveAlpacaOptionContract } from './alpacaClient';
 
 export interface WatchlistCandidate {
   symbol: string;
@@ -191,16 +192,19 @@ export interface AgenticConsensusDossier {
  */
 export async function runMacroRegimeAgent(yf: any): Promise<AgenticMacroRegime> {
   try {
-    const quotes = await yf.quote(['SPY', 'QQQ', '^VIX']).catch(() => []);
+    const [alpacaIdx, quotes] = await Promise.all([
+      fetchAlpacaStockSnapshots(['SPY', 'QQQ']),
+      yf.quote(['SPY', 'QQQ', '^VIX']).catch(() => [])
+    ]);
     const spyObj = quotes.find((q: any) => q.symbol === 'SPY');
     const qqqObj = quotes.find((q: any) => q.symbol === 'QQQ');
     const vixObj = quotes.find((q: any) => q.symbol === '^VIX');
 
-    const spy = spyObj?.regularMarketPrice || 765.10;
-    const qqq = qqqObj?.regularMarketPrice || 730.50;
+    const spy = alpacaIdx.SPY?.price || spyObj?.regularMarketPrice || 765.10;
+    const qqq = alpacaIdx.QQQ?.price || qqqObj?.regularMarketPrice || 730.50;
     const vix = vixObj?.regularMarketPrice || 17.50;
-    const spyChg = spyObj?.regularMarketChangePercent ?? 0;
-    const qqqChg = qqqObj?.regularMarketChangePercent ?? 0;
+    const spyChg = alpacaIdx.SPY?.changePercent ?? spyObj?.regularMarketChangePercent ?? 0;
+    const qqqChg = alpacaIdx.QQQ?.changePercent ?? qqqObj?.regularMarketChangePercent ?? 0;
 
     let score = 1;
     let regime: AgenticMacroRegime["regime"] = "BULLISH_RISK_ON";
@@ -530,9 +534,12 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
   // Step 1: Macro & Regime Agent
   const macro = await runMacroRegimeAgent(yf);
 
-  // Step 2: Fetch live quotes for universe
+  // Step 2: Fetch live quotes for universe (Primary: Alpaca Real-Time Snapshots, Fallback: Yahoo Finance)
   const symbols = SECTOR_AGNOSTIC_UNIVERSE.map(c => c.symbol);
-  const quotes = await yf.quote(symbols).catch(() => []);
+  const [alpacaSnaps, quotes] = await Promise.all([
+    fetchAlpacaStockSnapshots(symbols),
+    yf.quote(symbols).catch(() => [])
+  ]);
   const quoteMap = new Map<string, any>();
   quotes.forEach((q: any) => quoteMap.set(q.symbol, q));
 
@@ -542,14 +549,15 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
 
   const candidatePromises = SECTOR_AGNOSTIC_UNIVERSE.map(async (candidate) => {
     try {
+      const snap = alpacaSnaps[candidate.symbol];
       const q = quoteMap.get(candidate.symbol);
       const fallbackBenchmark = PROSPECTIVE_STOCKS.find(p => p.symbol === candidate.symbol);
-      const currentPrice = q?.regularMarketPrice || fallbackBenchmark?.price || 150;
+      const currentPrice = snap?.price || q?.regularMarketPrice || fallbackBenchmark?.price || 150;
       const quoteMetrics = {
-        dayOpen: q?.regularMarketOpen || fallbackBenchmark?.prevClose || currentPrice,
-        prevClose: q?.regularMarketPreviousClose || fallbackBenchmark?.prevClose || currentPrice,
-        dayHigh: q?.regularMarketDayHigh || fallbackBenchmark?.dayHigh || currentPrice,
-        changePercent: q?.regularMarketChangePercent ?? fallbackBenchmark?.changePercent ?? 0
+        dayOpen: snap?.open || q?.regularMarketOpen || fallbackBenchmark?.prevClose || currentPrice,
+        prevClose: snap?.prevClose || q?.regularMarketPreviousClose || fallbackBenchmark?.prevClose || currentPrice,
+        dayHigh: snap?.high || q?.regularMarketDayHigh || fallbackBenchmark?.dayHigh || currentPrice,
+        changePercent: snap?.changePercent ?? q?.regularMarketChangePercent ?? fallbackBenchmark?.changePercent ?? 0
       };
 
       // Fetch historical closes for technical indicators
@@ -604,13 +612,40 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
   const topOpportunity = evaluatedSetups[0];
   const secondaryOpportunity = evaluatedSetups[1] || evaluatedSetups[0];
 
+  // Enrich Top 2 with Real Live OPRA Option Chain Quotes from Alpaca
+  await Promise.all(
+    [topOpportunity, secondaryOpportunity].filter(Boolean).map(async (setup) => {
+      const liveOpt = await resolveAlpacaOptionContract(
+        setup.symbol,
+        setup.strike,
+        setup.direction || "CALL",
+        false
+      );
+      if (liveOpt && liveOpt.ask >= 0.40 && liveOpt.ask <= 25.0) {
+        setup.strike = liveOpt.strike;
+        setup.contract = `${setup.symbol} $${liveOpt.strike}${setup.direction === "PUT" ? "P" : "C"}`;
+        setup.entryAsk = liveOpt.ask;
+        setup.stopLoss = Math.round(liveOpt.ask * 0.75 * 100) / 100;
+        setup.target1 = Math.round(liveOpt.ask * 1.30 * 100) / 100;
+        setup.target2 = Math.round(liveOpt.ask * 1.65 * 100) / 100;
+        setup.kellySizing = calculateQuarterKellySizing(
+          setup.convictionScore,
+          setup.entryAsk,
+          setup.target1,
+          setup.target2,
+          setup.stopLoss
+        );
+      }
+    })
+  );
+
   const isTopPut = topOpportunity.direction === "PUT";
   // Synthesize Agentic Debate
   const hunterThesis = `Sector-Agnostic Hunter crowned **${topOpportunity.symbol} (${isTopPut ? 'BEARISH PUT' : 'BULLISH CALL'})** (${topOpportunity.sector}) as the #1 Best Opportunity of the Day with a Conviction Score of **${topOpportunity.convictionScore}%** and Target Contract **${topOpportunity.contract}**. Catalyst: ${topOpportunity.catalyst}.`;
   
   const riskOfficerAudit = `Adversarial Risk Officer Verdict: **${topOpportunity.riskOfficer.badge}**. ${topOpportunity.riskOfficer.devilsAdvocateCritique}`;
   
-  const quantExecutionBracket = `Quant Structurer Bracket: ${isTopPut ? 'Breakdown Support Trigger' : 'Breakout Trigger'}: **$${topOpportunity.trigger.toFixed(2)}** | ${isTopPut ? 'Safe Entry Floor' : 'Safe Entry Ceiling'}: **$${topOpportunity.maxChase.toFixed(2)}** | Target Contract: **${topOpportunity.contract}** @ $${topOpportunity.entryAsk.toFixed(2)} | Target 1: $${topOpportunity.target1.toFixed(2)} (+30%) | Target 2: $${topOpportunity.target2.toFixed(2)} (+65%) | Stop Loss: $${topOpportunity.stopLoss.toFixed(2)} (-25%).`;
+  const quantExecutionBracket = `Quant Structurer Bracket: ${isTopPut ? 'Breakdown Support Trigger' : 'Breakout Trigger'}: **$${topOpportunity.trigger.toFixed(2)}** | ${isTopPut ? 'Safe Entry Floor' : 'Safe Entry Ceiling'}: **$${topOpportunity.maxChase.toFixed(2)}** | Target Contract: **${topOpportunity.contract}** @ $${topOpportunity.entryAsk.toFixed(2)} (Live Alpaca OPRA) | Target 1: $${topOpportunity.target1.toFixed(2)} (+30%) | Target 2: $${topOpportunity.target2.toFixed(2)} (+65%) | Stop Loss: $${topOpportunity.stopLoss.toFixed(2)} (-25%).`;
 
   const todayStr = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York" });
   const calibration = calculateBrierCalibration();

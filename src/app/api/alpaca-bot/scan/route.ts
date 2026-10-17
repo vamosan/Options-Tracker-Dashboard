@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
 import { PROSPECTIVE_STOCKS } from '@/lib/prospectiveStocks';
 
-const ALPACA_API_KEY = process.env.ALPACA_API_KEY || 'PKWRCURWLNXPT2TBFR3WKS3U44';
-const ALPACA_SECRET_KEY = process.env.ALPACA_SECRET_KEY || 'HddJhbAp2r9mSRs8GpNTgMPTYHzmJc9zjWwyKhJyRCX2';
+const ALPACA_API_KEY = (process.env.ALPACA_API_KEY || 'PKIXZNNSHLPXWJMCFVHX3XHGSU').trim();
+const ALPACA_SECRET_KEY = (process.env.ALPACA_SECRET_KEY || '8c6pEQfLQCnoCKcQYjjsX7vL7dNTHhW54ienhTaPJD2s').trim();
 const DATA_URL = 'https://data.alpaca.markets/v2';
 const OPTIONS_DATA_URL = 'https://data.alpaca.markets/v1beta1';
 const TRADING_URL = 'https://paper-api.alpaca.markets/v2';
@@ -62,7 +62,7 @@ export async function POST() {
             logs.push(`[WARN] Yahoo Finance batch latency: ${e?.message}`);
         }
 
-        // 2. Fallback / Augment with Alpaca API if available
+        // 2. Primary Real-Time Feed: Alpaca Market Data v2 Snapshots
         const alpacaHeaders = {
             'APCA-API-KEY-ID': ALPACA_API_KEY,
             'APCA-API-SECRET-KEY': ALPACA_SECRET_KEY,
@@ -73,13 +73,14 @@ export async function POST() {
             const symbolsToFetch = CORE_UNIVERSE.map(u => u.symbol).join(',');
             const snapRes = await fetch(`${DATA_URL}/stocks/snapshots?symbols=${symbolsToFetch}`, {
                 headers: alpacaHeaders,
-                signal: AbortSignal.timeout(3000)
+                signal: AbortSignal.timeout(3500)
             });
             if (snapRes.ok) {
                 stockSnapshots = await snapRes.json();
+                logs.push(`[${currentTimeStr}] Alpaca Real-Time Snapshot Stream Connected (${Object.keys(stockSnapshots).length} equities).`);
             }
         } catch {
-            // Alpaca unavailable, Yahoo Finance handles primary pricing
+            // Alpaca unavailable, Yahoo Finance handles fallback pricing
         }
 
         const estHours = estTime.getHours();
@@ -98,21 +99,21 @@ export async function POST() {
 
         const discoveredSetups: any[] = [];
 
-        // 3. Process Qualified Assets
+        // 3. Process Qualified Assets (Prioritizing Alpaca Real-Time Tick Price)
         for (const asset of CORE_UNIVERSE) {
             const q = quotesMap[asset.symbol];
             const snap = stockSnapshots[asset.symbol];
 
-            const livePrice = q?.regularMarketPrice || snap?.latestTrade?.p || snap?.dailyBar?.c || asset.defaultPrice;
-            const prevClose = q?.regularMarketPreviousClose || snap?.prevDailyBar?.c || (livePrice * 0.985);
-            const changePercent = typeof q?.regularMarketChangePercent === 'number'
-                ? Math.round(q.regularMarketChangePercent * 100) / 100
-                : Math.round(((livePrice - prevClose) / prevClose) * 10000) / 100;
+            const livePrice = snap?.latestTrade?.p || snap?.dailyBar?.c || q?.regularMarketPrice || asset.defaultPrice;
+            const prevClose = snap?.prevDailyBar?.c || q?.regularMarketPreviousClose || (livePrice * 0.985);
+            const changePercent = prevClose > 0
+                ? Math.round(((livePrice - prevClose) / prevClose) * 10000) / 100
+                : (typeof q?.regularMarketChangePercent === 'number' ? Math.round(q.regularMarketChangePercent * 100) / 100 : 0);
 
-            const dayHigh = q?.regularMarketDayHigh || snap?.dailyBar?.h || (livePrice * 1.012);
-            const dayLow = q?.regularMarketDayLow || snap?.dailyBar?.l || (livePrice * 0.988);
-            const dayOpen = q?.regularMarketOpen || snap?.dailyBar?.o || prevClose;
-            const volume = q?.regularMarketVolume || snap?.dailyBar?.v || 15000000;
+            const dayHigh = snap?.dailyBar?.h || q?.regularMarketDayHigh || (livePrice * 1.012);
+            const dayLow = snap?.dailyBar?.l || q?.regularMarketDayLow || (livePrice * 0.988);
+            const dayOpen = snap?.dailyBar?.o || q?.regularMarketOpen || prevClose;
+            const volume = snap?.dailyBar?.v || q?.regularMarketVolume || 15000000;
             const avgVolume = q?.averageDailyVolume3Month || q?.averageDailyVolume10Day || 25000000;
 
             // Paced RVOL Calculation: (Actual Volume / Expected Volume to this minute)

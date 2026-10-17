@@ -13,6 +13,11 @@ import {
 import YahooFinance from 'yahoo-finance2';
 import { runAgenticDailyConsensus } from '@/lib/agenticOrchestrator';
 import { getSignals } from '@/lib/ledger';
+import {
+    fetchAlpacaStockSnapshots,
+    placeAlpacaPaperOptionOrder,
+    manageAlpacaPaperPositions,
+} from '@/lib/alpacaClient';
 
 const CACHE_FILE = process.env.VERCEL ? '/tmp/cloud_cron_cache.json' : path.join(process.cwd(), '.cron_cache.json');
 
@@ -160,6 +165,25 @@ async function handleCron(request: Request) {
             let entriesDispatchedThisTick = 0;
             const MAX_DAILY_ENTRIES = 3;
 
+            // Step 0: Run Autonomous Alpaca Paper Position Guardian (+30% scale, +60% harvest, -25% hard stop, 15:55 EOD close)
+            const guardianActions = await manageAlpacaPaperPositions(timeVal);
+            for (const gAct of guardianActions) {
+                logs.push(gAct.summary);
+                actionsTriggered.push(`ALPACA_${gAct.action}_${gAct.symbol}`);
+                await sendTargetScaleAlert({
+                    symbol: gAct.symbol,
+                    contract: gAct.symbol,
+                    stage: gAct.action === 'TARGET_1_TRIM' ? 'TARGET_1_HIT' : gAct.action === 'TARGET_2_EXIT' ? 'TARGET_2_HIT' : 'TRAILING_STOP_EXIT',
+                    currentPrice: gAct.currentPrice,
+                    highPrice: Math.max(gAct.currentPrice, gAct.avgEntry),
+                    entryPrice: gAct.avgEntry,
+                    targetPrice: gAct.currentPrice,
+                    pnlPercent: `${gAct.pnlPct >= 0 ? '+' : ''}${gAct.pnlPct}% ($${gAct.pnlDollars >= 0 ? '+' : ''}${gAct.pnlDollars.toFixed(2)})`,
+                    actionMessage: gAct.summary,
+                    stopAdjustment: gAct.action === 'TARGET_1_TRIM' ? 'Remaining runner stop moved to breakeven in Alpaca Paper' : 'Position closed in Alpaca Paper Account'
+                });
+            }
+
             // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
             const consensus = await runAgenticDailyConsensus(timeVal);
             
@@ -167,8 +191,12 @@ async function handleCron(request: Request) {
             const activeSetups = consensus.allRanked
                 .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88);
 
+            // Batch-fetch Real-Time Alpaca Stock Snapshots for all active setups
+            const alpacaSnaps = await fetchAlpacaStockSnapshots(activeSetups.map(s => s.symbol));
+
             for (const setup of activeSetups) {
                 const sym = setup.symbol;
+                const isPutSetup = setup.direction === "PUT";
                 const entryKey = `ORB_ENTRY_${sym}_${todayStr}`;
                 const proxKey = `PROXIMITY_${sym}_${todayStr}`;
                 const t1Key = `TARGET_1_${sym}_${todayStr}`;
@@ -183,12 +211,14 @@ async function handleCron(request: Request) {
                 const hasTrailFired = isCached(trailKey) || Boolean(ledgerTrade && ledgerTrade.outcome === "TRAILING_WIN");
 
                 try {
-                    const q = await yf.quote(sym);
-                    const currentPrice = q?.regularMarketPrice || setup.underlyingPrice;
-                    const dayHigh = q?.regularMarketDayHigh || currentPrice;
-                    const dayOpen = q?.regularMarketOpen || currentPrice;
-                    const prevClose = q?.regularMarketPreviousClose || currentPrice;
-                    const changePercent = q?.regularMarketChangePercent ?? ((currentPrice - prevClose) / prevClose) * 100;
+                    const snap = alpacaSnaps[sym];
+                    const q = snap ? null : await yf.quote(sym).catch(() => null);
+                    const currentPrice = snap?.price || q?.regularMarketPrice || setup.underlyingPrice;
+                    const dayHigh = snap?.high || q?.regularMarketDayHigh || currentPrice;
+                    const dayLow = snap?.low || q?.regularMarketDayLow || currentPrice;
+                    const dayOpen = snap?.open || q?.regularMarketOpen || currentPrice;
+                    const prevClose = snap?.prevClose || q?.regularMarketPreviousClose || currentPrice;
+                    const changePercent = snap?.changePercent ?? q?.regularMarketChangePercent ?? ((currentPrice - prevClose) / prevClose) * 100;
                     const trigger = setup.trigger;
                     const maxChase = setup.maxChase;
 
@@ -199,7 +229,7 @@ async function handleCron(request: Request) {
                             contract: setup.contract,
                             currentPrice,
                             triggerPrice: trigger,
-                            gapDollars: Math.max(0.35, trigger - currentPrice),
+                            gapDollars: Math.max(0.35, Math.abs(trigger - currentPrice)),
                             timeET: timeDisplay,
                             catalyst: `Testing $${trigger.toFixed(2)} morning shelf. ${setup.catalyst.slice(0, 70)}...`
                         });
@@ -208,18 +238,22 @@ async function handleCron(request: Request) {
                         logs.push(`[Proximity Alert] ${sym} testing shelf @ $${currentPrice.toFixed(2)} (Trigger: $${trigger.toFixed(2)})`);
                     }
 
-                    // Strict Live-Price-Only Breakout Conditions (Zero Hindsight)
+                    // Strict Live-Price-Only Breakout / Breakdown Conditions (Zero Hindsight, Bidirectional)
                     const isGreenOnSession = changePercent >= 0.40 && currentPrice > dayOpen && currentPrice > prevClose;
                     const isPushingSessionHigh = currentPrice >= dayHigh * 0.994;
-                    const isSafeEntry =
-                        currentPrice >= trigger &&
-                        currentPrice <= maxChase &&
-                        isGreenOnSession &&
-                        isPushingSessionHigh;
-                    const isOverextended = currentPrice > maxChase;
+                    const isRedOnSession = changePercent <= -0.80 && currentPrice < dayOpen && currentPrice < prevClose;
+                    const isPushingSessionLow = currentPrice <= dayLow * 1.008;
 
-                    const t1Level = trigger * 1.015;
-                    const t2Level = trigger * 1.025;
+                    const isSafeEntry = isPutSetup
+                        ? (currentPrice <= trigger && currentPrice >= maxChase && isRedOnSession && isPushingSessionLow)
+                        : (currentPrice >= trigger && currentPrice <= maxChase && isGreenOnSession && isPushingSessionHigh);
+
+                    const isOverextended = isPutSetup
+                        ? currentPrice < maxChase
+                        : currentPrice > maxChase;
+
+                    const t1Level = isPutSetup ? trigger * 0.985 : trigger * 1.015;
+                    const t2Level = isPutSetup ? trigger * 0.975 : trigger * 1.025;
                     const entryAgeMs = cache[entryKey] ? (Date.now() - cache[entryKey]) : 0;
                     const t1AgeMs = cache[t1Key] ? (Date.now() - cache[t1Key]) : 0;
                     const t2AgeMs = cache[t2Key] ? (Date.now() - cache[t2Key]) : 0;
@@ -230,24 +264,39 @@ async function handleCron(request: Request) {
                             (isSafeEntry && entriesDispatchedThisTick < 1 && totalEntriesToday < MAX_DAILY_ENTRIES) ||
                             (forceTest && testStep === 'entry' && entriesDispatchedThisTick < 1)
                         ) {
+                            // AUTOMATIC ALPACA PAPER EXECUTION UPON SIGNAL FIRE
+                            const orderQty = setup.kellySizing?.recommendedContracts || 3;
+                            const alpacaOrder = await placeAlpacaPaperOptionOrder({
+                                underlying: sym,
+                                strike: setup.strike,
+                                direction: isPutSetup ? 'PUT' : 'CALL',
+                                qty: orderQty,
+                                allowZeroDte: false,
+                            });
+
+                            const verifiedAsk = alpacaOrder.limitOrAskPrice || setup.entryAsk;
+                            const verifiedT1 = Math.round(verifiedAsk * 1.30 * 100) / 100;
+                            const verifiedT2 = Math.round(verifiedAsk * 1.65 * 100) / 100;
+                            const verifiedStop = Math.round(verifiedAsk * 0.75 * 100) / 100;
+
                             await sendTradeEntryCallout({
                                 symbol: sym,
-                                contract: setup.contract,
+                                contract: alpacaOrder.occSymbol ? `${setup.contract} (${alpacaOrder.occSymbol})` : setup.contract,
                                 underlyingPrice: currentPrice,
                                 entryTime: timeDisplay,
-                                entryPrice: setup.entryAsk,
-                                target1: setup.target1,
-                                target2: setup.target2,
-                                stopLoss: setup.stopLoss,
+                                entryPrice: verifiedAsk,
+                                target1: verifiedT1,
+                                target2: verifiedT2,
+                                stopLoss: verifiedStop,
                                 rvol: setup.rvol,
                                 gatekeeperBadge: setup.riskOfficer.badge,
-                                gatekeeperReason: `Rule 1-4 Cleared: ${setup.riskOfficer.devilsAdvocateCritique}`,
+                                gatekeeperReason: `Rule 1-4 Cleared (${isPutSetup ? 'BEARISH PUT' : 'BULLISH CALL'}): ${setup.riskOfficer.devilsAdvocateCritique} | 🤖 ${alpacaOrder.message}`,
                                 catalyst: setup.catalyst,
                                 confidenceScore: setup.convictionScore,
                                 agenticConsensus: {
                                     scoreBreakdown: `Trend: +${setup.pillars.trend} | Momentum: +${setup.pillars.momentum} | Macro: ${setup.pillars.macro >= 0 ? '+' : ''}${setup.pillars.macro} | Score: ${setup.convictionScore}%`,
                                     riskOfficerBadge: setup.riskOfficer.badge,
-                                    devilsAdvocateCritique: setup.riskOfficer.devilsAdvocateCritique
+                                    devilsAdvocateCritique: `${setup.riskOfficer.devilsAdvocateCritique}\n🤖 Alpaca Paper Auto-Execution: ${alpacaOrder.message}`
                                 },
                                 kellySizing: setup.kellySizing
                             });
@@ -255,6 +304,9 @@ async function handleCron(request: Request) {
                             entriesDispatchedThisTick += 1;
                             totalEntriesToday += 1;
                             actionsTriggered.push(`ORB_ENTRY_${sym}`);
+                            if (alpacaOrder.success) {
+                                actionsTriggered.push(`ALPACA_ORDER_${alpacaOrder.occSymbol || sym}`);
+                            }
                             recordedTrades.push({
                                 id: `trade_${todayStr.replace(/-/g, '')}_${sym.toLowerCase()}`,
                                 date: todayStr,
@@ -262,47 +314,47 @@ async function handleCron(request: Request) {
                                 symbol: sym,
                                 name: setup.name || sym,
                                 contract: setup.contract,
-                                action: `BUY ${setup.contract}`,
+                                action: `BUY ${setup.contract}${alpacaOrder.occSymbol ? ` [${alpacaOrder.occSymbol}]` : ''}`,
                                 time: timeDisplay,
                                 entryTime: timeDisplay,
                                 exitTime: "Active Position",
                                 duration: "Live",
                                 session: "MORNING_ORB",
-                                entryPrice: setup.entryAsk,
-                                target1: setup.target1,
-                                target2: setup.target2,
-                                stopLoss: setup.stopLoss,
+                                entryPrice: verifiedAsk,
+                                target1: verifiedT1,
+                                target2: verifiedT2,
+                                stopLoss: verifiedStop,
                                 peakPrice: currentPrice,
                                 outcome: "OPEN_LIVE",
                                 pnlPerContract: 0,
                                 percentGain: "0.0%",
-                                rationale: setup.catalyst,
+                                rationale: `${setup.catalyst} | ${alpacaOrder.message}`,
                                 catalyst: setup.catalyst,
                                 rvol: setup.rvol,
                                 confidenceScore: setup.convictionScore,
                                 winStatus: "PENDING"
                             });
-                            logs.push(`[Breakout Entry] Fresh A+ Breakout dispatched for ${sym} @ $${currentPrice.toFixed(2)} (Trigger: $${trigger.toFixed(2)}, Safe ceiling: $${maxChase.toFixed(2)}, Daily Count: ${totalEntriesToday}/${MAX_DAILY_ENTRIES})`);
+                            logs.push(`[${isPutSetup ? 'Breakdown Put' : 'Breakout Call'} Entry] Dispatched ${sym} @ $${currentPrice.toFixed(2)} | ${alpacaOrder.message}`);
                         } else if (isOverextended && !isCached(overextKey)) {
-                            logs.push(`[Chase Guard] ${sym} @ $${currentPrice.toFixed(2)} is overextended past max safe entry $${maxChase.toFixed(2)}. Entry suppressed.`);
+                            logs.push(`[Chase Guard] ${sym} @ $${currentPrice.toFixed(2)} is overextended past safe limit $${maxChase.toFixed(2)}. Entry suppressed.`);
                             setCache(overextKey);
                         }
                     } else if (
                         hasEntryFired &&
                         !hasT1Fired &&
-                        ((entryAgeMs >= 600000 && currentPrice >= t1Level) || (forceTest && testStep === 't1'))
+                        ((entryAgeMs >= 600000 && (isPutSetup ? currentPrice <= t1Level : currentPrice >= t1Level)) || (forceTest && testStep === 't1'))
                     ) {
-                        // 3. Sequential Target 1 Scale Alert (+30%) — requires >=10 mins after Entry & live currentPrice >= t1Level
+                        // 3. Sequential Target 1 Scale Alert (+30%) — requires >=10 mins after Entry & live currentPrice beyond t1Level
                         await sendTargetScaleAlert({
                             symbol: sym,
                             contract: setup.contract,
                             stage: "TARGET_1_HIT",
                             currentPrice,
-                            highPrice: dayHigh,
+                            highPrice: isPutSetup ? dayLow : dayHigh,
                             entryPrice: setup.entryAsk,
                             targetPrice: setup.target1,
                             pnlPercent: "+30.0%",
-                            actionMessage: `Underlying reached $${currentPrice.toFixed(2)} (above $${t1Level.toFixed(2)} T1 level). Target 1 achieved! Scale 50% profit.`,
+                            actionMessage: `Underlying reached $${currentPrice.toFixed(2)} (${isPutSetup ? 'below' : 'above'} $${t1Level.toFixed(2)} T1 level). Target 1 achieved! Scale 50% profit.`,
                             stopAdjustment: `Move stop loss to breakeven ($${trigger.toFixed(2)})`
                         });
                         setCache(t1Key);
@@ -312,7 +364,7 @@ async function handleCron(request: Request) {
                             date: todayStr,
                             symbol: sym,
                             contract: setup.contract,
-                            peakPrice: Math.max(dayHigh, currentPrice),
+                            peakPrice: isPutSetup ? Math.min(dayLow, currentPrice) : Math.max(dayHigh, currentPrice),
                             outcome: "TARGET_1",
                             pnlPerContract: Math.round((setup.target1 - setup.entryAsk) * 100),
                             percentGain: "+30.0%",
@@ -322,19 +374,19 @@ async function handleCron(request: Request) {
                     } else if (
                         hasT1Fired &&
                         !hasT2Fired &&
-                        ((t1AgeMs >= 600000 && currentPrice >= t2Level) || (forceTest && testStep === 't2'))
+                        ((t1AgeMs >= 600000 && (isPutSetup ? currentPrice <= t2Level : currentPrice >= t2Level)) || (forceTest && testStep === 't2'))
                     ) {
-                        // 4. Sequential Target 2 Scale Alert (+65%) — requires >=10 mins after T1 & live currentPrice >= t2Level
+                        // 4. Sequential Target 2 Scale Alert (+65%) — requires >=10 mins after T1 & live currentPrice beyond t2Level
                         await sendTargetScaleAlert({
                             symbol: sym,
                             contract: setup.contract,
                             stage: "TARGET_2_HIT",
                             currentPrice,
-                            highPrice: dayHigh,
+                            highPrice: isPutSetup ? dayLow : dayHigh,
                             entryPrice: setup.entryAsk,
                             targetPrice: setup.target2,
                             pnlPercent: "+65.0%",
-                            actionMessage: `Live extension reached $${currentPrice.toFixed(2)} (above $${t2Level.toFixed(2)} T2 level)! Target 2 smashed. Harvest profits!`,
+                            actionMessage: `Live extension reached $${currentPrice.toFixed(2)} (${isPutSetup ? 'below' : 'above'} $${t2Level.toFixed(2)} T2 level)! Target 2 smashed. Harvest profits!`,
                             stopAdjustment: "Trail runners behind 5-min EMA9. DO NOT ENTER AT MARKET."
                         });
                         setCache(t2Key);
@@ -344,7 +396,7 @@ async function handleCron(request: Request) {
                             date: todayStr,
                             symbol: sym,
                             contract: setup.contract,
-                            peakPrice: Math.max(dayHigh, currentPrice),
+                            peakPrice: isPutSetup ? Math.min(dayLow, currentPrice) : Math.max(dayHigh, currentPrice),
                             outcome: "TARGET_2",
                             pnlPerContract: Math.round((setup.target2 - setup.entryAsk) * 100),
                             percentGain: "+65.0%",
@@ -355,7 +407,7 @@ async function handleCron(request: Request) {
                         hasT2Fired &&
                         !hasTrailFired &&
                         t2AgeMs >= 300000 &&
-                        currentPrice <= (dayHigh - (trigger * 0.012))
+                        (isPutSetup ? currentPrice >= (dayLow + (trigger * 0.012)) : currentPrice <= (dayHigh - (trigger * 0.012)))
                     ) {
                         // 5. Trailing Stop on Pullback from Runner Peak — requires >=5 mins after T2
                         await sendTargetScaleAlert({
@@ -363,11 +415,11 @@ async function handleCron(request: Request) {
                             contract: setup.contract,
                             stage: "TRAILING_STOP_EXIT",
                             currentPrice,
-                            highPrice: dayHigh,
+                            highPrice: isPutSetup ? dayLow : dayHigh,
                             entryPrice: setup.entryAsk,
                             targetPrice: setup.entryAsk * 1.25,
                             pnlPercent: "+25.0% Trailing Win",
-                            actionMessage: `Stock pulled back from $${dayHigh.toFixed(2)} peak to $${currentPrice.toFixed(2)}. Trailing stop triggered on runners.`,
+                            actionMessage: `Stock retraced from $${(isPutSetup ? dayLow : dayHigh).toFixed(2)} peak to $${currentPrice.toFixed(2)}. Trailing stop triggered on runners.`,
                             stopAdjustment: "All positions closed. Overall trade secured in heavy green."
                         });
                         setCache(trailKey);
@@ -377,7 +429,7 @@ async function handleCron(request: Request) {
                             date: todayStr,
                             symbol: sym,
                             contract: setup.contract,
-                            peakPrice: dayHigh,
+                            peakPrice: isPutSetup ? dayLow : dayHigh,
                             exitTime: timeDisplay,
                             outcome: "TRAILING_WIN",
                             pnlPerContract: Math.round((setup.entryAsk * 0.25) * 100),
@@ -402,6 +454,15 @@ async function handleCron(request: Request) {
     // ==============================================================
     if ((timeVal >= 1500 && timeVal <= 1600) || (forceTest && (testStep === 'spx' || testStep === 'all'))) {
         try {
+            // Also run Alpaca Paper Position Guardian during final 15:45-16:00 PM ET window (for 15:55 EOD close)
+            if (timeVal > 1545 && timeVal <= 1600) {
+                const lateGuardian = await manageAlpacaPaperPositions(timeVal);
+                for (const gAct of lateGuardian) {
+                    logs.push(gAct.summary);
+                    actionsTriggered.push(`ALPACA_${gAct.action}_${gAct.symbol}`);
+                }
+            }
+
             const spxData = await getLiveSPXPowerHourData();
             const { spxSpot, rangeShelf, mocImbalance, directSignal } = spxData;
             const high30 = rangeShelf.high30;
@@ -424,6 +485,16 @@ async function handleCron(request: Request) {
                         const entryAsk = directSignal?.entryAsk || 3.70;
                         const minsRemaining = Math.max(1, 40 - minutes);
 
+                        // Automatically place SPY 0DTE proxy Paper Option Order on Alpaca
+                        const spyStrike = Math.round(spxSpot / 10);
+                        const spyOrder = await placeAlpacaPaperOptionOrder({
+                            underlying: 'SPY',
+                            strike: spyStrike,
+                            direction: callSide ? 'CALL' : 'PUT',
+                            qty: 3,
+                            allowZeroDte: true,
+                        });
+
                         await sendSPXPowerHourAlert({
                             setupType: callSide ? "PRE_CUTOFF_BREAKOUT_CALL" : "PRE_CUTOFF_BREAKOUT_PUT",
                             triggerTime: timeDisplay,
@@ -435,7 +506,7 @@ async function handleCron(request: Request) {
                             target2: Math.round(entryAsk * 4.5 * 100) / 100,
                             stopLoss: Math.round(entryAsk * 0.3 * 100) / 100,
                             maxRiskPerContract: Math.round(entryAsk * 100),
-                            mocImbalance: mocImbalance.rawText,
+                            mocImbalance: `${mocImbalance.rawText} | 🤖 ${spyOrder.message}`,
                             mocImbalanceType: mocImbalance.direction,
                             morningBias: spxData.morningMomentumBias.bias,
                             shelfBreak: callSide ? `Broke above $${high30.toFixed(1)}` : `Broke below $${low30.toFixed(1)}`,
@@ -445,7 +516,10 @@ async function handleCron(request: Request) {
 
                         setCache(breakoutKey);
                         actionsTriggered.push(`SPX_BREAKOUT_${callSide ? 'CALL' : 'PUT'}`);
-                        logs.push(`[SPX Power Hour] Breakout Entry Alert dispatched: ${contract}`);
+                        if (spyOrder.success) {
+                            actionsTriggered.push(`ALPACA_SPY_0DTE_${spyOrder.occSymbol || 'ORDER'}`);
+                        }
+                        logs.push(`[SPX Power Hour] Breakout Entry Alert dispatched: ${contract} | ${spyOrder.message}`);
                     }
                 }
             }
