@@ -99,6 +99,11 @@ export async function fetchAlpacaStockSnapshots(
     const raw = await res.json();
     const out: Record<string, AlpacaStockSnapshot> = {};
 
+    const estNow = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
+    );
+    const todayIso = `${estNow.getFullYear()}-${String(estNow.getMonth() + 1).padStart(2, '0')}-${String(estNow.getDate()).padStart(2, '0')}`;
+
     for (const sym of cleanSymbols) {
       const snap = raw?.[sym];
       if (!snap) continue;
@@ -111,12 +116,29 @@ export async function fetchAlpacaStockSnapshots(
         0;
       if (!price || price <= 0) continue;
 
-      const prevClose = snap.prevDailyBar?.c || snap.dailyBar?.o || price;
-      const open = snap.dailyBar?.o || prevClose;
-      const high = Math.max(price, snap.dailyBar?.h || price);
-      const low = Math.min(price, snap.dailyBar?.l || price);
-      const volume = snap.dailyBar?.v || 0;
-      const vwap = snap.dailyBar?.vw || price;
+      // Before 09:30 AM ET, Alpaca's dailyBar.t is still the previous trading day's bar (e.g. Friday),
+      // while prevDailyBar.t is 2 trading days ago (e.g. Thursday).
+      const dailyBarDate = String(snap.dailyBar?.t || '').slice(0, 10);
+      const isDailyBarToday = dailyBarDate === todayIso;
+
+      const prevClose = isDailyBarToday
+        ? (snap.prevDailyBar?.c || snap.dailyBar?.o || price)
+        : (snap.dailyBar?.c || snap.prevDailyBar?.c || price);
+      const open = isDailyBarToday
+        ? (snap.dailyBar?.o || prevClose)
+        : price;
+      const high = isDailyBarToday
+        ? Math.max(price, snap.dailyBar?.h || price)
+        : Math.max(price, snap.minuteBar?.h || price);
+      const low = isDailyBarToday
+        ? Math.min(price, snap.dailyBar?.l || price)
+        : Math.min(price, snap.minuteBar?.l || price);
+      const volume = isDailyBarToday
+        ? (snap.dailyBar?.v || 0)
+        : (snap.minuteBar?.v || 0);
+      const vwap = isDailyBarToday
+        ? (snap.dailyBar?.vw || price)
+        : (snap.minuteBar?.vw || price);
       const change = Math.round((price - prevClose) * 100) / 100;
       const changePercent =
         prevClose > 0
@@ -164,14 +186,15 @@ export async function resolveAlpacaOptionContract(
     );
     const dayOfWeek = estDate.getDay();
 
-    // For single-stock equities (!allowZeroDte), avoid same-day 0DTE contracts by starting at least 1 day ahead (or 3 days ahead on Fridays)
+    // Allow same-day 0DTE / near-dated tradable contracts during the morning session (< 14:00 ET) or when allowZeroDte is true,
+    // so explosive 0DTE setups like META $705P ($3.80 -> $11.45) capture full gamma instead of paying $24.00 for far-dated IV.
     const minExpDate = new Date(estDate);
-    if (!allowZeroDte) {
+    if (!allowZeroDte && estDate.getHours() >= 14) {
       minExpDate.setDate(minExpDate.getDate() + (dayOfWeek === 5 ? 3 : 1));
     }
     const minExpStr = `${minExpDate.getFullYear()}-${String(minExpDate.getMonth() + 1).padStart(2, '0')}-${String(minExpDate.getDate()).padStart(2, '0')}`;
 
-    const strikeRange = Math.max(5, Math.round(targetStrike * 0.04));
+    const strikeRange = Math.max(5, Math.round(targetStrike * 0.05));
     const minStrike = Math.max(1, Math.floor(targetStrike - strikeRange));
     const maxStrike = Math.ceil(targetStrike + strikeRange);
 
@@ -189,7 +212,7 @@ export async function resolveAlpacaOptionContract(
     const contracts: any[] = rawContracts.filter((c: any) => c.tradable !== false);
     if (contracts.length === 0) return null;
 
-    // Group by earliest available expiration date, then pick strike closest to targetStrike
+    // Group by earliest available tradable expiration date, then pick strike closest to targetStrike
     contracts.sort((a, b) => {
       if (a.expiration_date !== b.expiration_date) {
         return a.expiration_date.localeCompare(b.expiration_date);
@@ -202,7 +225,7 @@ export async function resolveAlpacaOptionContract(
     const earliestExp = contracts[0].expiration_date;
     const sameExpContracts = contracts
       .filter((c) => c.expiration_date === earliestExp)
-      .slice(0, 5);
+      .slice(0, 8);
 
     const symbolsList = sameExpContracts.map((c) => c.symbol).join(',');
     const snapRes = await fetch(
@@ -217,19 +240,36 @@ export async function resolveAlpacaOptionContract(
     const snapData = snapRes.ok ? await snapRes.json() : {};
     const snapshots = snapData?.snapshots || {};
 
-    // Pick the contract closest to targetStrike that has a liquid live quote and tight bid-ask spread (<= 10%)
+    // First pass: Prefer a liquid contract in our $0.80 - $8.50 high-gamma institutional Ask sweet spot with spread <= 10%
     let bestContract = sameExpContracts[0];
     let bestSnap = snapshots[bestContract.symbol];
+    let foundSweetSpot = false;
 
     for (const c of sameExpContracts) {
       const s = snapshots[c.symbol];
       const ap = s?.latestQuote?.ap || s?.latestTrade?.p || s?.dailyBar?.c || 0;
       const bp = s?.latestQuote?.bp || 0;
       const spPct = ap > 0 && bp > 0 ? ((ap - bp) / ap) * 100 : 5;
-      if (ap >= 0.40 && spPct <= 10.0) {
+      if (ap >= 0.80 && ap <= 8.50 && spPct <= 10.0) {
         bestContract = c;
         bestSnap = s;
+        foundSweetSpot = true;
         break;
+      }
+    }
+
+    // Second pass fallback if all contracts are above $8.50
+    if (!foundSweetSpot) {
+      for (const c of sameExpContracts) {
+        const s = snapshots[c.symbol];
+        const ap = s?.latestQuote?.ap || s?.latestTrade?.p || s?.dailyBar?.c || 0;
+        const bp = s?.latestQuote?.bp || 0;
+        const spPct = ap > 0 && bp > 0 ? ((ap - bp) / ap) * 100 : 5;
+        if (ap >= 0.40 && spPct <= 10.0) {
+          bestContract = c;
+          bestSnap = s;
+          break;
+        }
       }
     }
 

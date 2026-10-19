@@ -372,10 +372,14 @@ export function structureSetup(
   const rejectedOffHighs = sessionHigh > 0 && currentPrice < sessionHigh * 0.985;
 
   // Determine whether this stock/session is a BEARISH BREAKDOWN PUT or BULLISH BREAKOUT CALL
+  // Strict True-Red Mandate: A stock can ONLY be a PUT if it is genuinely red vs yesterday's close AND below today's open (prevents false PUTs on green stocks like PLTR)
+  const isTrulyRedIntraday = currentPrice < prevClose && currentPrice <= dayOpen;
   const isBearishBreakdown =
-    changePct <= -1.0 ||
-    (macroScore < 0 && (changePct < 0 || currentPrice < dayOpen * 0.996)) ||
-    (rejectedOffHighs && currentPrice < dayOpen);
+    isTrulyRedIntraday && (
+      changePct <= -0.80 ||
+      (macroScore < 0 && changePct <= -0.35) ||
+      (rejectedOffHighs && changePct <= -0.50)
+    );
 
   const direction: "CALL" | "PUT" = isBearishBreakdown ? "PUT" : "CALL";
 
@@ -438,10 +442,10 @@ export function structureSetup(
     riskBadge = `QUARANTINE ENFORCED (< ${candidate.quarantineBeforeTimeVal >= 1000 ? `${candidate.quarantineBeforeTimeVal.toString().slice(0, 2)}:${candidate.quarantineBeforeTimeVal.toString().slice(2)}` : candidate.quarantineBeforeTimeVal} AM ET)`;
     devilsAdvocateCritique = `Defensive Stock Quarantine: Historical failure mode when entered before 10:15 AM ET. 100% win rate requires waiting for midday consolidation box breach with confirmed RVOL >= 3.0x.`;
   } else if (direction === "PUT") {
-    if (changePct <= -1.2 && currentPrice < trigger) {
+    if (changePct <= -0.80 && currentPrice <= trigger) {
       riskStatus = "CLEARED";
       riskBadge = "BEARISH BREAKDOWN PUT QUALIFIED";
-      devilsAdvocateCritique = `Devil's Advocate Clearance (PUT): ${candidate.symbol} broke below its $${trigger.toFixed(2)} morning support shelf (${changePct.toFixed(2)}% intraday distribution). High-conviction bearish trend continuation aligned with negative index tape.`;
+      devilsAdvocateCritique = `Devil's Advocate Clearance (PUT): ${candidate.symbol} broke below its $${trigger.toFixed(2)} morning support shelf (${changePct.toFixed(2)}% intraday distribution below Open & Previous Close). High-conviction relative weakness breakdown.`;
     } else {
       riskStatus = "LEASH_WARNING";
       riskBadge = "BEARISH WATCH: AWAIT SUPPORT BREAK";
