@@ -390,19 +390,11 @@ export function structureSetup(
     ? Math.max(dayOpen, prevClose)
     : Math.min(dayOpen, prevClose);
 
-  const parsedBenchShelf = parseFloat(benchmark?.triggerShelf?.match(/\$([0-9.]+)/)?.[1] || "0");
-  const isBenchShelfValidForSession =
-    direction === "CALL" &&
-    parsedBenchShelf >= baseAnchor * 1.003 &&
-    parsedBenchShelf <= baseAnchor * 1.025;
-
   const gapUpPct = prevClose > 0 ? ((dayOpen - prevClose) / prevClose) * 100 : 0;
-  const callMultiplier = gapUpPct >= 1.5 ? 1.0025 : 1.008;
+  const callMultiplier = gapUpPct >= 1.5 ? 1.0025 : 1.0065;
 
   const trigger = direction === "PUT"
     ? Math.round(baseAnchor * 0.992 * 100) / 100
-    : isBenchShelfValidForSession
-    ? parsedBenchShelf
     : Math.round(baseAnchor * callMultiplier * 100) / 100;
 
   // Anti-Hindsight Safe Zone
@@ -415,10 +407,8 @@ export function structureSetup(
   const strike = calculateSensibleStrike(direction === "PUT" ? currentPrice : trigger, direction);
   const contract = `${candidate.symbol} $${strike}${direction === "PUT" ? "P" : "C"}`;
 
-  // Estimate option ask: ~1.2% - 1.8% of spot
-  const rawAsk = (benchmark?.suggestedOption?.estimatedAsk && Math.abs(currentPrice - benchmark.price) / benchmark.price < 0.05)
-    ? benchmark.suggestedOption.estimatedAsk
-    : (currentPrice * 0.014);
+  // Estimate option ask in the high-gamma $0.80-$8.50 sweet spot (~1.1% of spot, capped at $8.50)
+  const rawAsk = Math.min(8.50, Math.max(1.20, currentPrice * 0.011));
   const entryAsk = Math.round(rawAsk * 100) / 100;
   const stopLoss = Math.round(entryAsk * 0.75 * 100) / 100; // -25% capital preservation
   const target1 = Math.round(entryAsk * 1.30 * 100) / 100; // +30% scale 50%
