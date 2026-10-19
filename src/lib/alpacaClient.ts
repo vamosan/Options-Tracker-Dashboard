@@ -175,7 +175,7 @@ export async function resolveAlpacaOptionContract(
     const minStrike = Math.max(1, Math.floor(targetStrike - strikeRange));
     const maxStrike = Math.ceil(targetStrike + strikeRange);
 
-    const url = `${ALPACA_PAPER_TRADING_URL}/options/contracts?underlying_symbols=${underlying.toUpperCase()}&status=active&type=${direction.toLowerCase()}&expiration_date_gte=${minExpStr}&strike_price_gte=${minStrike}&strike_price_lte=${maxStrike}&limit=25`;
+    const url = `${ALPACA_PAPER_TRADING_URL}/options/contracts?underlying_symbols=${underlying.toUpperCase()}&status=active&type=${direction.toLowerCase()}&expiration_date_gte=${minExpStr}&strike_price_gte=${minStrike}&strike_price_lte=${maxStrike}&limit=100`;
 
     const res = await fetch(url, {
       headers: getAlpacaHeaders(),
@@ -185,7 +185,8 @@ export async function resolveAlpacaOptionContract(
     if (!res.ok) return null;
 
     const data = await res.json();
-    const contracts: any[] = data?.option_contracts || [];
+    const rawContracts: any[] = data?.option_contracts || [];
+    const contracts: any[] = rawContracts.filter((c: any) => c.tradable !== false);
     if (contracts.length === 0) return null;
 
     // Group by earliest available expiration date, then pick strike closest to targetStrike
