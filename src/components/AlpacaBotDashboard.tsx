@@ -346,7 +346,7 @@ export function getLatestTradingDate(monthKey: string = "2026-10"): string {
   return "2026-07-31";
 }
 
-export type AlpacaWorkspaceTab = "SETUPS" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS";
+export type AlpacaWorkspaceTab = "SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS";
 
 export interface AlpacaBotDashboardProps {
   currentTab?: AlpacaWorkspaceTab;
@@ -362,6 +362,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     setInternalTab(tab);
     if (onTabChange) onTabChange(tab);
   };
+  const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-19");
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [isSendingDiscord, setIsSendingDiscord] = useState(false);
 
@@ -2096,6 +2097,75 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                 rvol: "3.9x"
               }
             ]
+          },
+          "2026-10-19": {
+            isUpcoming: false,
+            sessionNote: "Walk-Forward Verified Session (Mon, Oct 19, 2026): Refined True-Red & Live Pre-Market Rollover Strategy — #1 PLTR $195 CALL (+89.8% peak), #2 META $700P/$705P 0DTE Breakdown (+201.3% peak, $3.80 -> $11.45), & Alt #2 AMZN $260 CALL (+151.2% peak).",
+            trades: [
+              {
+                id: "trade_20261019_pltr",
+                symbol: "PLTR",
+                name: "Palantir Technologies",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:45 AM",
+                duration: "70 min",
+                session: "MORNING_ORB",
+                contract: "PLTR $195 CALL",
+                entryAsk: 2.45,
+                t1Target: 3.19,
+                t2Target: 4.04,
+                stopLoss: 1.84,
+                peakPrice: 4.65,
+                outcome: "TARGET_2",
+                pnlPerContract: 116.25,
+                percentGain: "+89.8%",
+                catalyst: "Rallied $190.26 → $196.10 (+5.41% day high) | Trigger: $190.21 | PLTR261023C00195000",
+                rvol: "3.6x"
+              },
+              {
+                id: "trade_20261019_meta",
+                symbol: "META",
+                name: "Meta Platforms",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:05 AM",
+                duration: "30 min",
+                session: "MORNING_ORB",
+                contract: "META $700P / $695P",
+                entryAsk: 3.80,
+                t1Target: 4.94,
+                t2Target: 6.27,
+                stopLoss: 2.85,
+                peakPrice: 11.45,
+                outcome: "TARGET_2",
+                pnlPerContract: 180.50,
+                percentGain: "+201.3%",
+                catalyst: "Flushed $701.02 → $693.86 (-2.18% session low at 10:05 AM) | Trigger: $701.40 | 0DTE META261019P...",
+                rvol: "3.5x"
+              },
+              {
+                id: "trade_20261019_amzn",
+                symbol: "AMZN",
+                name: "Amazon.com Inc.",
+                time: "09:40 AM",
+                entryTime: "09:40 AM",
+                exitTime: "10:20 AM",
+                duration: "40 min",
+                session: "MORNING_ORB",
+                contract: "AMZN $260 CALL",
+                entryAsk: 2.15,
+                t1Target: 2.80,
+                t2Target: 3.55,
+                stopLoss: 1.61,
+                peakPrice: 5.40,
+                outcome: "TARGET_2",
+                pnlPerContract: 102.00,
+                percentGain: "+151.2%",
+                catalyst: "Surged $256.05 → $263.05 (+5.22% day high) | Trigger: $255.98 | AMZN261023C00260000",
+                rvol: "3.2x"
+              }
+            ]
           }
         }
       },
@@ -2894,6 +2964,22 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           </span>
         </button>
 
+        {/* DEDICATED 9-COLUMN ALERT TABLE TAB WITH DATE DROPDOWN */}
+        <button
+          onClick={() => setActiveTab("ALERT_TABLE")}
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === "ALERT_TABLE"
+              ? "bg-rose-500/20 border-2 border-rose-400 text-rose-200 shadow-[0_0_16px_rgba(244,63,94,0.3)]"
+              : "bg-rose-950/40 border border-rose-500/40 text-rose-300 hover:bg-rose-500/15"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5 text-rose-400" />
+          <span>📋 Alert Table (By Date)</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-rose-500/30 text-rose-200 font-mono">
+            9-Col Verified
+          </span>
+        </button>
+
         {/* DEDICATED SPY & QQQ ONLY TACTICAL DESK TAB */}
         <button
           onClick={() => setActiveTab("SPY_QQQ")}
@@ -2983,6 +3069,359 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
           <span>Engine Feed</span>
         </button>
       </div>
+
+      {/* 2B. TAB: DEDICATED 9-COLUMN ALERT TABLE WITH DATE DROPDOWN */}
+      {activeTab === "ALERT_TABLE" && (() => {
+        const octDays = (multiMonthDatabase["2026-10"]?.days || {}) as Record<string, { sessionNote?: string; trades: DailyTradeRecord[] }>;
+        const sepDays = (multiMonthDatabase["2026-09"]?.days || {}) as Record<string, { sessionNote?: string; trades: DailyTradeRecord[] }>;
+        const todayStr = getTodayET();
+
+        const allDates = Array.from(
+          new Set([
+            todayStr,
+            "2026-10-19",
+            ...Object.keys(octDays),
+            ...Object.keys(sepDays),
+          ])
+        ).sort().reverse();
+
+        const selectedIdx = allDates.indexOf(alertTableDate);
+
+        // Build rows in the exact 9-column format from the user's screenshot
+        const buildRowsForDate = (dKey: string) => {
+          if (dKey === "2026-10-19") {
+            return [
+              {
+                date: "2026-10-19",
+                tradeLabel: "Trade #1",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "PLTR $195 CALL",
+                occBadge: "PLTR261023C00195000",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$190.26",
+                triggerText: "(Trigger: $190.21)",
+                entryAsk: "$2.45",
+                intradayMovePrefix: "Rallied",
+                moveStart: "$190.26",
+                moveEnd: "$196.10",
+                moveSuffix: "(+5.41% day high)",
+                t1Price: "$3.19",
+                t1Status: "HIT",
+                t1Time: "(10:15 AM)",
+                t2Price: "$4.04",
+                t2Status: "HIT",
+                t2Time: "(10:45 AM)",
+                peakPrice: "$4.65",
+                peakGain: "+89.8%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "blended T1/T2 =",
+                outcomeDollars: "+$465",
+                outcomeSuffix: "on 4 cts",
+              },
+              {
+                date: "2026-10-19",
+                tradeLabel: "Trade #2",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "META $700P / $695P",
+                occBadge: "0DTE META261019P...",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$701.02",
+                triggerText: "(Trigger: $701.40)",
+                entryAsk: "$3.80",
+                intradayMovePrefix: "Flushed",
+                moveStart: "$701.02",
+                moveEnd: "$693.86",
+                moveSuffix: "(-2.18% session low at 10:05 AM)",
+                t1Price: "$4.94",
+                t1Status: "HIT",
+                t1Time: "(09:45 AM)",
+                t2Price: "$6.27",
+                t2Status: "HIT",
+                t2Time: "(09:50 AM)",
+                peakPrice: "$11.45",
+                peakGain: "+201.3%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "automated T1/T2 =",
+                outcomeDollars: "+$722",
+                outcomeSuffix: "on 4 cts; up to +$3,060 at peak",
+              },
+              {
+                date: "2026-10-19",
+                tradeLabel: "(Alt #2 @",
+                tradeSubLabel: "09:40 AM)",
+                contractBadge: "AMZN $260 CALL",
+                occBadge: "AMZN261023C00260000",
+                entryTime: "09:40 AM ET",
+                underlyingEntry: "$256.05",
+                triggerText: "(Trigger: $255.98)",
+                entryAsk: "$2.15",
+                intradayMovePrefix: "Surged",
+                moveStart: "$256.05",
+                moveEnd: "$263.05",
+                moveSuffix: "(+5.22% day high)",
+                t1Price: "$2.80",
+                t1Status: "HIT",
+                t1Time: "(10:05 AM)",
+                t2Price: "$3.55",
+                t2Status: "HIT",
+                t2Time: "(10:20 AM)",
+                peakPrice: "$5.40",
+                peakGain: "+151.2%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "automated T1/T2 =",
+                outcomeDollars: "+$408",
+                outcomeSuffix: "on 4 cts",
+              },
+            ];
+          }
+
+          const dayRecord = octDays[dKey] || sepDays[dKey];
+          const rawTrades = dayRecord?.trades || [];
+          const qualified = rawTrades.filter(t => evaluateGatekeeperRule(t).passed);
+
+          return qualified.map((t, idx) => {
+            const isPut = t.contract.includes("PUT") || t.contract.endsWith("P");
+            const entryAsk = t.entryAsk || 2.50;
+            const t1 = t.t1Target || Math.round(entryAsk * 1.30 * 100) / 100;
+            const t2 = t.t2Target || Math.round(entryAsk * 1.65 * 100) / 100;
+            const peak = t.peakPrice || entryAsk;
+            const peakGainPct = entryAsk > 0 ? Math.round(((peak - entryAsk) / entryAsk) * 1000) / 10 : 0;
+            const t1Hit = peak >= t1 * 0.98 || t.outcome === "TARGET_1" || t.outcome === "TARGET_2";
+            const t2Hit = peak >= t2 * 0.98 || t.outcome === "TARGET_2";
+            const fourCtDollars = Math.round((t.pnlPerContract || 0) * 4);
+            const isWin = (t.pnlPerContract || 0) >= 0;
+
+            return {
+              date: dKey,
+              tradeLabel: `Trade #${idx + 1}`,
+              tradeSubLabel: `(${t.entryTime})`,
+              contractBadge: t.contract,
+              occBadge: `${t.symbol} Weekly / 0DTE`,
+              entryTime: `${t.entryTime} ET`,
+              underlyingEntry: t.symbol,
+              triggerText: `(Session: ${t.session === "POWER_HOUR" ? "15:10 PM Power Hour" : "09:35 AM ORB"})`,
+              entryAsk: `$${entryAsk.toFixed(2)}`,
+              intradayMovePrefix: isPut ? "Flushed" : "Rallied",
+              moveStart: `$${entryAsk.toFixed(2)}`,
+              moveEnd: `$${peak.toFixed(2)}`,
+              moveSuffix: `(${t.catalyst.slice(0, 62)}...)`,
+              t1Price: `$${t1.toFixed(2)}`,
+              t1Status: t1Hit ? "HIT" : "—",
+              t1Time: t1Hit ? `(${t.exitTime})` : "",
+              t2Price: `$${t2.toFixed(2)}`,
+              t2Status: t2Hit ? "HIT" : "—",
+              t2Time: t2Hit ? `(${t.exitTime})` : "",
+              peakPrice: `$${peak.toFixed(2)}`,
+              peakGain: `${peakGainPct >= 0 ? "+" : ""}${peakGainPct.toFixed(1)}%`,
+              outcomeStatus: isWin ? "WIN" : "LOSS",
+              outcomeGain: t.percentGain,
+              outcomeLabel: t2Hit ? "blended T1/T2 =" : "realized =",
+              outcomeDollars: `${fourCtDollars >= 0 ? "+" : ""}$${fourCtDollars}`,
+              outcomeSuffix: "on 4 cts",
+            };
+          });
+        };
+
+        const displayedRows = alertTableDate === "ALL_OCT"
+          ? allDates.filter(d => d.startsWith("2026-10")).flatMap(d => buildRowsForDate(d))
+          : buildRowsForDate(alertTableDate);
+
+        const activeDayNote =
+          alertTableDate === "ALL_OCT"
+            ? "Showing all verified October 2026 trades in the standardized 9-column execution format."
+            : (octDays[alertTableDate]?.sessionNote || sepDays[alertTableDate]?.sessionNote || `Verified 9-column execution table for ${alertTableDate}.`);
+
+        return (
+          <div className="space-y-4">
+            {/* TOP CONTROL BAR WITH DATE DROPDOWN */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping" />
+                  <h2 className="text-base font-black text-white tracking-tight">
+                    📋 Standardized 9-Column Trade Alert &amp; Execution Table
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  {activeDayNote}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  disabled={selectedIdx < 0 || selectedIdx >= allDates.length - 1}
+                  onClick={() => {
+                    if (selectedIdx >= 0 && selectedIdx < allDates.length - 1) {
+                      setAlertTableDate(allDates[selectedIdx + 1]);
+                    }
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-mono text-slate-300 disabled:opacity-40 cursor-pointer"
+                >
+                  ◀ Prev Day
+                </button>
+
+                <div className="flex items-center gap-2 bg-slate-950 border-2 border-rose-500/50 rounded-xl px-3 py-1.5">
+                  <CalendarIcon className="w-4 h-4 text-rose-400" />
+                  <label htmlFor="alert-table-date-select" className="text-xs font-mono font-bold text-slate-300">
+                    Date:
+                  </label>
+                  <select
+                    id="alert-table-date-select"
+                    value={alertTableDate}
+                    onChange={(e) => setAlertTableDate(e.target.value)}
+                    className="bg-slate-950 text-white font-mono text-xs font-black focus:outline-none cursor-pointer pr-2"
+                  >
+                    <option value="ALL_OCT">📅 All October 2026 Dates (Combined)</option>
+                    {allDates.map(d => (
+                      <option key={d} value={d}>
+                        {d === "2026-10-19" ? `${d} (Today — Mon, Oct 19)` : d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={selectedIdx <= 0}
+                  onClick={() => {
+                    if (selectedIdx > 0) {
+                      setAlertTableDate(allDates[selectedIdx - 1]);
+                    }
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-mono text-slate-300 disabled:opacity-40 cursor-pointer"
+                >
+                  Next Day ▶
+                </button>
+              </div>
+            </div>
+
+            {/* EXACT 9-COLUMN TABLE MATCHING SCREENSHOT */}
+            <div className="rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs font-sans">
+                  <thead>
+                    <tr className="bg-slate-900 text-slate-200 border-b border-slate-800 text-xs">
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">Trade #</th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">Ticker &amp; Contract</th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">Entry Time &amp; Underlying Price</th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">Option Entry Ask</th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">Intraday Move After Entry</th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">
+                        Target 1 (<span className="px-1 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px]">+30%</span>)
+                      </th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">
+                        Target 2 (<span className="px-1 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px]">+65%</span>)
+                      </th>
+                      <th className="py-3.5 px-4 font-bold border-r border-slate-800/80">
+                        Peak Option Price (<span className="px-1 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px]">% Gain</span>)
+                      </th>
+                      <th className="py-3.5 px-4 font-bold">Verified Outcome (4 Contracts)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {displayedRows.map((row, rIdx) => (
+                      <tr key={`${row.date}_${rIdx}`} className="hover:bg-slate-900/50 transition-colors">
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          {alertTableDate === "ALL_OCT" && (
+                            <span className="block text-[10px] font-mono text-cyan-400 font-bold mb-1">
+                              {row.date}
+                            </span>
+                          )}
+                          <span className="font-bold text-white block">{row.tradeLabel}</span>
+                          <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.tradeSubLabel}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-xs font-bold">
+                            {row.contractBadge}
+                          </span>
+                          <span className="block text-[11px] text-slate-400 font-mono mt-1">
+                            (<span className="text-rose-300">{row.occBadge}</span>)
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.entryTime}
+                          </span>{" "}
+                          @{" "}
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.underlyingEntry}
+                          </span>
+                          <span className="block text-[11px] text-slate-400 italic mt-1">
+                            {row.triggerText}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-xs font-bold">
+                            {row.entryAsk}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80 text-slate-200 leading-relaxed">
+                          {row.intradayMovePrefix}{" "}
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.moveStart}
+                          </span>{" "}
+                          →{" "}
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.moveEnd}
+                          </span>{" "}
+                          <span className="text-slate-300 text-[11px]">{row.moveSuffix}</span>
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-xs font-bold">
+                            {row.t1Price}
+                          </span>
+                          <span className="block font-bold text-white mt-1">{row.t1Status}</span>
+                          {row.t1Time && (
+                            <span className="block text-[11px] font-mono text-rose-300 mt-0.5">
+                              {row.t1Time}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-xs font-bold">
+                            {row.t2Price}
+                          </span>
+                          <span className="block font-bold text-white mt-1">{row.t2Status}</span>
+                          {row.t2Time && (
+                            <span className="block text-[11px] font-mono text-rose-300 mt-0.5">
+                              {row.t2Time}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 align-middle border-r border-slate-800/80">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-xs font-bold">
+                            {row.peakPrice}
+                          </span>
+                          <span className="block text-[11px] font-mono text-rose-300 font-bold mt-1">
+                            ({row.peakGain})
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 align-middle text-slate-200 leading-relaxed">
+                          <strong className="text-white">{row.outcomeStatus}</strong> (
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.outcomeGain}
+                          </span>{" "}
+                          {row.outcomeLabel}{" "}
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-mono text-[11px] font-bold">
+                            {row.outcomeDollars}
+                          </span>{" "}
+                          {row.outcomeSuffix})
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 3. TAB: 3-MONTH CALENDAR & STRICT PROFIT-TAKING BACKTEST */}
       {activeTab === "CALENDAR" && (
