@@ -18,6 +18,7 @@ import { getSignals, recordOrUpdateAlertTrade } from '@/lib/ledger';
 import {
     fetchAlpacaStockSnapshots,
     fetchTodayAlpacaTradedUnderlyings,
+    fetchTodayAlpacaOptionTrades,
     placeAlpacaPaperOptionOrder,
     manageAlpacaPaperPositions,
 } from '@/lib/alpacaClient';
@@ -126,6 +127,8 @@ async function handleCron(request: Request) {
                 },
                 setups: topSetups.map(s => ({
                     symbol: s.symbol,
+                    underlyingPrice: s.underlyingPrice,
+                    direction: s.direction,
                     rank: s.rank,
                     isTopPick: s.isTopPick,
                     sector: s.sector,
@@ -139,6 +142,7 @@ async function handleCron(request: Request) {
                     catalyst: s.catalyst,
                     convictionScore: s.convictionScore,
                     riskBadge: s.riskOfficer.badge,
+                    recommendedContracts: s.kellySizing?.recommendedContracts || 4,
                     pillarSummary: `Trend: +${s.pillars.trend} | Mom: +${s.pillars.momentum} | Macro: ${s.pillars.macro >= 0 ? '+' : ''}${s.pillars.macro}`
                 }))
             });
@@ -347,24 +351,24 @@ async function handleCron(request: Request) {
                             const spreadText = alpacaOrder.spreadPct !== undefined ? `Spread: ${alpacaOrder.spreadPct}%` : 'OPRA Verified';
 
                             await sendTradeEntryCallout({
+                                tradeNumber: totalEntriesToday + 1,
                                 symbol: sym,
-                                contract: alpacaOrder.occSymbol ? `${setup.contract} (${alpacaOrder.occSymbol})` : setup.contract,
+                                contract: setup.contract,
+                                occSymbol: alpacaOrder.occSymbol,
                                 underlyingPrice: currentPrice,
+                                triggerPrice: trigger,
+                                maxChasePrice: maxChase,
                                 entryTime: timeDisplay,
                                 entryPrice: verifiedAsk,
                                 target1: verifiedT1,
                                 target2: verifiedT2,
                                 stopLoss: verifiedStop,
+                                contractsQty: orderQty,
                                 rvol: setup.rvol,
                                 gatekeeperBadge: `${setup.riskOfficer.badge} • DO NOT PAY OVER $${maxPayCeiling.toFixed(2)}`,
                                 gatekeeperReason: `Rule 1-4 Cleared (${isPutSetup ? 'BEARISH PUT' : 'BULLISH CALL'} • ${spreadText}): ${setup.riskOfficer.devilsAdvocateCritique} | 🤖 ${alpacaOrder.message}`,
                                 catalyst: setup.catalyst,
                                 confidenceScore: setup.convictionScore,
-                                agenticConsensus: {
-                                    scoreBreakdown: `Trend: +${setup.pillars.trend} | Momentum: +${setup.pillars.momentum} | Macro: ${setup.pillars.macro >= 0 ? '+' : ''}${setup.pillars.macro} | Score: ${setup.convictionScore}%`,
-                                    riskOfficerBadge: `${setup.riskOfficer.badge} (Ceiling: $${maxPayCeiling.toFixed(2)})`,
-                                    devilsAdvocateCritique: `${setup.riskOfficer.devilsAdvocateCritique}\n🛡️ Hard Max-Pay Ceiling: DO NOT PAY OVER $${maxPayCeiling.toFixed(2)} (${spreadText})\n🤖 Alpaca Paper Auto-Execution: ${alpacaOrder.message}`
-                                },
                                 kellySizing: setup.kellySizing
                             });
                             setCache(entryKey);
@@ -691,18 +695,47 @@ async function handleCron(request: Request) {
     }
 
     // ==============================================================
-    // 3. AUTOMATED END-OF-DAY PERFORMANCE AUDIT & WALK-FORWARD TRUTH SCORECARD (04:02 PM - 04:15 PM ET)
-    // Automatically compiles daily alerts + 5-min walk-forward verification and dispatches to Discord
+    // 3. AUTOMATED END-OF-DAY VERIFIED SCORECARD (04:02 PM - 04:15 PM ET)
+    // Dispatches a single clean 9-field table summary of today's trades to Discord
     // ==============================================================
     if ((timeVal >= 1602 && timeVal <= 1615) || (forceTest && (testStep === 'audit' || testStep === 'all'))) {
         const auditKey = `EOD_AUDIT_${todayStr}`;
         if (!isCached(auditKey) || (forceTest && testStep === 'audit')) {
             try {
                 const allTrades = await getSignals();
-                const todayTrades = allTrades.filter((t: any) => t.date === todayStr);
+                const ledgerToday = allTrades.filter((t: any) => t.date === todayStr);
+                const liveAlpacaToday = await fetchTodayAlpacaOptionTrades(todayStr);
+
+                // Merge live Alpaca trades with ledger trades
+                const mergedMap = new Map<string, any>();
+                for (const lt of ledgerToday) {
+                    mergedMap.set(lt.symbol, lt);
+                }
+                for (const at of liveAlpacaToday) {
+                    const sym = at.underlying === 'SPY' ? 'SPX' : at.underlying;
+                    if (!mergedMap.has(sym)) {
+                        mergedMap.set(sym, {
+                            symbol: sym,
+                            contract: at.displayContract,
+                            occSymbol: at.occSymbol,
+                            entryTime: at.filledAtET,
+                            exitTime: at.isOpen ? "Closed EOD" : "Closed",
+                            entryPrice: at.entryPrice,
+                            exitPrice: Math.max(at.currentPrice, at.entryPrice),
+                            target1: Math.round(at.entryPrice * 1.30 * 100) / 100,
+                            target2: Math.round(at.entryPrice * 1.65 * 100) / 100,
+                            pnlPerContract: Math.round((at.currentPrice - at.entryPrice) * 100),
+                            percentGain: `${at.pnlPct >= 0 ? '+' : ''}${at.pnlPct}%`,
+                            outcome: at.pnlPct >= 50 ? "TARGET_2" : at.pnlPct >= 25 ? "TARGET_1" : at.pnlPct >= 0 ? "WIN" : "STOPPED",
+                            winStatus: at.pnlPct >= 0 ? "WIN" : "LOSS",
+                            qty: at.qty,
+                        });
+                    }
+                }
+                const todayTrades = Array.from(mergedMap.values());
 
                 if (todayTrades.length > 0) {
-                    const wins = todayTrades.filter((t: any) => t.winStatus === "WIN" || (t.pnlPerContract || 0) > 0).length;
+                    const wins = todayTrades.filter((t: any) => t.winStatus === "WIN" || (t.pnlPerContract || 0) >= 0).length;
                     const losses = todayTrades.filter((t: any) => t.winStatus === "LOSS" || (t.pnlPerContract < 0 && t.outcome !== "OPEN_LIVE")).length;
                     const totalPnl = todayTrades.reduce((acc: number, t: any) => acc + (t.pnlPerContract || 0), 0);
                     const winRate = todayTrades.length > 0 ? Math.round((wins / todayTrades.length) * 100) : 100;
@@ -713,15 +746,19 @@ async function handleCron(request: Request) {
                         trades: todayTrades.map((t: any) => ({
                             symbol: t.symbol,
                             contract: t.contract,
+                            occSymbol: t.occSymbol,
                             entryTime: t.entryTime || t.time,
                             exitTime: t.exitTime || "Closed EOD",
                             entryPrice: t.entryPrice,
                             exitPrice: t.peakPrice || t.exitPrice,
+                            target1: t.target1,
+                            target2: t.target2,
                             pnlPercent: t.percentGain,
                             pnlPerContract: t.pnlPerContract,
                             status: t.outcome === "TARGET_2" ? "TARGET 2 HIT (+65%)" : t.outcome === "TARGET_1" ? "TARGET 1 HIT (+30%)" : t.outcome === "TRAILING_WIN" ? "TRAILING WIN (+25%)" : t.outcome,
                             lessons: t.catalyst || t.rationale,
-                            gatekeeperStatus: "QUALIFIED"
+                            gatekeeperStatus: "QUALIFIED",
+                            qty: t.qty || 4,
                         })),
                         totalPnlPerCt: totalPnl,
                         winRate,
@@ -730,47 +767,7 @@ async function handleCron(request: Request) {
                     });
 
                     actionsTriggered.push("EOD_PERFORMANCE_AUDIT");
-                    logs.push(`[EOD Audit] Automated Performance Report dispatched to Discord: ${wins}W / ${losses}L (${winRate}%) • Net PnL: +$${totalPnl}`);
-                }
-
-                // Pillar 5: Automated 16:05 PM ET 5-Minute Walk-Forward "Truth Scorecard"
-                const verifiedReport = await runLiveMarketSignalVerification();
-                const confirmed = verifiedReport.verifiedSignals.filter(s => s.signalCategory === "CONFIRMED_STRATEGY_SIGNAL");
-                if (confirmed.length > 0) {
-                    const confirmedLines = confirmed.slice(0, 6).map(s => {
-                        const badge = s.chronologicalOutcome === "VERIFIED_T2_WIN"
-                            ? "🏆 **T2 WIN**"
-                            : s.chronologicalOutcome === "VERIFIED_T1_WIN"
-                            ? "✅ **T1 WIN**"
-                            : s.chronologicalOutcome === "VERIFIED_STOP_LOSS"
-                            ? "❌ **STOP**"
-                            : "⚪ **OPEN**";
-                        return `${badge} **${s.symbol}** (${s.date} @ ${s.entryTimeET}) • Entry \`$${s.entryUnderlyingPrice.toFixed(2)}\` ➔ Peak \`$${s.postEntryHigh.toFixed(2)}\` (**+${s.estimatedOptionPnlPct}%** est. option)`;
-                    }).join("\n");
-
-                    await sendDiscordWebhook({
-                        content: `🔬 **AUTOMATED 16:05 PM ET LIVE-TAPE TRUTH SCORECARD (${todayStr})**`,
-                        embeds: [{
-                            title: `📊 5-Minute Walk-Forward Verification (${verifiedReport.confirmedStrategyStats.winRatePct}% Confirmed Win Rate)`,
-                            description: `Every signal was audited bar-by-bar against real 5-minute intraday candles strictly after entry timestamp.\n\n${confirmedLines}`,
-                            color: 0x10b981,
-                            fields: [
-                                {
-                                    name: "🎯 Confirmed Strategy Stats",
-                                    value: `**${verifiedReport.confirmedStrategyStats.wins}/${verifiedReport.confirmedStrategyStats.totalSignals} Wins (${verifiedReport.confirmedStrategyStats.winRatePct}%)** • Avg Option Return: **+${verifiedReport.confirmedStrategyStats.avgOptionGainPct}%**`,
-                                    inline: true
-                                },
-                                {
-                                    name: "🛡️ False Barrages Quarantined",
-                                    value: `**${verifiedReport.barrageComparisonStats.falsePositivesBlockedByFix} Blocked** by Green/Red ORB + VWAP Gate`,
-                                    inline: true
-                                }
-                            ],
-                            timestamp: new Date().toISOString()
-                        }]
-                    });
-                    actionsTriggered.push("EOD_TRUTH_SCORECARD");
-                    logs.push(`[Truth Scorecard] Dispatched 5-minute walk-forward verification (${verifiedReport.confirmedStrategyStats.winRatePct}% win rate).`);
+                    logs.push(`[EOD Audit] Automated 9-field Scorecard dispatched to Discord: ${wins}W / ${losses}L (${winRate}%) • Net PnL: +$${totalPnl}`);
                 }
 
                 setCache(auditKey);

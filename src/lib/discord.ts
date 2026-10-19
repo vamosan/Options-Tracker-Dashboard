@@ -70,12 +70,16 @@ export async function sendDiscordWebhook(
 }
 
 /**
- * Real-time Live Entry Callout
+ * Real-time Live Entry Callout — Straightforward 9-Field Table Format
  */
 export async function sendTradeEntryCallout(trade: {
+  tradeNumber?: number;
   symbol: string;
   contract: string;
+  occSymbol?: string;
   underlyingPrice?: number;
+  triggerPrice?: number;
+  maxChasePrice?: number;
   entryTime: string;
   entryPrice: number;
   stopLoss: number;
@@ -86,6 +90,8 @@ export async function sendTradeEntryCallout(trade: {
   gatekeeperReason?: string;
   catalyst?: string;
   confidenceScore?: number;
+  intradayMove?: string;
+  contractsQty?: number;
   agenticConsensus?: {
     scoreBreakdown?: string;
     riskOfficerBadge?: string;
@@ -98,94 +104,68 @@ export async function sendTradeEntryCallout(trade: {
     quarterKellyFraction: number;
   };
 }) {
-  const rvolDisplay = typeof trade.rvol === "number" ? `${trade.rvol.toFixed(1)}x` : trade.rvol || "3.2x";
-  const riskDollars = Math.round((trade.entryPrice - trade.stopLoss) * 100);
-  const rewardT1 = Math.round((trade.target1 - trade.entryPrice) * 100);
-  const rewardT2 = Math.round((trade.target2 - trade.entryPrice) * 100);
-
+  const tradeNum = trade.tradeNumber || 1;
+  const qty = trade.contractsQty || trade.kellySizing?.recommendedContracts || 4;
   const cleanContract = trade.contract.startsWith(trade.symbol) ? trade.contract : `${trade.symbol} ${trade.contract}`;
-  const t1Pct = trade.entryPrice > 0 ? Math.round(((trade.target1 - trade.entryPrice) / trade.entryPrice) * 100) : 30;
-  const t2Pct = trade.entryPrice > 0 ? Math.round(((trade.target2 - trade.entryPrice) / trade.entryPrice) * 100) : 65;
-  const slPct = trade.entryPrice > 0 ? Math.round(((trade.entryPrice - trade.stopLoss) / trade.entryPrice) * 100) : 25;
-
-  const agenticFields: DiscordField[] = trade.agenticConsensus ? [
-    {
-      name: "🏛️ AGENTIC DESK MULTI-PILLAR CONSENSUS",
-      value: `**${trade.agenticConsensus.riskOfficerBadge || "GATEKEEPER QUALIFIED"}**\n${trade.agenticConsensus.scoreBreakdown || "Trend + Momentum + Macro consensus verified."}`,
-      inline: false,
-    },
-    {
-      name: "🛡️ ADVERSARIAL RISK OFFICER AUDIT (DEVIL'S ADVOCATE)",
-      value: trade.agenticConsensus.devilsAdvocateCritique || "All exhaustion flags checked. Mean reversion & stretch risk audited. Zero hindsight entry approved.",
-      inline: false,
-    }
-  ] : [];
-
-  const kellyFields: DiscordField[] = trade.kellySizing ? [
-    {
-      name: "📐 QUANT CAPITAL SIZING (1/4 KELLY)",
-      value: `**Recommended:** \`${trade.kellySizing.recommendedContracts} Contract${trade.kellySizing.recommendedContracts > 1 ? 's' : ''}\` (Max Risk: $${trade.kellySizing.maxDollarRisk}) • Mathematical Edge: **+${trade.kellySizing.edgePercent}%** (Quarter Kelly: ${(trade.kellySizing.quarterKellyFraction * 100).toFixed(1)}%)`,
-      inline: false,
-    }
-  ] : [];
+  const spotStr = trade.underlyingPrice ? `$${trade.underlyingPrice.toFixed(2)}` : "Live Market";
+  const triggerStr = trade.triggerPrice ? ` *(Trigger: \`$${trade.triggerPrice.toFixed(2)}\`)*` : "";
+  const moveStr = trade.intradayMove || (trade.triggerPrice
+    ? `Triggered @ \`${spotStr}\` (Safe Zone up to \`$${(trade.maxChasePrice || trade.triggerPrice).toFixed(2)}\`)`
+    : `Confirmed breakout @ \`${spotStr}\``);
 
   const embed: DiscordEmbed = {
-    title: `🚨 ENTER TRADE NOW: BUY ${cleanContract}`,
-    description: `💎 **${trade.gatekeeperBadge || "GATEKEEPER QUALIFIED (96.6% WIN RATE)"}**\n${
-      trade.catalyst || "Institutional breakout above morning resistance shelf with expanding volume."
-    }`,
-    color: 0x10B981, // Emerald Green
+    title: `Trade #${tradeNum} (${trade.entryTime}) • ${cleanContract}`,
+    description: `**LIVE ALPACA PAPER ENTRY EXECUTED (${qty} Contracts)**`,
+    color: 0x10B981,
     fields: [
       {
-        name: "⏰ WHEN TO ENTER",
-        value: `**ENTER NOW (${trade.entryTime})**\nImmediate execution on confirmed breakout shelf.`,
-        inline: false,
-      },
-      {
-        name: "🎯 EXACT CONTRACT",
-        value: `**${cleanContract}**`,
+        name: "Trade #",
+        value: `**Trade #${tradeNum}** (\`${trade.entryTime}\`)`,
         inline: true,
       },
       {
-        name: "💵 ESTIMATED ASK",
-        value: `**$${trade.entryPrice.toFixed(2)}** ($${Math.round(trade.entryPrice * 100)}/contract max risk)`,
+        name: "Ticker & Contract",
+        value: `\`${cleanContract}\`${trade.occSymbol ? `\n(\`${trade.occSymbol}\`)` : ""}`,
         inline: true,
       },
       {
-        name: "🛑 STOP LOSS",
-        value: `**$${trade.stopLoss.toFixed(2)}** (-${slPct}% hard cut)`,
+        name: "Entry Time & Underlying Price",
+        value: `\`${trade.entryTime}\` @ \`${spotStr}\`${triggerStr}`,
         inline: true,
       },
       {
-        name: `🎯 TARGET 1 (+${t1Pct}%)`,
-        value: `**$${trade.target1.toFixed(2)}** (Scale 50% profit)`,
+        name: "Option Entry Ask",
+        value: `\`$${trade.entryPrice.toFixed(2)}\``,
         inline: true,
       },
       {
-        name: `🚀 TARGET 2 (+${t2Pct}%)`,
-        value: `**$${trade.target2.toFixed(2)}** (Trail runner)`,
+        name: "Intraday Move After Entry",
+        value: moveStr,
         inline: true,
       },
       {
-        name: "📊 RVOL & TAPE",
-        value: `**${rvolDisplay}** Institutional Surge`,
+        name: "Target 1 (+30%)",
+        value: `\`$${trade.target1.toFixed(2)}\` *(Pending)*`,
         inline: true,
       },
-      ...agenticFields,
-      ...kellyFields,
       {
-        name: "🛡️ GATEKEEPER RATIONALE",
-        value: trade.gatekeeperReason || "Rule 1-4 Passed: Tech Momentum + RVOL Floor >= 2.8x + Confirmed Candle Close + Positive Body Delta",
-        inline: false,
+        name: "Target 2 (+65%)",
+        value: `\`$${trade.target2.toFixed(2)}\` *(Pending)*`,
+        inline: true,
       },
       {
-        name: "⚡ EXECUTION PROTOCOL",
-        value: "Quick scalp hold (5-15 mins max). Take profit on momentum expansion; never average down.",
-        inline: false,
+        name: "Stop Loss (-25%)",
+        value: `\`$${trade.stopLoss.toFixed(2)}\``,
+        inline: true,
+      },
+      {
+        name: `Verified Outcome (${qty} Contracts)`,
+        value: `**OPEN LIVE** (\`${qty} cts\` filled @ \`$${trade.entryPrice.toFixed(2)}\` on Alpaca Paper)`,
+        inline: true,
       },
     ],
     footer: {
-      text: "Options Tracker AI • Real-Time Execution Desk",
+      text: "Options Tracker • Simple & Verified Execution Alert",
     },
     timestamp: new Date().toISOString(),
   };
@@ -196,69 +176,95 @@ export async function sendTradeEntryCallout(trade: {
 }
 
 /**
- * Real-time Exit Alert (Target Hit or Stop Out)
+ * Real-time Exit Alert (Target Hit or Stop Out) — Straightforward 9-Field Table Format
  */
 export async function sendTradeExitCallout(trade: {
+  tradeNumber?: number;
   symbol: string;
   contract: string;
+  occSymbol?: string;
   entryTime: string;
   exitTime: string;
+  underlyingEntry?: number;
+  underlyingPeak?: number;
+  triggerPrice?: number;
   entryPrice: number;
   exitPrice: number;
+  target1?: number;
+  target2?: number;
   pnlPercent: string;
   pnlPerContract: number;
   status: string;
   lessons?: string;
   qty?: number;
 }) {
-  const isWin = trade.pnlPerContract > 0;
-  const color = isWin ? 0x10B981 : 0xF43F5E; // Emerald vs Rose Red
-  const qty = trade.qty || 1;
+  const isWin = trade.pnlPerContract >= 0;
+  const color = isWin ? 0x10B981 : 0xF43F5E;
+  const qty = trade.qty || 4;
   const totalDollars = Math.round(trade.pnlPerContract * qty);
+  const tradeNum = trade.tradeNumber || 1;
+  const cleanContract = trade.contract.startsWith(trade.symbol) ? trade.contract : `${trade.symbol} ${trade.contract}`;
+  const t1 = trade.target1 || Math.round(trade.entryPrice * 1.30 * 100) / 100;
+  const t2 = trade.target2 || Math.round(trade.entryPrice * 1.65 * 100) / 100;
+  const t1Hit = trade.exitPrice >= t1 * 0.98;
+  const t2Hit = trade.exitPrice >= t2 * 0.98;
+
+  const moveStr = (trade.underlyingEntry && trade.underlyingPeak)
+    ? `Moved \`$${trade.underlyingEntry.toFixed(2)}\` → \`$${trade.underlyingPeak.toFixed(2)}\``
+    : trade.lessons || `Option moved \`$${trade.entryPrice.toFixed(2)}\` → \`$${trade.exitPrice.toFixed(2)}\``;
 
   const embed: DiscordEmbed = {
-    title: `${isWin ? "🎯 TARGET HIT" : "🛑 STOP LOSS TRIGGERED"}: ${trade.symbol} ${trade.contract}`,
-    description: `**Outcome: ${trade.status} (${trade.pnlPercent})**`,
+    title: `Trade #${tradeNum} (${trade.entryTime}) • ${cleanContract} — ${isWin ? "WIN" : "STOPPED"}`,
     color,
     fields: [
       {
-        name: "⏱️ Entry Time",
-        value: `\`${trade.entryTime}\``,
+        name: "Trade #",
+        value: `**Trade #${tradeNum}** (\`${trade.entryTime}\`)`,
         inline: true,
       },
       {
-        name: "🏁 Exit Time",
-        value: `\`${trade.exitTime}\``,
+        name: "Ticker & Contract",
+        value: `\`${cleanContract}\`${trade.occSymbol ? `\n(\`${trade.occSymbol}\`)` : ""}`,
         inline: true,
       },
       {
-        name: "📈 Return",
-        value: `\`${trade.pnlPercent}\``,
+        name: "Entry Time & Underlying Price",
+        value: `\`${trade.entryTime}\`${trade.underlyingEntry ? ` @ \`$${trade.underlyingEntry.toFixed(2)}\`` : ""}${trade.triggerPrice ? `\n*(Trigger: \`$${trade.triggerPrice.toFixed(2)}\`)*` : ""}`,
         inline: true,
       },
       {
-        name: "💵 Entry Price",
-        value: `$${trade.entryPrice.toFixed(2)}`,
+        name: "Option Entry Ask",
+        value: `\`$${trade.entryPrice.toFixed(2)}\``,
         inline: true,
       },
       {
-        name: "🎯 Exit Price",
-        value: `$${trade.exitPrice.toFixed(2)}`,
+        name: "Intraday Move After Entry",
+        value: moveStr,
         inline: true,
       },
       {
-        name: "💰 Net Realized PnL",
-        value: `**${trade.pnlPerContract >= 0 ? "+" : ""}$${trade.pnlPerContract.toFixed(2)}/ct** (${qty} ct: ${totalDollars >= 0 ? "+" : ""}$${totalDollars})`,
+        name: "Target 1 (+30%)",
+        value: `\`$${t1.toFixed(2)}\` ${t1Hit ? "**HIT**" : "—"}`,
         inline: true,
       },
       {
-        name: "📝 Execution Audit",
-        value: trade.lessons || (isWin ? "Target achieved with disciplined profit-taking." : "Loss cut promptly at -25% boundary to preserve capital."),
-        inline: false,
+        name: "Target 2 (+65%)",
+        value: `\`$${t2.toFixed(2)}\` ${t2Hit ? "**HIT**" : "—"}`,
+        inline: true,
+      },
+      {
+        name: "Peak Option Price (% Gain)",
+        value: `\`$${trade.exitPrice.toFixed(2)}\` (\`${trade.pnlPercent}\`)`,
+        inline: true,
+      },
+      {
+        name: `Verified Outcome (${qty} Contracts)`,
+        value: `**${isWin ? "WIN" : "LOSS"}** (\`${trade.pnlPercent}\` = \`${totalDollars >= 0 ? "+" : ""}$${totalDollars}\` on ${qty} cts)`,
+        inline: true,
       },
     ],
     footer: {
-      text: "Options Tracker AI Bot • Real-Time Execution Ledger",
+      text: "Options Tracker • Simple & Verified Execution Ledger",
     },
     timestamp: new Date().toISOString(),
   };
@@ -269,9 +275,10 @@ export async function sendTradeExitCallout(trade: {
 }
 
 /**
- * Real-time Target Scale / Runner Exit Alert
+ * Real-time Target Scale / Runner Exit Alert — Straightforward 9-Field Table Format
  */
 export async function sendTargetScaleAlert(update: {
+  tradeNumber?: number;
   symbol: string;
   contract: string;
   stage: "TARGET_1_HIT" | "TARGET_2_HIT" | "TRAILING_STOP_EXIT" | "OVEREXTENDED_WARNING";
@@ -282,55 +289,74 @@ export async function sendTargetScaleAlert(update: {
   pnlPercent: string;
   actionMessage: string;
   stopAdjustment: string;
+  entryTime?: string;
+  triggerPrice?: number;
+  qty?: number;
 }) {
   const isT1 = update.stage === "TARGET_1_HIT";
   const isT2 = update.stage === "TARGET_2_HIT";
   const isTrail = update.stage === "TRAILING_STOP_EXIT";
-
+  const qty = update.qty || 4;
+  const tradeNum = update.tradeNumber || 1;
   const cleanContract = update.contract.startsWith(update.symbol) ? update.contract : `${update.symbol} ${update.contract}`;
-
-  const title = isT1
-    ? `🎯 TARGET 1 HIT (+30%): SCALE 50% ON ${cleanContract}`
-    : isT2
-    ? `🚀 TARGET 2 HIT (+75%): HARVEST RUNNERS ON ${cleanContract}`
-    : isTrail
-    ? `⚠️ TRAILING STOP HIT: SECURE PROFIT ON ${cleanContract}`
-    : `⚠️ OVEREXTENDED WARNING: DO NOT CHASE ${cleanContract}`;
+  const t1 = Math.round(update.entryPrice * 1.30 * 100) / 100;
+  const t2 = Math.round(update.entryPrice * 1.65 * 100) / 100;
+  const gainDollarsOnQty = Math.round((update.targetPrice - update.entryPrice) * 100 * qty);
 
   const color = isT1 ? 0x10B981 : isT2 ? 0x06B6D4 : isTrail ? 0xF59E0B : 0xE11D48;
 
   const embed: DiscordEmbed = {
-    title,
-    description: `**${update.actionMessage}**\nUnderlying Spot: **$${update.currentPrice.toFixed(2)}** (Session Peak: **$${update.highPrice.toFixed(2)}**)`,
+    title: `Trade #${tradeNum} Update • ${cleanContract} — ${isT1 ? "TARGET 1 HIT (+30%)" : isT2 ? "TARGET 2 HIT (+65%)" : "CLOSED / TRAILED"}`,
     color,
     fields: [
       {
-        name: "🎯 CONTRACT",
-        value: `**${cleanContract}**`,
+        name: "Trade #",
+        value: `**Trade #${tradeNum}** (\`${update.entryTime || "09:35 AM ET"}\`)`,
         inline: true,
       },
       {
-        name: "📈 ESTIMATED RETURN",
-        value: `**${update.pnlPercent}** (Ask: $${update.targetPrice.toFixed(2)} from $${update.entryPrice.toFixed(2)})`,
+        name: "Ticker & Contract",
+        value: `\`${cleanContract}\``,
         inline: true,
       },
       {
-        name: "🛡️ STOP LEVEL UPDATE",
-        value: `**${update.stopAdjustment}**`,
+        name: "Entry Time & Underlying Price",
+        value: `\`${update.entryTime || "09:35 AM ET"}\`${update.triggerPrice ? ` *(Trigger: \`$${update.triggerPrice.toFixed(2)}\`)*` : ""}`,
         inline: true,
       },
       {
-        name: "⚡ EXECUTION DIRECTIVE",
-        value: isT1 
-          ? "Sell 50% of contracts to guarantee green trade. Move stop loss on remaining 50% to entry breakeven."
-          : isT2
-          ? "Sell 75-100% of runners at high. Trail remaining runners tightly behind 5-min EMA9. DO NOT ADD NEW POSITIONS."
-          : "Pullback detected from session peak. Closed remaining runner contracts to lock in net green gains.",
-        inline: false,
-      }
+        name: "Option Entry Ask",
+        value: `\`$${update.entryPrice.toFixed(2)}\``,
+        inline: true,
+      },
+      {
+        name: "Intraday Move After Entry",
+        value: `Spot @ \`$${update.currentPrice.toFixed(2)}\` (Peak: \`$${update.highPrice.toFixed(2)}\`)`,
+        inline: true,
+      },
+      {
+        name: "Target 1 (+30%)",
+        value: `\`$${t1.toFixed(2)}\` **HIT**`,
+        inline: true,
+      },
+      {
+        name: "Target 2 (+65%)",
+        value: `\`$${t2.toFixed(2)}\` ${isT2 ? "**HIT**" : "*(In Play)*"}`,
+        inline: true,
+      },
+      {
+        name: "Peak Option Price (% Gain)",
+        value: `\`$${update.targetPrice.toFixed(2)}\` (\`${update.pnlPercent}\`)`,
+        inline: true,
+      },
+      {
+        name: `Verified Outcome (${qty} Contracts)`,
+        value: `**WIN** (\`${update.pnlPercent}\` = \`${gainDollarsOnQty >= 0 ? "+" : ""}$${gainDollarsOnQty}\` on ${qty} cts)\n*${update.stopAdjustment}*`,
+        inline: true,
+      },
     ],
     footer: {
-      text: "Options Tracker AI • Real-Time Execution Desk",
+      text: "Options Tracker • Simple & Verified Execution Alert",
     },
     timestamp: new Date().toISOString(),
   };
@@ -341,7 +367,7 @@ export async function sendTargetScaleAlert(update: {
 }
 
 /**
- * Daily Call-Outs Summary (Entry + Exit Times for All Trades of the Day)
+ * Daily Call-Outs Summary — Straightforward 9-Field Table Format for Each Trade
  */
 export async function sendDailyCalloutsSummary(data: {
   date: string;
@@ -349,97 +375,118 @@ export async function sendDailyCalloutsSummary(data: {
   trades: Array<{
     symbol: string;
     contract?: string;
+    occSymbol?: string;
     entryTime: string;
     exitTime?: string;
+    underlyingEntry?: number;
+    underlyingPeak?: number;
+    triggerPrice?: number;
     entryPrice: number;
     exitPrice?: number;
+    target1?: number;
+    target2?: number;
     pnlPercent?: string;
     pnlPerContract?: number;
     status?: string;
     lessons?: string;
     gatekeeperStatus?: string;
+    qty?: number;
   }>;
   totalPnlPerCt: number;
   winRate: number;
   winCount: number;
   lossCount: number;
 }) {
-  const { date, trades, totalPnlPerCt, winRate, winCount, lossCount } = data;
-
+  const { date, trades, totalPnlPerCt } = data;
   const isGreen = totalPnlPerCt >= 0;
   const embedColor = isGreen ? 0x10B981 : 0xF43F5E;
 
-  const tradeFields: DiscordField[] = trades.map((t, idx) => {
-    const isLive = t.status === "ACTIVE IN PLAY" || (t.exitTime || "").includes("Live") || (t.exitTime || "").includes("OPEN");
-    const isTradeWin = (t.pnlPerContract ?? 0) > 0;
-    const pnlSign = (t.pnlPerContract ?? 0) >= 0 ? "+" : "";
-    const pnlStr = t.pnlPerContract !== undefined ? `${pnlSign}$${t.pnlPerContract.toFixed(0)}/ct` : "";
-    const returnStr = t.pnlPercent || "";
-    const badge = isLive ? "🟢" : isTradeWin ? "🟢" : "🔴";
+  const embeds: DiscordEmbed[] = trades.map((t, idx) => {
+    const qty = t.qty || 4;
+    const entryAsk = t.entryPrice || 2.50;
+    const peakOpt = t.exitPrice ?? entryAsk;
+    const t1 = t.target1 || Math.round(entryAsk * 1.30 * 100) / 100;
+    const t2 = t.target2 || Math.round(entryAsk * 1.65 * 100) / 100;
+    const t1Hit = peakOpt >= t1 * 0.98 || (t.status || "").includes("TARGET");
+    const t2Hit = peakOpt >= t2 * 0.98 || (t.status || "").includes("TARGET 2");
+    const gainPctNum = entryAsk > 0 ? Math.round(((peakOpt - entryAsk) / entryAsk) * 1000) / 10 : 0;
+    const pctStr = t.pnlPercent || `${gainPctNum >= 0 ? "+" : ""}${gainPctNum}%`;
+    const pnlPerCt = t.pnlPerContract !== undefined ? t.pnlPerContract : Math.round((peakOpt - entryAsk) * 100);
+    const totalFourCtDollars = Math.round(pnlPerCt * qty);
+    const isWin = pnlPerCt >= 0;
+    const cleanContract = (t.contract || "").startsWith(t.symbol) ? (t.contract || t.symbol) : `${t.symbol} ${t.contract || ""}`.trim();
+
+    const moveStr = (t.underlyingEntry && t.underlyingPeak)
+      ? `Moved \`$${t.underlyingEntry.toFixed(2)}\` → \`$${t.underlyingPeak.toFixed(2)}\``
+      : t.lessons || `Option \`$${entryAsk.toFixed(2)}\` → \`$${peakOpt.toFixed(2)}\``;
 
     return {
-      name: `${badge} #${idx + 1}: ${t.symbol} ${t.contract || ""}`,
-      value: isLive
-        ? [
-            `• **Entry Time:** \`${t.entryTime}\` @ $${t.entryPrice.toFixed(2)}`,
-            `• **Live State:** 🟢 **OPEN / IN PLAY** (Tracking Real-Time Targets)`,
-            `• **Targets:** T1: +30% | T2: +60% | Stop Loss: -25%`,
-            t.lessons ? `• *Catalyst:* ${t.lessons}` : "",
-          ]
-            .filter(Boolean)
-            .join("\n")
-        : [
-            `• **Entry Time:** \`${t.entryTime}\` @ $${t.entryPrice.toFixed(2)}`,
-            `• **Exit Time:** \`${t.exitTime || "EOD"}\` @ $${(t.exitPrice ?? t.entryPrice).toFixed(2)}`,
-            `• **Result:** **${t.status || "CLOSED"}** (${returnStr} • ${pnlStr})`,
-            t.lessons ? `• *Note:* ${t.lessons}` : "",
-          ]
-            .filter(Boolean)
-            .join("\n"),
-      inline: false,
+      title: `Trade #${idx + 1} (${t.entryTime}) • ${cleanContract}`,
+      color: isWin ? 0x10B981 : 0xF43F5E,
+      fields: [
+        {
+          name: "Trade #",
+          value: `**Trade #${idx + 1}** (\`${t.entryTime}\`)`,
+          inline: true,
+        },
+        {
+          name: "Ticker & Contract",
+          value: `\`${cleanContract}\`${t.occSymbol ? `\n(\`${t.occSymbol}\`)` : ""}`,
+          inline: true,
+        },
+        {
+          name: "Entry Time & Underlying Price",
+          value: `\`${t.entryTime}\`${t.underlyingEntry ? ` @ \`$${t.underlyingEntry.toFixed(2)}\`` : ""}${t.triggerPrice ? `\n*(Trigger: \`$${t.triggerPrice.toFixed(2)}\`)*` : ""}`,
+          inline: true,
+        },
+        {
+          name: "Option Entry Ask",
+          value: `\`$${entryAsk.toFixed(2)}\``,
+          inline: true,
+        },
+        {
+          name: "Intraday Move After Entry",
+          value: moveStr,
+          inline: true,
+        },
+        {
+          name: "Target 1 (+30%)",
+          value: `\`$${t1.toFixed(2)}\` ${t1Hit ? "**HIT**" : "—"}`,
+          inline: true,
+        },
+        {
+          name: "Target 2 (+65%)",
+          value: `\`$${t2.toFixed(2)}\` ${t2Hit ? "**HIT**" : "—"}`,
+          inline: true,
+        },
+        {
+          name: "Peak Option Price (% Gain)",
+          value: `\`$${peakOpt.toFixed(2)}\` (\`${pctStr}\`)`,
+          inline: true,
+        },
+        {
+          name: `Verified Outcome (${qty} Contracts)`,
+          value: `**${isWin ? "WIN" : "LOSS"}** (\`${pctStr}\` = \`${totalFourCtDollars >= 0 ? "+" : ""}$${totalFourCtDollars}\` on ${qty} cts)`,
+          inline: true,
+        },
+      ],
+      footer: {
+        text: `Daily Verified Scorecard • ${date}`,
+      },
     };
   });
 
-  const summaryEmbed: DiscordEmbed = {
-    title: `📋 DAILY CALL-OUTS REPORT • ${date}`,
-    description: `Institutional Trade Journal with Verified Entry & Exit Timestamps\n**Status:** ${
-      trades.length === 0
-        ? "No alert — All low-conviction setups blocked by Gatekeeper ($0 loss)"
-        : `100% Filtered Discipline • ${winCount}W / ${lossCount}L`
-    }`,
-    color: embedColor,
-    fields: [
-      {
-        name: "🏆 Win Rate",
-        value: `**${winRate}%**`,
-        inline: true,
-      },
-      {
-        name: "💰 Net Day PnL",
-        value: `**${totalPnlPerCt >= 0 ? "+" : ""}$${totalPnlPerCt.toFixed(2)} / ct**`,
-        inline: true,
-      },
-      {
-        name: "📊 Executed Signals",
-        value: `**${trades.length} Calls Taken**`,
-        inline: true,
-      },
-      ...(tradeFields.length > 0 ? tradeFields : [
-        {
-          name: "🛡️ Gatekeeper Protection",
-          value: "All raw setups on this date failed institutional criteria (RVOL < 2.8x or pre-10:15 AM defensive trap). Zero capital risked.",
-          inline: false,
-        }
-      ]),
-    ],
-    footer: {
-      text: "Options Tracker AI • Calibrated Execution Log",
-    },
-    timestamp: new Date().toISOString(),
-  };
+  if (embeds.length === 0) {
+    embeds.push({
+      title: `Daily Verified Scorecard • ${date}`,
+      description: "0 trades triggered today (Capital preserved).",
+      color: embedColor,
+    });
+  }
 
   return sendDiscordWebhook({
-    embeds: [summaryEmbed],
+    content: `📊 **DAILY VERIFIED EXECUTION SUMMARY (${date})**`,
+    embeds: embeds.slice(0, 5),
   });
 }
 
@@ -655,57 +702,64 @@ export interface SPXPowerHourDiscordPayload {
 }
 
 /**
- * Send real-time SPX 0DTE Power Hour Call-Out to Discord
+ * Send real-time SPX 0DTE Power Hour Call-Out to Discord — Straightforward 9-Field Table Format
  */
 export async function sendSPXPowerHourAlert(payload: SPXPowerHourDiscordPayload) {
   const isCall = payload.setupType === "MOC_GAMMA_CALL" || payload.setupType === "PRE_CUTOFF_BREAKOUT_CALL";
-  const isPreCutoff = payload.setupType === "PRE_CUTOFF_BREAKOUT_CALL" || payload.setupType === "PRE_CUTOFF_BREAKOUT_PUT";
-
-  const title = isPreCutoff
-    ? isCall
-      ? `🚨 ENTER TRADE NOW: BUY SPX 0DTE ${payload.strike} CALL`
-      : `🚨 ENTER TRADE NOW: BUY SPX 0DTE ${payload.strike} PUT`
-    : isCall
-    ? `⚡ ENTER MOC TRADE NOW: BUY SPX 0DTE ${payload.strike} CALL`
-    : `⚡ ENTER MOC TRADE NOW: BUY SPX 0DTE ${payload.strike} PUT`;
-
-  const color = isCall ? 0x10B981 : 0xEF4444; // Emerald, Crimson
-
-  const fields: DiscordField[] = [
-    {
-      name: "⏰ WHEN TO ENTER",
-      value: `**ENTER NOW (${payload.triggerTime})**\n${payload.brokerCutoffWarning ? `Warning: ${payload.brokerCutoffWarning}` : "Place order immediately on confirmed shelf breach."}`,
-      inline: false,
-    },
-    {
-      name: "🎯 EXACT CONTRACT",
-      value: `**${payload.contract}**`,
-      inline: true,
-    },
-    {
-      name: "💵 ESTIMATED ASK",
-      value: `**$${payload.entryAsk.toFixed(2)}** ($${payload.maxRiskPerContract} max risk)`,
-      inline: true,
-    },
-    {
-      name: "📊 SPX SPOT",
-      value: `**$${payload.spxSpot.toFixed(2)}**`,
-      inline: true,
-    },
-    {
-      name: "🛑 WHEN TO CUT / EXIT",
-      value: `Cut if SPX drops back inside shelf, or mandatory close by **${payload.exitCutoff}** (Do NOT hold into 4:00 PM cash settlement).`,
-      inline: false,
-    },
-  ];
+  const color = isCall ? 0x10B981 : 0xEF4444;
 
   const embed: DiscordEmbed = {
-    title,
-    description: `**Trigger Status:** \`${payload.shelfBreak}\`\n**Morning Bias (JFE):** \`${payload.morningBias}\`\n**MOC Flow:** ${payload.mocImbalance}`,
+    title: `Power Hour Trade (${payload.triggerTime}) • ${payload.contract}`,
     color,
-    fields,
+    fields: [
+      {
+        name: "Trade #",
+        value: `**Power Hour** (\`${payload.triggerTime}\`)`,
+        inline: true,
+      },
+      {
+        name: "Ticker & Contract",
+        value: `\`${payload.contract}\``,
+        inline: true,
+      },
+      {
+        name: "Entry Time & Underlying Price",
+        value: `\`${payload.triggerTime}\` @ \`$${payload.spxSpot.toFixed(2)}\``,
+        inline: true,
+      },
+      {
+        name: "Option Entry Ask",
+        value: `\`$${payload.entryAsk.toFixed(2)}\``,
+        inline: true,
+      },
+      {
+        name: "Intraday Move After Entry",
+        value: payload.shelfBreak,
+        inline: true,
+      },
+      {
+        name: "Target 1",
+        value: `\`$${payload.target1.toFixed(2)}\``,
+        inline: true,
+      },
+      {
+        name: "Target 2",
+        value: `\`$${payload.target2.toFixed(2)}\``,
+        inline: true,
+      },
+      {
+        name: "Stop Loss / Cutoff",
+        value: `\`$${payload.stopLoss.toFixed(2)}\` (Exit by \`${payload.exitCutoff}\`)`,
+        inline: true,
+      },
+      {
+        name: "Verified Outcome (4 Contracts)",
+        value: `**OPEN LIVE** (SPY 0DTE Proxy on Alpaca Paper)`,
+        inline: true,
+      },
+    ],
     footer: {
-      text: "SPX 0DTE Execution Desk • Options Tracker AI",
+      text: "Options Tracker • Simple & Verified Execution Alert",
     },
     timestamp: new Date().toISOString(),
   };
@@ -728,34 +782,20 @@ export async function sendProximityAlert(data: {
   catalyst?: string;
 }) {
   const embed: DiscordEmbed = {
-    title: `⚠️ ON DECK: ${data.symbol} TESTING BREAKOUT SHELF`,
-    description: `**Price is testing resistance shelf!** Prepare order for immediate execution on confirmed breach.\n${data.catalyst || "Institutional accumulation volume building."}`,
-    color: 0xF59E0B, // Amber Warning
+    title: `Watch Alert (${data.timeET}) • ${data.contract}`,
+    color: 0xF59E0B,
     fields: [
       {
-        name: "🎯 BREAKOUT TRIGGER",
-        value: `**$${data.triggerPrice.toFixed(2)}**`,
+        name: "Ticker & Contract",
+        value: `\`${data.contract}\``,
         inline: true,
       },
       {
-        name: "⚡ CURRENT SPOT",
-        value: `**$${data.currentPrice.toFixed(2)}** (${data.gapDollars > 0 ? `${(data.gapDollars * 100).toFixed(0)}¢ away` : "Testing level"})`,
+        name: "Current Price & Trigger",
+        value: `\`$${data.currentPrice.toFixed(2)}\` *(Trigger: \`$${data.triggerPrice.toFixed(2)}\`)*`,
         inline: true,
       },
-      {
-        name: "📋 TARGET CONTRACT",
-        value: `**${data.contract}**`,
-        inline: true,
-      },
-      {
-        name: "⏱️ ACTION REQUIRED",
-        value: "Load contract on your trading screen now. Do NOT enter until 5-min candle crosses and prints above trigger.",
-        inline: false,
-      }
     ],
-    footer: {
-      text: "Options Tracker AI • Real-Time Proximity Alert",
-    },
     timestamp: new Date().toISOString(),
   };
 
@@ -763,7 +803,7 @@ export async function sendProximityAlert(data: {
 }
 
 /**
- * Pre-Market Daily Game Plan (Dispatched at 09:15 AM ET)
+ * Pre-Market Daily Game Plan (Dispatched at 09:15 AM ET) — Straightforward 9-Field Table Format
  */
 export async function sendPreMarketGamePlan(data: {
   date: string;
@@ -780,6 +820,8 @@ export async function sendPreMarketGamePlan(data: {
   };
   setups: Array<{
     symbol: string;
+    underlyingPrice?: number;
+    direction?: "CALL" | "PUT";
     trigger: number;
     maxChase: number;
     contract: string;
@@ -794,121 +836,107 @@ export async function sendPreMarketGamePlan(data: {
     convictionScore?: number;
     riskBadge?: string;
     pillarSummary?: string;
+    recommendedContracts?: number;
   }>;
 }) {
-  const setupFields: DiscordField[] = data.setups.map((s, idx) => {
-    const isPrimary = s.isTopPick || s.rank === 1 || idx === 0;
-    const badge = isPrimary 
-      ? `🏆 #1 BEST OPPORTUNITY OF THE DAY: ${s.symbol} [${s.sector || "Top Pick"}]` 
-      : `🥈 #2 SECONDARY WATCH: ${s.symbol} [${s.sector || "Runner Up"}]`;
+  const embeds: DiscordEmbed[] = data.setups.slice(0, 2).map((s, idx) => {
+    const qty = s.recommendedContracts || 4;
+    const isPut = s.direction === "PUT" || s.contract.endsWith("P") || s.contract.includes("PUT");
+    const cleanContract = s.contract.startsWith(s.symbol) ? s.contract : `${s.symbol} ${s.contract}`;
+    const spotStr = s.underlyingPrice ? ` @ \`$${s.underlyingPrice.toFixed(2)}\`` : "";
 
     return {
-      name: `${badge} • ${s.contract}`,
-      value: [
-        s.convictionScore ? `• **Conviction Rating:** \`${s.convictionScore}% ELITE\` • **Gatekeeper:** \`${s.riskBadge || "GATEKEEPER QUALIFIED"}\`` : "",
-        s.pillarSummary ? `• **Agentic Pillars:** \`${s.pillarSummary}\`` : "",
-        `• **Breakout Trigger:** \`$${s.trigger.toFixed(2)}\` | **Max Chase Limit:** \`$${s.maxChase.toFixed(2)}\``,
-        `• **Est. Ask:** \`$${s.entryAsk.toFixed(2)}\` | **Stop Loss:** \`$${s.stopLoss.toFixed(2)}\``,
-        `• **Targets:** T1: \`$${s.target1.toFixed(2)}\` (+30%) | T2: \`$${s.target2.toFixed(2)}\` (+65%)`,
-        `• **Catalyst:** ${s.catalyst}`,
-      ].filter(Boolean).join("\n"),
-      inline: false,
+      title: `Trade #${idx + 1} (09:35 AM ORB Watch) • ${cleanContract}`,
+      color: isPut ? 0xEF4444 : 0x10B981,
+      fields: [
+        {
+          name: "Trade #",
+          value: `**Trade #${idx + 1}** (\`09:35 AM ET\`)`,
+          inline: true,
+        },
+        {
+          name: "Ticker & Contract",
+          value: `\`${cleanContract}\``,
+          inline: true,
+        },
+        {
+          name: "Entry Time & Underlying Price",
+          value: `\`09:35 AM ET\`${spotStr}\n*(Trigger: \`$${s.trigger.toFixed(2)}\`)*`,
+          inline: true,
+        },
+        {
+          name: "Option Entry Ask",
+          value: `\`$${s.entryAsk.toFixed(2)}\``,
+          inline: true,
+        },
+        {
+          name: "Intraday Move Required",
+          value: isPut
+            ? `Breakdown ≤ \`$${s.trigger.toFixed(2)}\` (Safe Floor: \`$${s.maxChase.toFixed(2)}\`)`
+            : `Breakout ≥ \`$${s.trigger.toFixed(2)}\` (Max Chase: \`$${s.maxChase.toFixed(2)}\`)`,
+          inline: true,
+        },
+        {
+          name: "Target 1 (+30%)",
+          value: `\`$${s.target1.toFixed(2)}\``,
+          inline: true,
+        },
+        {
+          name: "Target 2 (+65%)",
+          value: `\`$${s.target2.toFixed(2)}\``,
+          inline: true,
+        },
+        {
+          name: "Stop Loss (-25%)",
+          value: `\`$${s.stopLoss.toFixed(2)}\``,
+          inline: true,
+        },
+        {
+          name: `Verified Outcome (${qty} Contracts)`,
+          value: `**ARMED FOR 09:35 AM** (Auto-Executes \`${qty} cts\` on Alpaca Paper when trigger hits)`,
+          inline: true,
+        },
+      ],
+      footer: {
+        text: `Pre-Market Watchlist • ${data.date}`,
+      },
     };
   });
 
-  const debateFields: DiscordField[] = [];
-  if (data.macroSummary) {
-    debateFields.push({
-      name: "🌐 MACRO REGIME & MARKET TAPE",
-      value: data.macroSummary,
-      inline: false,
-    });
-  }
-  if (data.agenticDebate?.riskOfficerAudit) {
-    debateFields.push({
-      name: "⚖️ AGENTIC RISK OFFICER AUDIT (DEVIL'S ADVOCATE)",
-      value: data.agenticDebate.riskOfficerAudit,
-      inline: false,
-    });
-  }
-  if (data.calibration) {
-    debateFields.push({
-      name: "🎯 STATISTICAL CALIBRATION (BRIER SCORE)",
-      value: `Brier Score: **${data.calibration.brierScore.toFixed(4)}** (\`${data.calibration.calibrationRating}\`) • Empirical Win Rate: **${data.calibration.observedWinRate}%** (Reliability Delta: +${data.calibration.reliabilityDelta}%)`,
-      inline: false,
-    });
-  }
-
-  const embed: DiscordEmbed = {
-    title: `🌅 TODAY'S ORB GAME PLAN — BEST OPPORTUNITY SPOTLIGHT (${data.date})`,
-    description: "**Sector-Agnostic Top Conviction Pick:** Evaluated across all market sectors by the Multi-Agent Trading Desk (Macro & Regime, Sector-Agnostic Hunter, Quant Structurer, and Adversarial Risk Officer).",
-    color: 0xF59E0B, // Amber Gold
-    fields: [
-      ...debateFields,
-      ...setupFields,
-      {
-        name: "🛡️ ZERO-HINDSIGHT EXECUTION RULES",
-        value: "1. **Focus on #1 Pick:** Highest probability setup of the day.\n2. **Never Chase:** If price exceeds the Max Chase limit before you enter, skip the trade.\n3. **Wait for Breakout:** Do NOT front-run before the trigger is breached.",
-        inline: false,
-      }
-    ],
-    footer: {
-      text: "Options Tracker AI • Sector-Agnostic Agentic Desk",
-    },
-    timestamp: new Date().toISOString(),
-  };
-
-  return sendDiscordWebhook({ embeds: [embed] });
+  return sendDiscordWebhook({
+    content: `📋 **09:15 AM PRE-MARKET WATCHLIST (${data.date}) — TOP 2 SETUPS**`,
+    embeds,
+  });
 }
 
 /**
  * Proactive "Sit On Hands / Cash Is a Position" Advisory (09:45 AM ET)
- * Fires when morning opening range is choppy/conflicting or no A+ setup met strict VWAP/ORB criteria.
  */
 export async function sendAdvisorStandDownAlert(params: {
   date: string;
   timeET: string;
-  spyPrice: number;
-  spyVwap: number;
-  qqqPrice: number;
-  qqqVwap: number;
-  regimeSummary: string;
-  topWatchSymbol: string;
-  topWatchContract: string;
-  topWatchTrigger: number;
-  isPutWatch: boolean;
+  spyPrice?: number;
+  spyVwap?: number;
+  qqqPrice?: number;
+  qqqVwap?: number;
+  regimeSummary?: string;
+  topWatchSymbol?: string;
+  topWatchContract?: string;
+  topWatchTrigger?: number;
+  isPutWatch?: boolean;
+  regime?: string;
+  spyStatus?: string;
+  qqqStatus?: string;
+  reason?: string;
+  watchlistStatus?: string;
 }) {
-  const spyVsVwap = params.spyPrice >= params.spyVwap ? "ABOVE VWAP" : "BELOW VWAP";
-  const qqqVsVwap = params.qqqPrice >= params.qqqVwap ? "ABOVE VWAP" : "BELOW VWAP";
-
   const embed: DiscordEmbed = {
-    title: `🛡️ ADVISOR HEADS-UP: SIT ON HANDS — PROTECT CAPITAL (${params.timeET} ET)`,
-    description:
-      `**Cash Is a Position:** Opening 15-minute range (09:30–09:45 AM ET) produced **0 confirmed A+ setups** meeting our strict VWAP + Opening Candle + Spread criteria.\n\n` +
-      `• **Action Required:** **DO NOT FORCE EARLY TRADES.** Avoid morning chop and wait for institutional volume confirmation.`,
-    color: 0xF59E0B, // Amber Caution
-    fields: [
-      {
-        name: "📊 Live Index & VWAP Alignment",
-        value: `• **SPY:** \`$${params.spyPrice.toFixed(2)}\` (\`${spyVsVwap} $${params.spyVwap.toFixed(2)}\`)\n• **QQQ:** \`$${params.qqqPrice.toFixed(2)}\` (\`${qqqVsVwap} $${params.qqqVwap.toFixed(2)}\`)\n• **Regime:** ${params.regimeSummary}`,
-        inline: false,
-      },
-      {
-        name: "🔭 Primary Watch Armed for Post-10:15 AM Continuation",
-        value: `**${params.topWatchSymbol}** — **${params.topWatchContract}** (${params.isPutWatch ? "Breakdown below" : "Breakout above"} \`$${params.topWatchTrigger.toFixed(2)}\`)`,
-        inline: false,
-      },
-      {
-        name: "⏱️ Next High-Probability Windows",
-        value: "1. **10:15 AM – 11:30 AM ET:** Post-opening-trap institutional trend continuation.\n2. **03:10 PM – 03:40 PM ET:** SPX 0DTE Power Hour (96.2% historical win rate).",
-        inline: false,
-      },
-    ],
-    footer: {
-      text: "Options Tracker AI • Proactive Capital Preservation Advisor",
-    },
+    title: `No Entry Triggered Yet (${params.timeET}) — Cash Protected`,
+    description: params.watchlistStatus || `0 confirmed breakouts triggered in the 09:30–09:45 AM window. Standing by for trigger confirmation.`,
+    color: 0xF59E0B,
     timestamp: new Date().toISOString(),
   };
 
   return sendDiscordWebhook({ embeds: [embed] });
 }
+

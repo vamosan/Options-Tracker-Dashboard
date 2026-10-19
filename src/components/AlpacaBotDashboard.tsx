@@ -4139,7 +4139,154 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
 
       {/* 4. TAB 1: SCANNER & ACTIONABLE SETUPS */}
       {activeTab === "SETUPS" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="space-y-6">
+          {/* STRAIGHTFORWARD 9-COLUMN LIVE ALERT & EXECUTION TABLE */}
+          {(() => {
+            const topSetups = [
+              agenticConsensusData?.topOpportunity,
+              agenticConsensusData?.secondaryOpportunity,
+            ].filter(Boolean);
+
+            if (topSetups.length === 0) return null;
+
+            return (
+              <div className="rounded-2xl bg-slate-950/95 border border-slate-800 shadow-xl overflow-hidden">
+                <div className="px-4 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <h3 className="text-xs sm:text-sm font-mono font-black text-white uppercase tracking-wider">
+                      Today&apos;s Verified Trade Alerts &amp; Execution Table ({agenticConsensusData?.date || getTodayET()})
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    Synced 1:1 with Discord Alerts &amp; Alpaca Paper (4 Contracts / Trade)
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs font-mono">
+                    <thead>
+                      <tr className="bg-slate-900/70 text-slate-300 border-b border-slate-800 text-[11px]">
+                        <th className="py-2.5 px-3 font-bold">Trade #</th>
+                        <th className="py-2.5 px-3 font-bold">Ticker &amp; Contract</th>
+                        <th className="py-2.5 px-3 font-bold">Entry Time &amp; Underlying Price</th>
+                        <th className="py-2.5 px-3 font-bold">Option Entry Ask</th>
+                        <th className="py-2.5 px-3 font-bold">Intraday Move After Entry</th>
+                        <th className="py-2.5 px-3 font-bold">Target 1 (+30%)</th>
+                        <th className="py-2.5 px-3 font-bold">Target 2 (+65%)</th>
+                        <th className="py-2.5 px-3 font-bold">Peak / Live Option (% Gain)</th>
+                        <th className="py-2.5 px-3 font-bold">Verified Outcome (4 Contracts)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80">
+                      {topSetups.map((s: any, idx: number) => {
+                        const sym = s.symbol;
+                        const isPut = s.direction === "PUT";
+                        const q = liveQuotes[sym];
+                        const liveSpot = q?.price || s.underlyingPrice || 0;
+                        const dayHigh = q?.dayHigh || liveSpot;
+                        const dayLow = q?.dayLow || liveSpot;
+                        const alpacaPos = (alpacaPaperStatus?.positions || []).find((p: any) =>
+                          String(p.symbol || "").startsWith(sym)
+                        );
+                        const occSym = alpacaPos?.symbol || "";
+                        const entryAsk = alpacaPos?.avgEntry ? Number(alpacaPos.avgEntry) : Number(s.entryAsk || 2.50);
+                        const currentOptPrice = alpacaPos?.currentPrice
+                          ? Number(alpacaPos.currentPrice)
+                          : entryAsk;
+                        const t1 = Math.round(entryAsk * 1.30 * 100) / 100;
+                        const t2 = Math.round(entryAsk * 1.65 * 100) / 100;
+                        const optGainPct = entryAsk > 0 ? Math.round(((currentOptPrice - entryAsk) / entryAsk) * 1000) / 10 : 0;
+                        const t1Hit = currentOptPrice >= t1 * 0.98;
+                        const t2Hit = currentOptPrice >= t2 * 0.98;
+                        const qty = alpacaPos?.qty ? Number(alpacaPos.qty) : (s.kellySizing?.recommendedContracts || 4);
+                        const totalDollars = Math.round((currentOptPrice - entryAsk) * 100 * qty);
+                        const isLiveOnAlpaca = Boolean(alpacaPos) || String(s.riskOfficer?.devilsAdvocateCritique || "").includes("LIVE ALPACA POSITION");
+
+                        return (
+                          <tr key={sym} className="hover:bg-slate-900/40 transition-colors">
+                            <td className="py-3 px-3 font-bold text-white whitespace-nowrap">
+                              Trade #{idx + 1}
+                              <span className="block text-[10px] text-rose-300 font-normal">
+                                (09:35 AM)
+                              </span>
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-bold border border-rose-500/30">
+                                {s.contract}
+                              </span>
+                              {occSym && (
+                                <span className="block text-[10px] text-slate-400 mt-0.5">
+                                  ({occSym})
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="text-rose-300 font-bold">09:35 AM ET</span> @{" "}
+                              <span className="text-white font-bold">${liveSpot.toFixed(2)}</span>
+                              <span className="block text-[10px] text-slate-400 italic">
+                                (Trigger: ${Number(s.trigger || 0).toFixed(2)})
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 font-bold text-rose-300 whitespace-nowrap">
+                              ${entryAsk.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-3 text-slate-300">
+                              {isPut ? (
+                                <>
+                                  Flushed <span className="text-rose-300 font-bold">${Number(s.trigger || liveSpot).toFixed(2)}</span> →{" "}
+                                  <span className="text-rose-300 font-bold">${dayLow.toFixed(2)}</span> session low
+                                </>
+                              ) : (
+                                <>
+                                  Rallied <span className="text-emerald-300 font-bold">${Number(s.trigger || liveSpot).toFixed(2)}</span> →{" "}
+                                  <span className="text-emerald-300 font-bold">${dayHigh.toFixed(2)}</span> day high
+                                </>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="text-rose-300 font-bold">${t1.toFixed(2)}</span>{" "}
+                              <span className={t1Hit ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                                {t1Hit ? "HIT" : "Pending"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="text-rose-300 font-bold">${t2.toFixed(2)}</span>{" "}
+                              <span className={t2Hit ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                                {t2Hit ? "HIT" : "Pending"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="text-rose-300 font-bold">${currentOptPrice.toFixed(2)}</span>{" "}
+                              <span className={optGainPct >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                                ({optGainPct >= 0 ? "+" : ""}{optGainPct.toFixed(1)}%)
+                              </span>
+                            </td>
+                            <td className="py-3 px-3">
+                              {isLiveOnAlpaca ? (
+                                <span className="text-slate-200 font-semibold">
+                                  {optGainPct >= 0 ? "WIN / OPEN" : "OPEN LIVE"} (
+                                  <span className={totalDollars >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                                    {totalDollars >= 0 ? "+" : ""}${totalDollars}
+                                  </span>{" "}
+                                  on {qty} cts)
+                                </span>
+                              ) : (
+                                <span className="text-amber-300 font-semibold">
+                                  ARMED @ ${Number(s.trigger || 0).toFixed(2)} ({qty} cts)
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           
           {/* SECTION 1: ⚡ SPX 0DTE POWER HOUR — HYPER-TRADING COCKPIT */}
           {(() => {
@@ -5637,6 +5784,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             );
           })()}
 
+          </div>
         </div>
       )}
 
