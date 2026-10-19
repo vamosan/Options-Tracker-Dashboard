@@ -334,6 +334,11 @@ async function handleCron(request: Request) {
                                 continue;
                             }
 
+                            if (!alpacaOrder.success && !forceTest) {
+                                logs.push(`[Execution Guard] ${sym} Alpaca order was not placed (${alpacaOrder.message}). Suppressed unexecuted Discord alert to maintain 100% Alpaca-Discord parity.`);
+                                continue;
+                            }
+
                             const verifiedAsk = alpacaOrder.limitOrAskPrice || setup.entryAsk;
                             const maxPayCeiling = alpacaOrder.maxPayCeiling || Math.round(verifiedAsk * 1.05 * 100) / 100;
                             const verifiedT1 = Math.round(verifiedAsk * 1.30 * 100) / 100;

@@ -607,28 +607,74 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(false);
   const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
   
-  // Agentic Desk Multi-Pillar Consensus & Devil's Advocate State
+  // Agentic Desk Multi-Pillar Consensus & Live Alpaca Paper Position Sync
   const [agenticConsensusData, setAgenticConsensusData] = useState<any>(null);
   const [isAgenticLoading, setIsAgenticLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
-    async function fetchAgentic() {
+    async function fetchAgenticAndAlpaca() {
       try {
         setIsAgenticLoading(true);
-        const res = await fetch('/api/agentic-desk');
-        const json = await res.json();
-        if (isMounted && json?.success && json?.data) {
-          setAgenticConsensusData(json.data);
+        const [agRes, alpRes] = await Promise.all([
+          fetch('/api/agentic-desk', { cache: 'no-store' }).catch(() => null),
+          fetch('/api/alpaca-paper', { cache: 'no-store' }).catch(() => null),
+        ]);
+        if (agRes && agRes.ok) {
+          const json = await agRes.json();
+          if (isMounted && json?.success && json?.data) {
+            setAgenticConsensusData(json.data);
+            const top1 = json.data?.topOpportunity?.symbol;
+            const top2 = json.data?.secondaryOpportunity?.symbol;
+            if (top1) {
+              setSelectedSignalTicker((prev) => (prev === top1 || prev === top2 ? prev : top1));
+            }
+          }
+        }
+        if (alpRes && alpRes.ok) {
+          const alpJson = await alpRes.json();
+          if (isMounted && alpJson?.success && Array.isArray(alpJson.positions)) {
+            const mappedLivePositions: ActiveTrade[] = alpJson.positions.map((p: any) => {
+              const occMatch = String(p.symbol || '').match(/^([A-Z]+)(\d{6})([CP])(\d{8})$/);
+              const underlyingSym = occMatch ? occMatch[1] : String(p.symbol || '');
+              const isPutPos = occMatch ? occMatch[3] === 'P' : false;
+              const strikeNum = occMatch ? parseInt(occMatch[4], 10) / 1000 : 0;
+              const avgEntry = parseFloat(p.avgEntryPrice) || 2.5;
+              const curPrice = parseFloat(p.currentPrice) || avgEntry;
+              return {
+                id: `alpaca_${p.symbol}`,
+                symbol: `${underlyingSym} $${strikeNum} ${isPutPos ? 'Put' : 'Call'} (${p.symbol})`,
+                underlying: underlyingSym,
+                strike: strikeNum,
+                type: isPutPos ? 'PUT' : 'CALL',
+                entryTime: 'Alpaca Live',
+                entryPrice: Math.round(avgEntry * 100) / 100,
+                currentPrice: Math.round(curPrice * 100) / 100,
+                qty: Math.abs(parseInt(p.qty, 10) || 1),
+                stopLoss: Math.round(avgEntry * 0.75 * 100) / 100,
+                target1: Math.round(avgEntry * 1.30 * 100) / 100,
+                target2: Math.round(avgEntry * 1.65 * 100) / 100,
+                status: 'OPEN',
+              };
+            });
+            setActivePositions((prev) => {
+              const manualOnly = prev.filter((item) => !String(item.id || '').startsWith('alpaca_') && !mappedLivePositions.some((lp) => lp.underlying === item.underlying));
+              return [...mappedLivePositions, ...manualOnly];
+            });
+          }
         }
       } catch (err) {
-        console.warn("Agentic desk fetch error:", err);
+        console.warn("Agentic desk / Alpaca sync error:", err);
       } finally {
         if (isMounted) setIsAgenticLoading(false);
       }
     }
-    fetchAgentic();
-    return () => { isMounted = false; };
+    fetchAgenticAndAlpaca();
+    const syncTimer = setInterval(fetchAgenticAndAlpaca, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(syncTimer);
+    };
   }, []);
 
   // Simple 1-Contract Trade Fill & Profit Tracker Engine
@@ -4683,30 +4729,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const dayHigh = quote?.dayHigh || (liveSetup?.orb?.high ? liveSetup.orb.high * 1.008 : price * 1.012);
             const dayLow = quote?.dayLow || (liveSetup?.orb?.low ? liveSetup.orb.low * 0.992 : price * 0.988);
 
-            // Bidirectional CALL / PUT Detection:
-            // Pivot to Bearish Breakdown PUT when Agentic Desk flags PUT, or stock is down <= -0.80%, or SPX is in distribution (<= -0.50%) while stock is red/rejected
+            // Bidirectional CALL / PUT Detection (Single Source of Truth from Agentic Desk & Alpaca Paper):
             const isBearishTape = (spxPowerHourState?.dayChangePct ?? 0) <= -0.50 || (agenticConsensusData?.macro?.score ?? 0) < 0;
-            const isPutSetup =
-              agenticSetup?.direction === "PUT" ||
-              changePct <= -0.80 ||
-              (isBearishTape && (changePct < 0 || price < dayHigh * 0.988));
+            const isPutSetup = agenticSetup?.direction
+              ? agenticSetup.direction === "PUT"
+              : (changePct <= -0.80 || (isBearishTape && (changePct < 0 || price < dayHigh * 0.988)));
 
-            // Strict Strike Anchor Rule: Round down for PUTs, round up/lock for CALLs
-            const dynamicStrike = isPutSetup
-              ? ((agenticSetup?.direction === "PUT" && agenticSetup?.strike) ? agenticSetup.strike : (
+            // Strict Strike Anchor Rule: Use Agentic Desk / Alpaca Paper locked strike first
+            const dynamicStrike = agenticSetup?.strike
+              ? agenticSetup.strike
+              : isPutSetup
+              ? (
                   price > 1000 ? Math.floor(price / 10) * 10 :
                   price > 400 ? Math.floor(price / 5) * 5 :
                   price > 100 ? Math.floor(price / 2.5) * 2.5 :
                   Math.floor(price || 100)
-                ))
-              : ((agenticSetup?.direction === "CALL" && agenticSetup?.strike) ? agenticSetup.strike : (
+                )
+              : (
                   prospective?.suggestedOption?.strike || liveSetup?.contract?.strike || (
                     price > 1000 ? Math.ceil(price / 10) * 10 :
                     price > 400 ? Math.ceil(price / 5) * 5 :
                     price > 100 ? Math.ceil(price / 2.5) * 2.5 :
                     Math.ceil(price || 100)
                   )
-                ));
+                );
             const strike = dynamicStrike;
             const contract = `${symbol} $${strike} ${isPutSetup ? "Put" : "Call"}`;
             const entryAsk = agenticSetup?.entryAsk || liveSetup?.contract?.ask || prospective?.suggestedOption?.estimatedAsk || (price > 0 ? Math.round(price * 0.014 * 100) / 100 : 2.45);
@@ -4714,16 +4760,14 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             const target2 = agenticSetup?.target2 || liveSetup?.targets?.target2 || prospective?.suggestedOption?.target2 || Math.round(entryAsk * 1.65 * 100) / 100;
             const stopLoss = agenticSetup?.stopLoss || liveSetup?.targets?.stopLoss || prospective?.suggestedOption?.stopLoss || Math.round(entryAsk * 0.75 * 100) / 100;
             
-            // Primary Institutional Trigger Shelf (Breakdown Support Shelf for PUTs, Breakout Resistance Shelf for CALLs):
+            // Primary Institutional Trigger Shelf (Single Source of Truth from Agentic Desk):
             const shelfMatch = prospective?.triggerShelf?.match(/\$([0-9]+(?:\.[0-9]+)?)/);
             const parsedShelf = shelfMatch ? parseFloat(shelfMatch[1]) : 0;
-            const triggerLevel = isPutSetup
-              ? ((agenticSetup?.direction === "PUT" && agenticSetup?.trigger > 0)
-                  ? agenticSetup.trigger
-                  : Math.round(Math.max(price * 1.006, dayHigh * 0.990) * 100) / 100)
-              : ((agenticSetup?.direction === "CALL" && agenticSetup?.trigger > 0)
-                  ? agenticSetup.trigger
-                  : (parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100)));
+            const triggerLevel = agenticSetup?.trigger > 0
+              ? agenticSetup.trigger
+              : isPutSetup
+              ? Math.round(Math.max(price * 1.006, dayHigh * 0.990) * 100) / 100
+              : (parsedShelf || (liveSetup?.orb?.high && liveSetup.orb.high <= price * 1.05 ? liveSetup.orb.high : Math.round(price * 1.008 * 100) / 100));
 
             // Active Breakout/Breakdown latch & Anchors
             // CRITICAL: Requires LIVE price to currently be beyond triggerLevel (never triggers on stale morning wick if price is back inside range)

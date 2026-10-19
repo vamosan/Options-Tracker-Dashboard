@@ -320,6 +320,97 @@ export async function fetchTodayAlpacaTradedUnderlyings(
   return traded;
 }
 
+export interface AlpacaActiveOptionTrade {
+  underlying: string;
+  occSymbol: string;
+  direction: 'CALL' | 'PUT';
+  strike: number;
+  qty: number;
+  avgEntryPrice: number;
+  currentPrice: number;
+  status: 'OPEN_POSITION' | 'FILLED_TODAY';
+}
+
+/**
+ * 2C. Fetch detailed live Alpaca Paper option positions & today's filled option orders.
+ * Used as the Single Source of Truth across Agentic Desk (/api/agentic-desk), Webpage, and Cloud Cron.
+ */
+export async function fetchTodayAlpacaOptionTrades(
+  todayStr: string
+): Promise<Map<string, AlpacaActiveOptionTrade>> {
+  const map = new Map<string, AlpacaActiveOptionTrade>();
+  try {
+    const headers = getAlpacaHeaders();
+    const afterIso = `${todayStr}T04:00:00Z`;
+    const [posRes, ordRes] = await Promise.all([
+      fetch(`${ALPACA_PAPER_TRADING_URL}/positions`, {
+        headers,
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3500),
+      }),
+      fetch(
+        `${ALPACA_PAPER_TRADING_URL}/orders?status=all&after=${encodeURIComponent(afterIso)}&limit=50`,
+        {
+          headers,
+          cache: 'no-store',
+          signal: AbortSignal.timeout(3500),
+        }
+      ),
+    ]);
+
+    const positions: any[] = posRes.ok ? await posRes.json() : [];
+    const orders: any[] = ordRes.ok ? await ordRes.json() : [];
+
+    const parseOcc = (sym: string) => {
+      const m = String(sym || '').match(/^([A-Z]+)(\d{6})([CP])(\d{8})$/);
+      if (!m) return null;
+      return {
+        underlying: m[1],
+        direction: (m[3] === 'P' ? 'PUT' : 'CALL') as 'CALL' | 'PUT',
+        strike: parseInt(m[4], 10) / 1000,
+      };
+    };
+
+    for (const p of positions) {
+      const parsed = parseOcc(p.symbol);
+      if (!parsed) continue;
+      const avgEntry = parseFloat(p.avg_entry_price) || 2.5;
+      const curPrice = parseFloat(p.current_price) || avgEntry;
+      map.set(parsed.underlying, {
+        underlying: parsed.underlying,
+        occSymbol: p.symbol,
+        direction: parsed.direction,
+        strike: parsed.strike,
+        qty: Math.abs(parseInt(p.qty, 10) || 1),
+        avgEntryPrice: Math.round(avgEntry * 100) / 100,
+        currentPrice: Math.round(curPrice * 100) / 100,
+        status: 'OPEN_POSITION',
+      });
+    }
+
+    for (const o of orders) {
+      if (o.side === 'buy' && o.status === 'filled') {
+        const parsed = parseOcc(o.symbol);
+        if (!parsed || map.has(parsed.underlying)) continue;
+        const fillPrice = parseFloat(o.filled_avg_price) || 2.5;
+        map.set(parsed.underlying, {
+          underlying: parsed.underlying,
+          occSymbol: o.symbol,
+          direction: parsed.direction,
+          strike: parsed.strike,
+          qty: Math.abs(parseInt(o.qty, 10) || 1),
+          avgEntryPrice: Math.round(fillPrice * 100) / 100,
+          currentPrice: Math.round(fillPrice * 100) / 100,
+          status: 'FILLED_TODAY',
+        });
+      }
+    }
+  } catch (err: any) {
+    console.warn('[AlpacaClient] fetchTodayAlpacaOptionTrades error:', err?.message);
+  }
+  return map;
+}
+
 /**
  * 3. Place Automatic Alpaca Paper Option Order Upon Signal Fire
  * Protects against duplicate positions or repeat same-day orders on the same underlying symbol.
