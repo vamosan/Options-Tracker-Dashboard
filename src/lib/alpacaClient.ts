@@ -164,13 +164,12 @@ export async function resolveAlpacaOptionContract(
     );
     const dayOfWeek = estDate.getDay();
 
-    // If Friday and not explicitly 0DTE (e.g. equity swing/day trade), start search 3 days ahead (next Friday weekly)
-    // unless allowZeroDte is true (e.g. SPY 0DTE Power Hour)
+    // For single-stock equities (!allowZeroDte), avoid same-day 0DTE contracts by starting at least 1 day ahead (or 3 days ahead on Fridays)
     const minExpDate = new Date(estDate);
-    if (!allowZeroDte && dayOfWeek === 5) {
-      minExpDate.setDate(minExpDate.getDate() + 3);
+    if (!allowZeroDte) {
+      minExpDate.setDate(minExpDate.getDate() + (dayOfWeek === 5 ? 3 : 1));
     }
-    const minExpStr = minExpDate.toISOString().split('T')[0];
+    const minExpStr = `${minExpDate.getFullYear()}-${String(minExpDate.getMonth() + 1).padStart(2, '0')}-${String(minExpDate.getDate()).padStart(2, '0')}`;
 
     const strikeRange = Math.max(5, Math.round(targetStrike * 0.04));
     const minStrike = Math.max(1, Math.floor(targetStrike - strikeRange));

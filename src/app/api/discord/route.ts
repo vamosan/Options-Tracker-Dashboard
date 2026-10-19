@@ -13,6 +13,7 @@ import {
 } from '@/lib/discord';
 import { CURRENT_MARKET_OUTLOOK } from '@/lib/prospectiveStocks';
 import { recordOrUpdateAlertTrade } from '@/lib/ledger';
+import { placeAlpacaPaperOptionOrder } from '@/lib/alpacaClient';
 
 export async function GET() {
   const webhookConfigured = Boolean(process.env.DISCORD_WEBHOOK_URL || DEFAULT_DISCORD_WEBHOOK_URL);
@@ -67,7 +68,22 @@ export async function POST(req: Request) {
       if (!payload || !payload.contract || !payload.entryAsk) {
         return NextResponse.json({ success: false, error: 'Invalid SPX power hour payload: contract and entryAsk required' }, { status: 400 });
       }
-      const result = await sendSPXPowerHourAlert(payload);
+      const isPutSpx = /put|\d+p\b/i.test(String(payload.contract || '')) || String(payload.setupType || '').includes('PUT');
+      const spxSpotVal = payload.spxSpot || payload.strike || 7655;
+      const spyStrike = Math.round((spxSpotVal > 1500 ? spxSpotVal / 10 : spxSpotVal));
+      const spyOrder = await placeAlpacaPaperOptionOrder({
+        underlying: 'SPY',
+        strike: spyStrike,
+        direction: isPutSpx ? 'PUT' : 'CALL',
+        qty: 3,
+        allowZeroDte: true,
+      }).catch(() => null);
+
+      const enrichedSpxPayload = spyOrder?.message && !String(payload.mocImbalance || '').includes('Alpaca')
+        ? { ...payload, mocImbalance: `${payload.mocImbalance || 'SPX 0DTE Power Hour'} | 🤖 ${spyOrder.message}` }
+        : payload;
+
+      const result = await sendSPXPowerHourAlert(enrichedSpxPayload);
       
       // Auto-record SPX trade to persistent ledger
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -79,12 +95,12 @@ export async function POST(req: Request) {
           symbol: "SPX",
           name: "S&P 500 Index",
           contract: payload.contract,
-          action: `BUY ${payload.contract}`,
+          action: `BUY ${payload.contract}${spyOrder?.occSymbol ? ` [${spyOrder.occSymbol}]` : ''}`,
           entryTime: payload.triggerTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           exitTime: payload.exitCutoff || "03:58 PM ET",
           duration: "20 min",
           session: "POWER_HOUR",
-          entryPrice: payload.entryAsk,
+          entryPrice: spyOrder?.limitOrAskPrice || payload.entryAsk,
           target1: payload.target1,
           target2: payload.target2,
           stopLoss: payload.stopLoss,
@@ -93,7 +109,7 @@ export async function POST(req: Request) {
           pnlPerContract: 0,
           percentGain: "0.0%",
           rationale: payload.shelfBreak || "MOC Imbalance Breakout",
-          catalyst: payload.mocImbalance || "SPX 0DTE Power Hour",
+          catalyst: enrichedSpxPayload.mocImbalance || "SPX 0DTE Power Hour",
           rvol: "3.8x",
           confidenceScore: 94,
           winStatus: "PENDING"
@@ -102,14 +118,41 @@ export async function POST(req: Request) {
         console.warn("Ledger auto-record SPX error:", err.message);
       }
 
-      return NextResponse.json({ success: result.success, message: `SPX Power Hour Alert sent for ${payload.contract}`, details: result });
+      return NextResponse.json({ success: result.success, message: `SPX Power Hour Alert sent for ${payload.contract}`, alpacaOrder: spyOrder, details: result });
     }
 
     if (action === 'entry') {
       if (!payload || !payload.symbol || !payload.entryTime || !payload.entryPrice) {
         return NextResponse.json({ success: false, error: 'Invalid entry payload: symbol, entryTime, and entryPrice required' }, { status: 400 });
       }
-      const result = await sendTradeEntryCallout(payload);
+
+      // Guarantee idempotent Alpaca Paper execution on every entry signal
+      const contractStr = String(payload.contract || payload.symbol || '');
+      const isPutEntry = /put|\d+p\b/i.test(contractStr) || String(payload.gatekeeperBadge || '').includes('PUT');
+      const parsedStrike =
+        payload.strike ||
+        parseFloat(contractStr.match(/\$([0-9.]+)/)?.[1] || contractStr.match(/\b([0-9]{2,4}(?:\.[0-9]+)?)\s*(?:C|P|CALL|PUT)\b/i)?.[1] || '0') ||
+        Math.round(payload.underlyingPrice || 150);
+      const targetUnderlying = payload.symbol === 'SPX' ? 'SPY' : payload.symbol;
+      const targetStrike = payload.symbol === 'SPX' && parsedStrike > 1500 ? Math.round(parsedStrike / 10) : parsedStrike;
+
+      const alpacaOrder = await placeAlpacaPaperOptionOrder({
+        underlying: targetUnderlying,
+        strike: targetStrike,
+        direction: isPutEntry ? 'PUT' : 'CALL',
+        qty: 3,
+        allowZeroDte: targetUnderlying === 'SPY' || targetUnderlying === 'QQQ',
+      }).catch(() => null);
+
+      const enrichedEntryPayload = alpacaOrder?.message && !String(payload.gatekeeperReason || '').includes('Alpaca')
+        ? {
+            ...payload,
+            contract: alpacaOrder.occSymbol && !contractStr.includes(alpacaOrder.occSymbol) ? `${contractStr} (${alpacaOrder.occSymbol})` : contractStr,
+            gatekeeperReason: `${payload.gatekeeperReason || 'Rule 1-4 Cleared'} | 🤖 ${alpacaOrder.message}`,
+          }
+        : payload;
+
+      const result = await sendTradeEntryCallout(enrichedEntryPayload);
 
       // Auto-record entry to persistent ledger
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -119,10 +162,10 @@ export async function POST(req: Request) {
           date: todayStr,
           timestamp: new Date().toISOString(),
           symbol: payload.symbol,
-          contract: payload.contract,
-          action: `BUY ${payload.contract || payload.symbol}`,
+          contract: enrichedEntryPayload.contract,
+          action: `BUY ${enrichedEntryPayload.contract || payload.symbol}`,
           entryTime: payload.entryTime,
-          entryPrice: payload.entryPrice,
+          entryPrice: alpacaOrder?.limitOrAskPrice || payload.entryPrice,
           target1: payload.target1,
           target2: payload.target2,
           stopLoss: payload.stopLoss,
@@ -140,7 +183,7 @@ export async function POST(req: Request) {
         console.warn("Ledger auto-record entry error:", err.message);
       }
 
-      return NextResponse.json({ success: result.success, message: `Entry call-out sent for ${payload.symbol}`, details: result });
+      return NextResponse.json({ success: result.success, message: `Entry call-out sent for ${payload.symbol}`, alpacaOrder, details: result });
     }
 
     if (action === 'exit') {

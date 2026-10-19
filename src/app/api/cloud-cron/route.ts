@@ -176,10 +176,10 @@ async function handleCron(request: Request) {
             // Run Agentic Consensus to select the top active opportunities cleared by Risk Officer
             const consensus = await runAgenticDailyConsensus(timeVal);
             
-            // Strictly filter to Top CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
+            // Strictly filter to all CLEARED setups with high conviction (no VETOED or LEASH_WARNING entries)
+            // Note: MAX_DAILY_ENTRIES = 2 strictly caps actual triggered entries per day, while evaluating all CLEARED candidates ensures active breakouts at rank #4/#5 are never skipped when #1-#3 sit in WAIT.
             const activeSetups = consensus.allRanked
-                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88)
-                .slice(0, 3);
+                .filter(s => s.riskOfficer.status === "CLEARED" && s.convictionScore >= 88);
 
             // Batch-fetch Real-Time Alpaca Stock Snapshots for all active setups + SPY & QQQ tape benchmarks
             const symbolsToFetch = Array.from(new Set([...activeSetups.map(s => s.symbol), 'SPY', 'QQQ']));
@@ -187,8 +187,12 @@ async function handleCron(request: Request) {
 
             const spySnap = alpacaSnaps['SPY'];
             const qqqSnap = alpacaSnaps['QQQ'];
-            const spyBelowVwap = spySnap ? spySnap.price < spySnap.vwap : consensus.macro.spyTrend === 'BEARISH';
-            const qqqBelowVwap = qqqSnap ? qqqSnap.price < qqqSnap.vwap : consensus.macro.qqqTrend === 'BEARISH';
+            const spyBelowVwap = spySnap
+                ? (spySnap.price < spySnap.vwap * 0.9985 && spySnap.changePercent < 0.15)
+                : consensus.macro.spyTrend === 'BEARISH';
+            const qqqBelowVwap = qqqSnap
+                ? (qqqSnap.price < qqqSnap.vwap * 0.9985 && qqqSnap.changePercent < 0.15)
+                : consensus.macro.qqqTrend === 'BEARISH';
 
             // Step 0 (Pillar 4): Run Autonomous Alpaca Paper Position Guardian (+30% scale, +60% harvest, -14% early tape-reversal exit, -25% hard stop, 15:55 EOD close)
             const guardianActions = await manageAlpacaPaperPositions(timeVal, { spyBelowVwap, qqqBelowVwap });
@@ -277,19 +281,21 @@ async function handleCron(request: Request) {
                     }
 
                     // Strict Live-Price-Only Breakout / Breakdown Conditions + Pillar 1 SPY/QQQ Intraday VWAP Alignment Gate
-                    const isGreenOnSession = changePercent >= 0.40 && currentPrice > dayOpen && currentPrice > prevClose;
-                    const isPushingSessionHigh = currentPrice >= dayHigh * 0.994;
-                    const isRedOnSession = changePercent <= -0.80 && currentPrice < dayOpen && currentPrice < prevClose;
-                    const isPushingSessionLow = currentPrice <= dayLow * 1.008;
+                    const isGreenOnSession = changePercent >= 0.40 && currentPrice > prevClose && (currentPrice >= dayOpen * 0.998 || changePercent >= 1.50);
+                    const isPushingSessionHigh = currentPrice >= dayHigh * 0.990;
+                    const isRedOnSession = changePercent <= -0.80 && currentPrice < prevClose && (currentPrice <= dayOpen * 1.002 || changePercent <= -1.20);
+                    const isPushingSessionLow = currentPrice <= dayLow * 1.010;
 
-                    // Pillar 1: Block CALL entries if both SPY & QQQ are below intraday VWAP (unless extreme +2% RS decoupled outlier)
-                    // Block PUT entries if both SPY & QQQ are above intraday VWAP (unless extreme -2% breakdown outlier)
-                    const tapeAlignedForCall = !(spyBelowVwap && qqqBelowVwap) || changePercent >= 2.0;
-                    const tapeAlignedForPut = (spyBelowVwap || qqqBelowVwap) || changePercent <= -2.0;
+                    // Pillar 1: Block CALL entries if both SPY & QQQ are below intraday VWAP (unless >= +1.5% RS decoupled outlier)
+                    // Block PUT entries if both SPY & QQQ are above intraday VWAP (unless <= -1.2% breakdown outlier)
+                    const tapeAlignedForCall = !(spyBelowVwap && qqqBelowVwap) || changePercent >= 1.5;
+                    const tapeAlignedForPut = (spyBelowVwap || qqqBelowVwap) || changePercent <= -1.2;
 
                     const isSafeEntry = isPutSetup
                         ? (currentPrice <= trigger && currentPrice >= maxChase && isRedOnSession && isPushingSessionLow && tapeAlignedForPut)
                         : (currentPrice >= trigger && currentPrice <= maxChase && isGreenOnSession && isPushingSessionHigh && tapeAlignedForCall);
+
+                    logs.push(`[Eval #${setup.rank}] ${sym} (${setup.direction} ${setup.convictionScore}%): price=$${currentPrice.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%), trigger=$${trigger.toFixed(2)}, maxChase=$${maxChase.toFixed(2)}, safe=${isSafeEntry}, traded=${hasEntryFired}`);
 
                     const isOverextended = isPutSetup
                         ? currentPrice < maxChase

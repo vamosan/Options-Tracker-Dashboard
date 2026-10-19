@@ -392,14 +392,17 @@ export function structureSetup(
     parsedBenchShelf >= baseAnchor * 1.003 &&
     parsedBenchShelf <= baseAnchor * 1.025;
 
+  const gapUpPct = prevClose > 0 ? ((dayOpen - prevClose) / prevClose) * 100 : 0;
+  const callMultiplier = gapUpPct >= 1.5 ? 1.0025 : 1.008;
+
   const trigger = direction === "PUT"
     ? Math.round(baseAnchor * 0.992 * 100) / 100
     : isBenchShelfValidForSession
     ? parsedBenchShelf
-    : Math.round(baseAnchor * 1.010 * 100) / 100;
+    : Math.round(baseAnchor * callMultiplier * 100) / 100;
 
   // Anti-Hindsight Safe Zone
-  const chaseBuffer = Math.min(2.20, Math.max(0.65, trigger * 0.0065));
+  const chaseBuffer = Math.min(3.00, Math.max(0.85, trigger * 0.0085));
   const maxChase = direction === "PUT"
     ? Math.round((trigger - chaseBuffer) * 100) / 100
     : Math.round((trigger + chaseBuffer) * 100) / 100;
@@ -591,11 +594,25 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
   // 1. Risk Officer Clearance (CLEARED > LEASH_WARNING > VETOED)
   // 2. Conviction Score descending
   // 3. Composite Pillar Total descending
+  const isInLiveTriggerZone = (s: AgenticSetupStructured) =>
+    s.convictionScore >= 88 &&
+    (s.direction === "PUT"
+      ? s.underlyingPrice <= s.trigger && s.underlyingPrice >= s.maxChase
+      : s.underlyingPrice >= s.trigger && s.underlyingPrice <= s.maxChase);
+
   evaluatedSetups.sort((a, b) => {
     const statusWeight = { CLEARED: 3, LEASH_WARNING: 2, VETOED: 1 };
     const weightA = statusWeight[a.riskOfficer.status];
     const weightB = statusWeight[b.riskOfficer.status];
     if (weightA !== weightB) return weightB - weightA;
+
+    // During market hours, prioritize CLEARED setups that are actively triggering inside their safe entry window right now
+    if (a.riskOfficer.status === "CLEARED" && b.riskOfficer.status === "CLEARED") {
+      const trigA = isInLiveTriggerZone(a) ? 1 : 0;
+      const trigB = isInLiveTriggerZone(b) ? 1 : 0;
+      if (trigA !== trigB) return trigB - trigA;
+    }
+
     if (macro.score < 0 && a.direction !== b.direction) {
       return a.direction === "PUT" ? -1 : 1;
     }
