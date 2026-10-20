@@ -131,7 +131,7 @@ interface ActiveTrade {
   symbol: string;
   underlying: string;
   strike: number;
-  type: "CALL";
+  type: "CALL" | "PUT";
   entryTime: string;
   entryPrice: number;
   currentPrice: number;
@@ -139,7 +139,7 @@ interface ActiveTrade {
   stopLoss: number;
   target1: number;
   target2: number;
-  status: "OPEN" | "SCALED_50" | "CLOSED";
+  status: "OPEN" | "SCALED_50" | "CLOSED" | "ACTIVE";
 }
 
 interface ClosedTrade {
@@ -363,6 +363,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
     if (onTabChange) onTabChange(tab);
   };
   const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-19");
+  const [alpacaPaperStatus, setAlpacaPaperStatus] = useState<any>(null);
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [isSendingDiscord, setIsSendingDiscord] = useState(false);
 
@@ -634,7 +635,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
         }
         if (alpRes && alpRes.ok) {
           const alpJson = await alpRes.json();
-          if (isMounted && alpJson?.success && Array.isArray(alpJson.positions)) {
+          if (isMounted && alpJson?.success) {
+            setAlpacaPaperStatus(alpJson);
+            if (Array.isArray(alpJson.positions)) {
             const mappedLivePositions: ActiveTrade[] = alpJson.positions.map((p: any) => {
               const occMatch = String(p.symbol || '').match(/^([A-Z]+)(\d{6})([CP])(\d{8})$/);
               const underlyingSym = occMatch ? occMatch[1] : String(p.symbol || '');
@@ -664,7 +667,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             });
           }
         }
-      } catch (err) {
+      }
+    } catch (err) {
         console.warn("Agentic desk / Alpaca sync error:", err);
       } finally {
         if (isMounted) setIsAgenticLoading(false);
@@ -3178,6 +3182,68 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
             ];
           }
 
+          if (dKey === todayStr && !octDays[dKey]) {
+            const topSetups = [
+              agenticConsensusData?.topOpportunity,
+              agenticConsensusData?.secondaryOpportunity,
+            ].filter(Boolean);
+
+            if (topSetups.length > 0) {
+              return topSetups.map((s: any, idx: number) => {
+                const sym = s.symbol;
+                const isPut = s.direction === "PUT";
+                const q = liveQuotes[sym];
+                const liveSpot = q?.price || s.underlyingPrice || 0;
+                const entryAsk = Number(s.entryAsk || 2.50);
+                const t1 = Math.round(entryAsk * 1.30 * 100) / 100;
+                const t2 = Math.round(entryAsk * 1.65 * 100) / 100;
+                const qHigh = q?.dayHigh || liveSpot;
+                const qLow = q?.dayLow || liveSpot;
+                const alpacaPositionsList = alpacaPaperStatus?.positions || [];
+                const alpacaPos = alpacaPositionsList.find((p: any) =>
+                  String(p.symbol || "").startsWith(sym)
+                ) || activePositions.find((p: any) => p.underlying === sym);
+                const occSym = (alpacaPos as any)?.symbol || `${sym} 0DTE`;
+                const curOpt = (alpacaPos as any)?.currentPrice
+                  ? Number((alpacaPos as any).currentPrice)
+                  : entryAsk;
+                const optGainPct = entryAsk > 0 ? Math.round(((curOpt - entryAsk) / entryAsk) * 1000) / 10 : 0;
+                const t1Hit = curOpt >= t1 * 0.98;
+                const t2Hit = curOpt >= t2 * 0.98;
+                const isLive = Boolean(alpacaPos);
+
+                return {
+                  date: todayStr,
+                  tradeLabel: idx === 0 ? "🏆 Top #1" : "🥈 Secondary #2",
+                  tradeSubLabel: "(09:15 AM Gameplan)",
+                  contractBadge: s.contract || `${sym} $${s.strike} ${s.direction}`,
+                  occBadge: occSym,
+                  entryTime: "09:35 AM ET",
+                  underlyingEntry: `$${liveSpot.toFixed(2)}`,
+                  triggerText: `(Trigger: $${Number(s.trigger || 0).toFixed(2)})`,
+                  entryAsk: `$${entryAsk.toFixed(2)}`,
+                  intradayMovePrefix: isPut ? "Flushed" : "Rallied",
+                  moveStart: `$${Number(s.trigger || liveSpot).toFixed(2)}`,
+                  moveEnd: isPut ? `$${qLow.toFixed(2)} low` : `$${qHigh.toFixed(2)} high`,
+                  moveSuffix: `(${String(s.catalyst || s.reason || "").slice(0, 50)}...)`,
+                  t1Price: `$${t1.toFixed(2)}`,
+                  t1Status: t1Hit ? "HIT" : "ARMED",
+                  t1Time: t1Hit ? "(Target Hit)" : "(+30%)",
+                  t2Price: `$${t2.toFixed(2)}`,
+                  t2Status: t2Hit ? "HIT" : "ARMED",
+                  t2Time: t2Hit ? "(Target Hit)" : "(+65%)",
+                  peakPrice: `$${curOpt.toFixed(2)}`,
+                  peakGain: `${optGainPct >= 0 ? "+" : ""}${optGainPct.toFixed(1)}%`,
+                  outcomeStatus: isLive ? "LIVE OPEN" : "ARMED",
+                  outcomeGain: `${optGainPct >= 0 ? "+" : ""}${optGainPct.toFixed(1)}%`,
+                  outcomeLabel: isLive ? "live pnl =" : "gameplan =",
+                  outcomeDollars: isLive ? `${Math.round((curOpt - entryAsk) * 400) >= 0 ? "+" : ""}$${Math.round((curOpt - entryAsk) * 400)}` : "$0",
+                  outcomeSuffix: "on 4 cts",
+                };
+              });
+            }
+          }
+
           const dayRecord = octDays[dKey] || sepDays[dKey];
           const rawTrades = dayRecord?.trades || [];
           const qualified = rawTrades.filter(t => evaluateGatekeeperRule(t).passed);
@@ -3232,6 +3298,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
         const activeDayNote =
           alertTableDate === "ALL_OCT"
             ? "Showing all verified October 2026 trades in the standardized 9-column execution format."
+            : alertTableDate === todayStr && !octDays[todayStr]
+            ? `Live Gameplan & Execution alerts for ${todayStr}. Synced with Discord & Alpaca Paper.`
             : (octDays[alertTableDate]?.sessionNote || sepDays[alertTableDate]?.sessionNote || `Verified 9-column execution table for ${alertTableDate}.`);
 
         return (
@@ -3278,7 +3346,11 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     <option value="ALL_OCT">📅 All October 2026 Dates (Combined)</option>
                     {allDates.map(d => (
                       <option key={d} value={d}>
-                        {d === "2026-10-19" ? `${d} (Today — Mon, Oct 19)` : d}
+                        {d === todayStr
+                          ? `${d} (Today's Live Alerts)`
+                          : d === "2026-10-19"
+                          ? `${d} (Mon, Oct 19 — Verified 3x META)`
+                          : d}
                       </option>
                     ))}
                   </select>
@@ -3323,7 +3395,30 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {displayedRows.map((row, rIdx) => (
+                    {displayedRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="py-12 px-4 text-center">
+                          <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-rose-400">
+                              <Clock className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-white">No Verified Executions on {alertTableDate}</h4>
+                              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                Institutional Capital Protection Rule: trades only trigger when RVOL &gt; 2.5x and the Gatekeeper confirms clean breakout candles.
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => setAlertTableDate("2026-10-19")}
+                              className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 rounded-xl text-rose-300 text-xs font-bold font-mono transition-all cursor-pointer shadow-[0_0_12px_rgba(244,63,94,0.2)]"
+                            >
+                              📋 View Oct 19, 2026 Verified Trades (3x META Alert) ▶
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      displayedRows.map((row, rIdx) => (
                       <tr key={`${row.date}_${rIdx}`} className="hover:bg-slate-900/50 transition-colors">
                         <td className="py-4 px-4 align-middle border-r border-slate-800/80">
                           {alertTableDate === "ALL_OCT" && (
@@ -3414,7 +3509,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                           {row.outcomeSuffix})
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -4586,7 +4681,19 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
               agenticConsensusData?.secondaryOpportunity,
             ].filter(Boolean);
 
-            if (topSetups.length === 0) return null;
+            if (topSetups.length === 0) {
+              if (isAgenticLoading) {
+                return (
+                  <div className="rounded-2xl bg-slate-950/90 border border-slate-800 p-6 shadow-xl flex items-center justify-center gap-3">
+                    <RefreshCw className="w-4 h-4 text-rose-400 animate-spin" />
+                    <span className="text-xs font-mono text-slate-300 font-bold">
+                      Loading Today&apos;s 09:15 AM Verified Trade Alerts...
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            }
 
             return (
               <div className="rounded-2xl bg-slate-950/95 border border-slate-800 shadow-xl overflow-hidden">
@@ -4624,13 +4731,16 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                         const liveSpot = q?.price || s.underlyingPrice || 0;
                         const dayHigh = q?.dayHigh || liveSpot;
                         const dayLow = q?.dayLow || liveSpot;
-                        const alpacaPos = (alpacaPaperStatus?.positions || []).find((p: any) =>
+                        const alpacaPositionsList = alpacaPaperStatus?.positions || [];
+                        const alpacaPos = alpacaPositionsList.find((p: any) =>
                           String(p.symbol || "").startsWith(sym)
-                        );
-                        const occSym = alpacaPos?.symbol || "";
-                        const entryAsk = alpacaPos?.avgEntry ? Number(alpacaPos.avgEntry) : Number(s.entryAsk || 2.50);
-                        const currentOptPrice = alpacaPos?.currentPrice
-                          ? Number(alpacaPos.currentPrice)
+                        ) || activePositions.find((p: any) => p.underlying === sym);
+                        const occSym = (alpacaPos as any)?.symbol || "";
+                        const entryAsk = (alpacaPos as any)?.avgEntry
+                          ? Number((alpacaPos as any).avgEntry)
+                          : ((alpacaPos as any)?.entryPrice ? Number((alpacaPos as any).entryPrice) : Number(s.entryAsk || 2.50));
+                        const currentOptPrice = (alpacaPos as any)?.currentPrice
+                          ? Number((alpacaPos as any).currentPrice)
                           : entryAsk;
                         const t1 = Math.round(entryAsk * 1.30 * 100) / 100;
                         const t2 = Math.round(entryAsk * 1.65 * 100) / 100;
