@@ -1,5 +1,27 @@
 [
   {
+    "id": "trade_20261021_pltr",
+    "date": "2026-10-21",
+    "symbol": "PLTR",
+    "exitTime": "1:43 PM ET",
+    "peakPrice": 6.3,
+    "outcome": "TARGET_2",
+    "pnlPerContract": 260,
+    "percentGain": "+70.3%",
+    "winStatus": "WIN"
+  },
+  {
+    "id": "trade_20261021_crwd",
+    "date": "2026-10-21",
+    "symbol": "CRWD",
+    "exitTime": "1:43 PM ET",
+    "peakPrice": 8.95,
+    "outcome": "TARGET_2",
+    "pnlPerContract": 515,
+    "percentGain": "+135.5%",
+    "winStatus": "WIN"
+  },
+  {
     "id": "trade_20261019_meta",
     "date": "2026-10-19",
     "symbol": "META",
