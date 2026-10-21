@@ -609,6 +609,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
   const [prospectiveSearch, setProspectiveSearch] = useState<string>("");
   const [showOutlookDetails, setShowOutlookDetails] = useState<boolean>(false);
   const [selectedSignalTicker, setSelectedSignalTicker] = useState<string>("NVDA");
+  const [selectedEtfTab, setSelectedEtfTab] = useState<"BEST" | "SPY" | "QQQ">("BEST");
   
   // Agentic Desk Multi-Pillar Consensus & Live Alpaca Paper Position Sync
   const [agenticConsensusData, setAgenticConsensusData] = useState<any>(null);
@@ -4724,293 +4725,368 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
         </div>
       )}
 
-      {/* 3B. DEDICATED SPY & QQQ ONLY TACTICAL WINDOW (STRICT FOR-PROFIT INDEX ENGINE) */}
+      {/* 3B. DEDICATED SPY & QQQ ONLY TACTICAL WINDOW (SPX POWER HOUR STYLE ENGINE) */}
       {(activeTab === "SPY_QQQ" || activeTab === "SETUPS") && (
-        <div className="rounded-3xl bg-gradient-to-b from-indigo-950/35 via-[#0B0F19] to-[#080B12] border-2 border-indigo-500/45 shadow-[0_0_40px_rgba(99,102,241,0.16)] p-5 md:p-6 space-y-5 relative overflow-hidden backdrop-blur-2xl">
+        (() => {
+          const activeEtf = selectedEtfTab === "BEST"
+            ? spyQqqDeskData.bestPick
+            : selectedEtfTab === "SPY"
+            ? spyQqqDeskData.spy
+            : spyQqqDeskData.qqq;
+          const isCall = !activeEtf.isPut;
+          const isBest = spyQqqDeskData.bestPick.symbol === activeEtf.symbol;
+          const isConfirmed = activeEtf.state === "CONFIRMED_ENTRY";
+          const isExtended = activeEtf.state === "EXTENDED_NO_CHASE";
           
-          {/* Top Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-indigo-500/15 border border-indigo-500/40 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.25)]">
-                <Target className="w-5 h-5" />
-              </div>
-              <div>
+          return (
+            <div className="space-y-6">
+              {/* Ticker & Desk Navigation Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/40 text-indigo-300">
+                    <Target className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+                        ⚡ Dedicated SPY &amp; QQQ Tactical Window
+                      </h2>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                        Strict For-Profit Engine
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-mono text-slate-400">
+                      09:35 AM ORB Shelf • Intraday VWAP Alignment • Strict Anti-Chase Leash • Mandatory -25% Hard Stop
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ticker Selector Buttons */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-                    ⚡ Dedicated SPY &amp; QQQ Only Tactical Window
-                  </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                    Strict For-Profit Strategy
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    ALPACA REAL-TIME VWAP
-                  </span>
+                  <button
+                    onClick={() => setSelectedEtfTab("BEST")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black tracking-wide transition-all cursor-pointer border ${
+                      selectedEtfTab === "BEST"
+                        ? "bg-amber-500 text-slate-950 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.35)]"
+                        : "bg-slate-950/80 text-amber-300 border-amber-500/40 hover:bg-slate-900"
+                    }`}
+                  >
+                    🏆 Best Edge: {spyQqqDeskData.bestPick.symbol} ({spyQqqDeskData.bestPick.conviction}%)
+                  </button>
+                  <button
+                    onClick={() => setSelectedEtfTab("SPY")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      selectedEtfTab === "SPY"
+                        ? "bg-indigo-600 text-white border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.35)]"
+                        : "bg-slate-950/80 text-slate-300 border-slate-700 hover:bg-slate-900"
+                    }`}
+                  >
+                    SPY (${spyQqqDeskData.spy.price.toFixed(2)})
+                  </button>
+                  <button
+                    onClick={() => setSelectedEtfTab("QQQ")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      selectedEtfTab === "QQQ"
+                        ? "bg-indigo-600 text-white border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.35)]"
+                        : "bg-slate-950/80 text-slate-300 border-slate-700 hover:bg-slate-900"
+                    }`}
+                  >
+                    QQQ (${spyQqqDeskData.qqq.price.toFixed(2)})
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab(activeTab === "SPY_QQQ" ? "SETUPS" : "SPY_QQQ")}
+                    className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-200 border border-indigo-500/40 transition-all cursor-pointer ml-1"
+                  >
+                    {activeTab === "SPY_QQQ" ? "← Show All Scanners" : "Focus: SPY & QQQ Only ↗"}
+                  </button>
                 </div>
-                <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                  09:35 AM ORB Shelf + Intraday VWAP Alignment + Strict Anti-Chase Leash • +30% T1 (Scale 50% &amp; BE Lock) • +65% T2 • -25% Hard Stop
-                </p>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab(activeTab === "SPY_QQQ" ? "SETUPS" : "SPY_QQQ")}
-                className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-200 border border-indigo-500/40 transition-all cursor-pointer"
-              >
-                {activeTab === "SPY_QQQ" ? "← Show All Scanners" : "Focus: SPY & QQQ Only ↗"}
-              </button>
-            </div>
-          </div>
-
-          {/* HEAD-TO-HEAD BEST OPPORTUNITY VERDICT BANNER */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900/90 to-emerald-950/40 border border-indigo-500/40 flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1 max-w-3xl">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  🏆 #1 BEST INDEX OPPORTUNITY RIGHT NOW
-                </span>
-                <span className="text-base font-mono font-black text-white">
-                  {spyQqqDeskData.bestPick.contract}
-                </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-black uppercase ${
-                  spyQqqDeskData.bestPick.isPut
-                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                    : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                }`}>
-                  {spyQqqDeskData.bestPick.isPut ? "⚡ BEARISH PUT" : "⚡ BULLISH CALL"}
-                </span>
-                <span className="text-xs font-mono font-bold text-cyan-300">
-                  {spyQqqDeskData.bestPick.conviction}% Conviction • RVOL {spyQqqDeskData.bestPick.rvol}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-sans leading-relaxed">
-                {spyQqqDeskData.bestReason}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => triggerDiscordLiveEntry({
-                  symbol: spyQqqDeskData.bestPick.symbol,
-                  price: spyQqqDeskData.bestPick.price,
-                  rvol: spyQqqDeskData.bestPick.rvol,
-                  contract: {
-                    symbol: spyQqqDeskData.bestPick.contract,
-                    strike: spyQqqDeskData.bestPick.strike,
-                    ask: spyQqqDeskData.bestPick.entryAsk
-                  },
-                  targets: {
-                    entry: spyQqqDeskData.bestPick.entryAsk,
-                    stopLoss: spyQqqDeskData.bestPick.stopLoss,
-                    target1: spyQqqDeskData.bestPick.target1,
-                    target2: spyQqqDeskData.bestPick.target2
-                  },
-                  catalyst: {
-                    headline: `${spyQqqDeskData.bestReason} | DO NOT PAY OVER $${spyQqqDeskData.bestPick.maxPayCeiling.toFixed(2)}`
-                  },
-                  confidence: { score: spyQqqDeskData.bestPick.conviction }
-                })}
-                disabled={isSendingDiscord}
-                className="px-3.5 py-2 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
-              >
-                <DiscordIcon className="w-3.5 h-3.5 text-white" />
-                <span>Send Best Pick to Discord &amp; Paper</span>
-              </button>
-            </div>
-          </div>
-
-          {/* SIDE-BY-SIDE SPY & QQQ EXECUTION CARDS */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {[spyQqqDeskData.spy, spyQqqDeskData.qqq].map(etf => {
-              const isBest = spyQqqDeskData.bestPick.symbol === etf.symbol;
-              const isConfirmed = etf.state === "CONFIRMED_ENTRY";
-              const isExtended = etf.state === "EXTENDED_NO_CHASE";
-
-              return (
-                <div
-                  key={etf.symbol}
-                  className={`rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 border transition-all ${
-                    isBest
-                      ? "bg-slate-950/90 border-2 border-indigo-400/70 shadow-[0_0_25px_rgba(99,102,241,0.18)]"
-                      : "bg-slate-950/75 border border-slate-800"
-                  }`}
-                >
-                  <div className="space-y-3.5">
-                    {/* Card Top Row */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xl font-mono font-black text-white">{etf.symbol}</span>
-                          <span className="text-xs text-slate-400">{etf.name}</span>
-                          {isBest && (
-                            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono font-black uppercase bg-indigo-500/25 text-indigo-200 border border-indigo-400/50">
-                              ★ BEST ETF OPPORTUNITY
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2.5 mt-1 text-xs font-mono">
-                          <span className="text-white font-black">${etf.price.toFixed(2)}</span>
-                          <span className={`font-bold ${etf.changePct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {etf.changePct >= 0 ? "+" : ""}{etf.changePct.toFixed(2)}%
-                          </span>
-                          <span className="text-slate-500">•</span>
-                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                            etf.belowVwap
-                              ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
-                              : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                          }`}>
-                            {etf.belowVwap ? `Below VWAP ($${etf.vwap.toFixed(2)})` : `Above VWAP ($${etf.vwap.toFixed(2)})`}
-                          </span>
-                          <span className="text-fuchsia-400 font-bold">RVOL {etf.rvol}</span>
-                        </div>
-                      </div>
-
-                      <div className="text-right font-mono">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase inline-block ${
-                          etf.isPut
-                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/50"
-                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50"
-                        }`}>
-                          {etf.isPut ? "⚡ BEARISH PUT" : "⚡ BULLISH CALL"}
+              {/* SPX POWER HOUR STYLE PREDICTION & BEST STRIKE CARD */}
+              <div className={`p-6 sm:p-8 rounded-3xl border shadow-2xl space-y-6 transition-all ${
+                isCall
+                  ? "bg-gradient-to-b from-slate-900 via-emerald-950/20 to-slate-950 border-emerald-500/40 shadow-emerald-950/20"
+                  : "bg-gradient-to-b from-slate-900 via-rose-950/20 to-slate-950 border-rose-500/40 shadow-rose-950/20"
+              }`}>
+                {/* Top: Big Direction Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-5">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-[11px] font-mono text-slate-400 uppercase font-black tracking-widest">
+                        PREDICTED INTRADAY DIRECTION • {activeEtf.symbol} ({activeEtf.name})
+                      </span>
+                      {isBest && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          🏆 #1 RANKED INDEX OPPORTUNITY
                         </span>
-                        <span className="text-[10px] text-slate-400 block mt-1">
-                          Conviction: <strong className="text-cyan-300">{etf.conviction}%</strong>
-                        </span>
-                      </div>
+                      )}
                     </div>
-
-                    {/* Contract & Max-Pay Ceiling */}
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-wrap items-center justify-between gap-2 font-mono">
-                      <div>
-                        <span className="text-[9.5px] text-slate-400 uppercase block">Selected Institutional Contract (1-2 DTE • 0.50Δ)</span>
-                        <span className="text-2xl font-black text-white tracking-tight">{etf.contract}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 block">
-                          🛡️ DO NOT PAY OVER ${etf.maxPayCeiling.toFixed(2)}
-                        </span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                          OPRA Ask: <strong className="text-white">${etf.entryAsk.toFixed(2)}</strong> (+5% Max Slippage Cap)
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 3-State Execution Verdict Box */}
-                    <div className={`p-3 rounded-xl border text-xs space-y-1 ${
-                      isConfirmed
-                        ? "bg-emerald-950/35 border-emerald-500/50 text-emerald-200"
-                        : isExtended
-                        ? "bg-amber-950/35 border-amber-500/50 text-amber-200"
-                        : "bg-slate-900/70 border-slate-800 text-slate-300"
+                    <div className={`text-3xl sm:text-4xl font-black font-mono tracking-tight flex items-center gap-3 ${
+                      isCall ? "text-emerald-400" : "text-rose-400"
                     }`}>
-                      <div className="flex items-center justify-between font-mono font-black text-[11px]">
-                        <span>{etf.statusBadge}</span>
-                        <span>
-                          {etf.isPut ? "Breakdown Trigger: " : "Breakout Trigger: "}
-                          <strong className="text-white">${etf.triggerPrice.toFixed(2)}</strong>
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-300 font-sans leading-snug">
-                        {etf.actionInstruction}
-                      </p>
-                      <div className="pt-1 flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono text-slate-400 border-t border-slate-800/70">
-                        <span>Safe Leash: <strong className="text-cyan-300">${etf.maxChasePrice.toFixed(2)}</strong></span>
-                        <span>ETF Stop: <strong className="text-rose-400">${etf.underlyingStop.toFixed(2)}</strong></span>
-                        <span>ETF T1/T2: <strong className="text-emerald-400">${etf.underlyingT1.toFixed(2)} / ${etf.underlyingT2.toFixed(2)}</strong></span>
-                      </div>
+                      <span>{activeEtf.symbol}</span>
+                      <span>{isCall ? "CALLS (BULLISH ↗)" : "PUTS (BEARISH ↘)"}</span>
                     </div>
-
-                    {/* Strict For-Profit Option Targets Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
-                      <div className="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800/90">
-                        <span className="text-[9.5px] text-slate-400 uppercase block">Entry Ask</span>
-                        <span className="text-sm font-black text-white">${etf.entryAsk.toFixed(2)}</span>
-                        <span className="text-[9px] text-amber-300 block">Cap: ${etf.maxPayCeiling.toFixed(2)}</span>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-slate-900/70 border border-rose-500/30">
-                        <span className="text-[9.5px] text-rose-300 uppercase block">Hard Stop (-25%)</span>
-                        <span className="text-sm font-black text-rose-400">${etf.stopLoss.toFixed(2)}</span>
-                        <span className="text-[9px] text-slate-400 block">-14% Early VWAP Exit</span>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-slate-900/70 border border-emerald-500/30">
-                        <span className="text-[9.5px] text-emerald-300 uppercase block">Target 1 (+30%)</span>
-                        <span className="text-sm font-black text-emerald-400">${etf.target1.toFixed(2)}</span>
-                        <span className="text-[9px] text-emerald-300/80 block">Scale 50% &amp; BE Stop</span>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-slate-900/70 border border-cyan-500/30">
-                        <span className="text-[9.5px] text-cyan-300 uppercase block">Target 2 (+65%)</span>
-                        <span className="text-sm font-black text-cyan-400">${etf.target2.toFixed(2)}</span>
-                        <span className="text-[9px] text-cyan-300/80 block">Harvest Runners</span>
-                      </div>
+                    <div className="flex items-center gap-2.5 mt-1.5 text-xs font-mono flex-wrap">
+                      <span className="text-white font-black">${activeEtf.price.toFixed(2)}</span>
+                      <span className={`font-bold ${activeEtf.changePct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                        {activeEtf.changePct >= 0 ? "+" : ""}{activeEtf.changePct.toFixed(2)}%
+                      </span>
+                      <span className="text-slate-500">•</span>
+                      <span className={`px-2 py-0.5 rounded text-[10.5px] font-bold ${
+                        activeEtf.belowVwap
+                          ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                          : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                      }`}>
+                        {activeEtf.belowVwap ? `Below VWAP ($${activeEtf.vwap.toFixed(2)})` : `Above VWAP ($${activeEtf.vwap.toFixed(2)})`}
+                      </span>
+                      <span className="text-slate-500">•</span>
+                      <span className="text-fuchsia-400 font-bold">RVOL {activeEtf.rvol}</span>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80">
-                    <button
-                      onClick={() => handleExecutePaperTrade({
-                        symbol: etf.symbol,
-                        name: etf.name,
-                        contract: {
-                          symbol: etf.contract,
-                          strike: etf.strike,
-                          ask: etf.entryAsk
-                        },
-                        targets: {
-                          stopLoss: etf.stopLoss,
-                          target1: etf.target1,
-                          target2: etf.target2
-                        }
-                      } as any, 3)}
-                      className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
-                    >
-                      <Zap className="w-3.5 h-3.5 fill-current" />
-                      <span>Execute {etf.symbol} in Alpaca Paper (3x)</span>
-                    </button>
-
-                    <button
-                      onClick={() => triggerDiscordLiveEntry({
-                        symbol: etf.symbol,
-                        price: etf.price,
-                        rvol: etf.rvol,
-                        contract: {
-                          symbol: etf.contract,
-                          strike: etf.strike,
-                          ask: etf.entryAsk
-                        },
-                        targets: {
-                          entry: etf.entryAsk,
-                          stopLoss: etf.stopLoss,
-                          target1: etf.target1,
-                          target2: etf.target2
-                        },
-                        catalyst: {
-                          headline: `${etf.actionInstruction} | DO NOT PAY OVER $${etf.maxPayCeiling.toFixed(2)}`
-                        },
-                        confidence: { score: etf.conviction }
-                      })}
-                      disabled={isSendingDiscord}
-                      className="py-2 px-3 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-mono font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <DiscordIcon className="w-3.5 h-3.5 text-white" />
-                      <span>Discord</span>
-                    </button>
-
-                    <button
-                      onClick={() => onOpenCopilot?.(`⚡ Should I enter ${etf.contract} right now? Spot price is $${etf.price.toFixed(2)}, intraday VWAP is $${etf.vwap.toFixed(2)}, option ask is $${etf.entryAsk.toFixed(2)}. Audit my timing, check for VWAP extension trap, and verify my -25% hard stop.`)}
-                      className="py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
-                      title="Audit with Gatekeeper AI Copilot"
-                    >
-                      <Bot className="w-3.5 h-3.5 text-indigo-200" />
-                      <span>Ask Copilot</span>
-                    </button>
+                  <div className="flex items-center gap-2 sm:self-center flex-wrap">
+                    <span className={`px-3 py-1.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider border ${
+                      isCall
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
+                        : "bg-rose-500/20 text-rose-300 border-rose-500/50"
+                    }`}>
+                      {activeEtf.conviction}% Statistical Edge
+                    </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+
+                {/* Middle: The Exact Best Strike To Take */}
+                <div className="p-6 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10.5px] font-mono text-slate-400 uppercase font-black">
+                        SINGLE BEST STRIKE TO TAKE (0DTE / 1-2 DTE • 0.50Δ ATM)
+                      </span>
+                      <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight mt-0.5">
+                        {activeEtf.contract}
+                      </div>
+                      <div className="text-xs font-mono text-cyan-400 mt-1">
+                        Retail / $200 Challenge: <b>1 Contract @ ${activeEtf.entryAsk.toFixed(2)}</b> (Risk: ${(activeEtf.entryAsk * 100).toFixed(0)} capital • Max loss with -25% stop is -${(activeEtf.entryAsk * 25).toFixed(0)})
+                      </div>
+                    </div>
+
+                    {/* Status Pill */}
+                    <div className="sm:text-right">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-black uppercase tracking-wider border ${
+                        isConfirmed
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500 animate-pulse"
+                          : isExtended
+                          ? "bg-rose-500/20 text-rose-300 border-rose-500/50"
+                          : "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                      }`}>
+                        {isConfirmed
+                          ? "🟢 CONFIRMED ENTRY — EXECUTE WITH -25% STOP"
+                          : isExtended
+                          ? "🚫 EXTENDED — DO NOT CHASE (WAIT PULLBACK)"
+                          : "⏳ ARMED — WAIT FOR SHELF BREAK"}
+                      </span>
+                      <div className="text-xs font-mono text-slate-400 mt-1.5 max-w-sm sm:ml-auto">
+                        {activeEtf.actionInstruction}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Exact Execution Numbers */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-800/80 font-mono text-center">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">ENTRY ASK</span>
+                      <div className="text-xl sm:text-2xl font-black text-white mt-0.5">
+                        ${activeEtf.entryAsk.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] text-amber-300 block mt-0.5">Cap: ${activeEtf.maxPayCeiling.toFixed(2)} (Max +5%)</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                      <span className="text-[10px] text-emerald-400 block uppercase font-bold">TARGET 1 (+30%)</span>
+                      <div className="text-xl sm:text-2xl font-black text-emerald-300 mt-0.5">
+                        ${activeEtf.target1.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Scale 50% &amp; lock BE stop</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                      <span className="text-[10px] text-cyan-400 block uppercase font-bold">TARGET 2 (+65%)</span>
+                      <div className="text-xl sm:text-2xl font-black text-cyan-300 mt-0.5">
+                        ${activeEtf.target2.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Harvest runner on momentum</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-rose-500/40">
+                      <span className="text-[10px] text-rose-400 block uppercase font-bold">STOP / HARD EXIT (-25%)</span>
+                      <div className="text-xl sm:text-2xl font-black text-rose-400 mt-0.5">
+                        ${activeEtf.stopLoss.toFixed(2)}
+                      </div>
+                      <span className="text-[10px] text-rose-300/80 block mt-0.5">Mandatory Stop: Preserves ${(activeEtf.entryAsk * 75).toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  {/* Anti-Chase Leash Parameters Bar */}
+                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/90 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                    <span className="text-slate-400">
+                      Break Trigger: <strong className="text-white">${activeEtf.triggerPrice.toFixed(2)}</strong>
+                    </span>
+                    <span className="text-slate-400">
+                      Safe Anti-Chase Leash: <strong className="text-cyan-300">${activeEtf.maxChasePrice.toFixed(2)}</strong>
+                    </span>
+                    <span className="text-slate-400">
+                      Underlying Stop: <strong className="text-rose-400">${activeEtf.underlyingStop.toFixed(2)}</strong>
+                    </span>
+                    <span className="text-slate-400">
+                      Index T1/T2: <strong className="text-emerald-400">${activeEtf.underlyingT1.toFixed(2)} / ${activeEtf.underlyingT2.toFixed(2)}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <button
+                    onClick={() => triggerDiscordLiveEntry({
+                      symbol: activeEtf.symbol,
+                      price: activeEtf.price,
+                      rvol: activeEtf.rvol,
+                      contract: {
+                        symbol: activeEtf.contract,
+                        strike: activeEtf.strike,
+                        ask: activeEtf.entryAsk
+                      },
+                      targets: {
+                        entry: activeEtf.entryAsk,
+                        stopLoss: activeEtf.stopLoss,
+                        target1: activeEtf.target1,
+                        target2: activeEtf.target2
+                      },
+                      catalyst: {
+                        headline: `${activeEtf.actionInstruction} | DO NOT PAY OVER $${activeEtf.maxPayCeiling.toFixed(2)}`
+                      },
+                      confidence: { score: activeEtf.conviction }
+                    })}
+                    disabled={isSendingDiscord}
+                    className="py-3 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    <DiscordIcon className="w-4 h-4 text-white" />
+                    <span>Alert Discord ({activeEtf.direction})</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleExecutePaperTrade({
+                      symbol: activeEtf.symbol,
+                      name: activeEtf.name,
+                      contract: {
+                        symbol: activeEtf.contract,
+                        strike: activeEtf.strike,
+                        ask: activeEtf.entryAsk
+                      },
+                      targets: {
+                        stopLoss: activeEtf.stopLoss,
+                        target1: activeEtf.target1,
+                        target2: activeEtf.target2
+                      }
+                    } as any, 1)}
+                    className={`py-3 px-4 rounded-xl font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer ${
+                      isCall
+                        ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                        : "bg-rose-500 hover:bg-rose-400 text-white"
+                    }`}
+                  >
+                    <Zap className="w-4 h-4 fill-current" />
+                    <span>Execute Paper (1x {activeEtf.symbol})</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenCopilot?.(`⚡ Audit ${activeEtf.symbol} trade: Spot is $${activeEtf.price.toFixed(2)}, VWAP is $${activeEtf.vwap.toFixed(2)}, recommended strike is ${activeEtf.contract} @ $${activeEtf.entryAsk.toFixed(2)}. Is it safe to enter right now, or is it extended past the anti-chase leash? Audit my -25% stop.`)}
+                    className="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer"
+                  >
+                    <Bot className="w-4 h-4 text-indigo-200" />
+                    <span>Audit with AI Copilot</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* CRITERIA FOR PROFITABLE TRADES & ANTI-CHASE INSTRUCTIONS (WHY THIS TRADE WINS) */}
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    CRITERIA FOR PROFITABLE TRADES (WHY THIS TRADE WINS)
+                  </h3>
+                  <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-800/60 px-2.5 py-0.5 rounded-full">
+                    Strict Anti-Chase &amp; Capital Protection Rules
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                  {/* Pillar 1: Favored Direction & VWAP */}
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-bold uppercase text-[10.5px]">
+                        1. Favored Direction &amp; VWAP
+                      </span>
+                      <span className={activeEtf.belowVwap ? "text-rose-400 font-black" : "text-emerald-400 font-black"}>
+                        {activeEtf.belowVwap ? "BELOW VWAP (BEARISH)" : "ABOVE VWAP (BULLISH)"}
+                      </span>
+                    </div>
+                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                      {activeEtf.symbol} is trading {activeEtf.belowVwap ? "below" : "above"} intraday VWAP (${activeEtf.vwap.toFixed(2)}). Never buy {isCall ? "Calls below VWAP" : "Puts above VWAP"} — algorithmic market makers will use VWAP as a reversal barrier against you.
+                    </p>
+                  </div>
+
+                  {/* Pillar 2: Best Strike Selection */}
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-bold uppercase text-[10.5px]">
+                        2. Best Strike Selection (~0.50Δ ATM)
+                      </span>
+                      <span className="text-emerald-400 font-black">
+                        ${activeEtf.strike} STRIKE
+                      </span>
+                    </div>
+                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                      Selected 0.50 Delta strike at ${activeEtf.strike}. Avoid far out-of-the-money lotto options that bleed theta decay rapidly. ATM contracts capture immediate 1:1 delta leverage when the index moves.
+                    </p>
+                  </div>
+
+                  {/* Pillar 3: Anti-Chase Mandate */}
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-amber-500/40 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-amber-300 font-bold uppercase text-[10.5px]">
+                        3. Anti-Chase Mandate (Execution Discipline)
+                      </span>
+                      <span className="text-amber-400 font-black">
+                        MAX CHASE: ${activeEtf.maxChasePrice.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                      If {activeEtf.symbol} is past ${activeEtf.maxChasePrice.toFixed(2)} or near session {isCall ? `highs ($${activeEtf.dayHigh.toFixed(2)})` : `lows ($${activeEtf.dayLow.toFixed(2)})`}, <strong>DO NOT CHASE</strong>. Buying at extremes causes the instant 80% loss before the reversal. Wait for a retest back to VWAP / shelf.
+                    </p>
+                  </div>
+
+                  {/* Pillar 4: Mandatory -25% Hard Stop */}
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-rose-500/40 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-rose-300 font-bold uppercase text-[10.5px]">
+                        4. Mandatory -25% Hard Stop (Preserve Capital)
+                      </span>
+                      <span className="text-rose-400 font-black">
+                        HARD STOP: ${activeEtf.stopLoss.toFixed(2)} (-25%)
+                      </span>
+                    </div>
+                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                      If the option ask drops to ${activeEtf.stopLoss.toFixed(2)}, exit without hesitation. Never hold to -80% hoping for a miracle bounce. Taking a -$50 loss on a $200 account preserves $150 so you have capital ready for the next clean trade.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()
       )}
 
       {/* 4. TAB 1: SCANNER & ACTIONABLE SETUPS */}
