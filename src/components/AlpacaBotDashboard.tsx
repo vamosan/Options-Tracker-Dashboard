@@ -9,7 +9,7 @@ import {
   Calendar as CalendarIcon, ChevronLeft, ArrowDownRight,
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
   TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp, Trash2,
-  BrainCircuit, Scale
+  BrainCircuit, Scale, Bot
 } from "lucide-react";
 import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock, MarketOutlookData } from "@/lib/prospectiveStocks";
 
@@ -352,9 +352,10 @@ export interface AlpacaBotDashboardProps {
   currentTab?: AlpacaWorkspaceTab;
   onTabChange?: (tab: AlpacaWorkspaceTab) => void;
   onNavigateTab?: (tab: "alpaca" | "dashboard" | "powerhour") => void;
+  onOpenCopilot?: (prompt?: string) => void;
 }
 
-export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: AlpacaBotDashboardProps = {}) {
+export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onOpenCopilot }: AlpacaBotDashboardProps = {}) {
   const [isRunning, setIsRunning] = useState(true);
   const [internalTab, setInternalTab] = useState<AlpacaWorkspaceTab>("SETUPS");
   const activeTab = currentTab || internalTab;
@@ -4663,6 +4664,15 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
                       <DiscordIcon className="w-3.5 h-3.5 text-white" />
                       <span>Discord</span>
                     </button>
+
+                    <button
+                      onClick={() => onOpenCopilot?.(`⚡ Should I enter ${etf.contract} right now? Spot price is $${etf.price.toFixed(2)}, intraday VWAP is $${etf.vwap.toFixed(2)}, option ask is $${etf.entryAsk.toFixed(2)}. Audit my timing, check for VWAP extension trap, and verify my -25% hard stop.`)}
+                      className="py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
+                      title="Audit with Gatekeeper AI Copilot"
+                    >
+                      <Bot className="w-3.5 h-3.5 text-indigo-200" />
+                      <span>Ask Copilot</span>
+                    </button>
                   </div>
                 </div>
               );
@@ -4674,6 +4684,320 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab }: A
       {/* 4. TAB 1: SCANNER & ACTIONABLE SETUPS */}
       {activeTab === "SETUPS" && (
         <div className="space-y-6">
+          {/* ANTI-CHASE & KEY SUPPORT RADAR (0DTE CAPITAL GUARDIAN) */}
+          {(() => {
+            const spy = spyQqqDeskData.spy;
+            const qqq = spyQqqDeskData.qqq;
+
+            const spyVwapDiff = spy.price - spy.vwap;
+            const spyVwapDiffPct = (spyVwapDiff / spy.vwap) * 100;
+            const spyDistFromHigh = spy.dayHigh - spy.price;
+            const spySupportFloor = Math.min(spy.dayLow, spy.prevClose);
+
+            const qqqVwapDiff = qqq.price - qqq.vwap;
+            const qqqVwapDiffPct = (qqqVwapDiff / qqq.vwap) * 100;
+            const qqqDistFromHigh = qqq.dayHigh - qqq.price;
+            const qqqSupportFloor = Math.min(qqq.dayLow, qqq.prevClose);
+
+            const isSpyDangerTrap = spyVwapDiff > 2.00 || spyDistFromHigh < 0.60;
+            const isSpySafe = Math.abs(spyVwapDiff) <= 1.00;
+            const isSpySupportBounce = spyVwapDiff < -2.00 || (spy.price - spySupportFloor) < 0.75;
+
+            const isQqqDangerTrap = qqqVwapDiff > 2.50 || qqqDistFromHigh < 0.80;
+            const isQqqSafe = Math.abs(qqqVwapDiff) <= 1.20;
+            const isQqqSupportBounce = qqqVwapDiff < -2.50 || (qqq.price - qqqSupportFloor) < 0.90;
+
+            return (
+              <div className="rounded-3xl bg-gradient-to-b from-[#0B1120] via-slate-950 to-[#070A12] border-2 border-cyan-500/30 shadow-[0_0_40px_rgba(6,182,212,0.12)] p-5 md:p-6 space-y-6">
+                {/* Header */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+                          🛡️ Anti-Chase &amp; Key Support Radar
+                        </h2>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                          0DTE Capital Guardian
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                          LIVE VWAP AUDIT
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        Real-time VWAP Dislocation • Key Support Floors • Mandatory -25% Hard Stop Protocol
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => onOpenCopilot?.("⚡ Should I enter SPY or QQQ right now? Perform a full live audit of current prices, intraday VWAP dislocation, extension traps, and calculate my exact -25% hard stop.")}
+                      className="px-4 py-2 rounded-xl text-xs font-mono font-black uppercase tracking-wider bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.35)] flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <Bot className="w-4 h-4 text-cyan-200 animate-pulse" />
+                      <span>Ask AI Copilot (Audit Timing)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* SPY & QQQ Live Radar Cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {/* SPY Radar */}
+                  <div className="rounded-2xl p-4 sm:p-5 bg-slate-900/60 border border-slate-800 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-mono font-black text-white">SPY</span>
+                        <span className="text-xs text-slate-400">S&amp;P 500 ETF</span>
+                        <span className="text-sm font-mono font-bold text-white">${spy.price.toFixed(2)}</span>
+                        <span className={`text-xs font-mono font-bold ${spy.changePct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {spy.changePct >= 0 ? "+" : ""}{spy.changePct.toFixed(2)}%
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        VWAP: <strong className="text-cyan-300">${spy.vwap.toFixed(2)}</strong>
+                      </span>
+                    </div>
+
+                    {/* Extension Status Banner */}
+                    <div className={`p-3 rounded-xl border text-xs font-mono flex items-start gap-2.5 ${
+                      isSpyDangerTrap
+                        ? "bg-rose-950/40 border-rose-500/50 text-rose-200"
+                        : isSpySafe
+                        ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200"
+                        : isSpySupportBounce
+                        ? "bg-amber-950/40 border-amber-500/50 text-amber-200"
+                        : "bg-cyan-950/30 border-cyan-500/40 text-cyan-200"
+                    }`}>
+                      {isSpyDangerTrap ? (
+                        <AlertOctagon className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                      ) : isSpySafe ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <div className="font-bold uppercase tracking-wider">
+                          {isSpyDangerTrap
+                            ? "🔴 TRAP ZONE: OVEREXTENDED (DO NOT CHASE CALLS!)"
+                            : isSpySafe
+                            ? "🟢 SAFE ACCUMULATION ZONE (WITHIN $1.00 OF VWAP)"
+                            : isSpySupportBounce
+                            ? "🟡 REVERSAL BOUNCE WATCH (AT KEY SUPPORT FLOOR)"
+                            : "🟡 CAUTION ZONE: MILD VWAP EXTENSION"}
+                        </div>
+                        <div className="text-[11px] mt-0.5 opacity-90">
+                          {isSpyDangerTrap
+                            ? `SPY is extended +$${spyVwapDiff.toFixed(2)} above VWAP (${spyVwapDiffPct.toFixed(2)}%) and near session highs ($${spy.dayHigh.toFixed(2)}). Chasing calls here is retail FOMO trap. Wait for mean-reversion pullback to VWAP.`
+                            : isSpySafe
+                            ? `SPY is trading within $${Math.abs(spyVwapDiff).toFixed(2)} of VWAP ($${spy.vwap.toFixed(2)}). R:R is optimal with tight invalidation.`
+                            : isSpySupportBounce
+                            ? `SPY is testing low of day / support floor ($${spySupportFloor.toFixed(2)}). Do NOT panic-sell calls or chase puts. Watch for 3-candle volume exhaustion.`
+                            : `SPY is $${Math.abs(spyVwapDiff).toFixed(2)} away from VWAP. Exercise patience and scale into confirmed bounces only.`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Structural Levels Table */}
+                    <div className="grid grid-cols-3 gap-2 text-center font-mono">
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                        <span className="text-[9.5px] text-slate-400 block uppercase">Trap Ceiling (High)</span>
+                        <span className="text-sm font-black text-rose-300">${spy.dayHigh.toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-500 block">Do Not Chase</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-cyan-500/30">
+                        <span className="text-[9.5px] text-cyan-300 block uppercase">VWAP Mean</span>
+                        <span className="text-sm font-black text-cyan-400">${spy.vwap.toFixed(2)}</span>
+                        <span className="text-[9px] text-cyan-300/70 block">
+                          {spyVwapDiff >= 0 ? `+${spyVwapDiff.toFixed(2)}` : spyVwapDiff.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                        <span className="text-[9.5px] text-emerald-300 block uppercase">Support Floor (Bounce)</span>
+                        <span className="text-sm font-black text-emerald-400">${spySupportFloor.toFixed(2)}</span>
+                        <span className="text-[9px] text-emerald-400/70 block">PDC / LOD</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onOpenCopilot?.(`⚡ Should I enter SPY Calls right now? Current SPY is $${spy.price.toFixed(2)}, VWAP is $${spy.vwap.toFixed(2)} (diff: ${spyVwapDiff >= 0 ? "+" : ""}$${spyVwapDiff.toFixed(2)}), Day High is $${spy.dayHigh.toFixed(2)}, Support floor is $${spySupportFloor.toFixed(2)}. Audit my timing and tell me if it is extended.`)}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>Audit SPY Timing</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenCopilot?.(`🛡️ What is today's SPY support & VWAP? Explain why $${spySupportFloor.toFixed(2)} is the structural bounce level and what confirmation I need before entering.`)}
+                        className="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                      >
+                        <span>Support Logic</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* QQQ Radar */}
+                  <div className="rounded-2xl p-4 sm:p-5 bg-slate-900/60 border border-slate-800 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-mono font-black text-white">QQQ</span>
+                        <span className="text-xs text-slate-400">Nasdaq-100 ETF</span>
+                        <span className="text-sm font-mono font-bold text-white">${qqq.price.toFixed(2)}</span>
+                        <span className={`text-xs font-mono font-bold ${qqq.changePct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {qqq.changePct >= 0 ? "+" : ""}{qqq.changePct.toFixed(2)}%
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        VWAP: <strong className="text-cyan-300">${qqq.vwap.toFixed(2)}</strong>
+                      </span>
+                    </div>
+
+                    {/* Extension Status Banner */}
+                    <div className={`p-3 rounded-xl border text-xs font-mono flex items-start gap-2.5 ${
+                      isQqqDangerTrap
+                        ? "bg-rose-950/40 border-rose-500/50 text-rose-200"
+                        : isQqqSafe
+                        ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200"
+                        : isQqqSupportBounce
+                        ? "bg-amber-950/40 border-amber-500/50 text-amber-200"
+                        : "bg-cyan-950/30 border-cyan-500/40 text-cyan-200"
+                    }`}>
+                      {isQqqDangerTrap ? (
+                        <AlertOctagon className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                      ) : isQqqSafe ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <div className="font-bold uppercase tracking-wider">
+                          {isQqqDangerTrap
+                            ? "🔴 TRAP ZONE: OVEREXTENDED (DO NOT CHASE CALLS!)"
+                            : isQqqSafe
+                            ? "🟢 SAFE ACCUMULATION ZONE (WITHIN $1.20 OF VWAP)"
+                            : isQqqSupportBounce
+                            ? "🟡 REVERSAL BOUNCE WATCH (AT KEY SUPPORT FLOOR)"
+                            : "🟡 CAUTION ZONE: MILD VWAP EXTENSION"}
+                        </div>
+                        <div className="text-[11px] mt-0.5 opacity-90">
+                          {isQqqDangerTrap
+                            ? `QQQ is extended +$${qqqVwapDiff.toFixed(2)} above VWAP (${qqqVwapDiffPct.toFixed(2)}%) and near session highs ($${qqq.dayHigh.toFixed(2)}). Chasing calls here is retail FOMO trap. Wait for mean-reversion pullback.`
+                            : isQqqSafe
+                            ? `QQQ is trading within $${Math.abs(qqqVwapDiff).toFixed(2)} of VWAP ($${qqq.vwap.toFixed(2)}). Clean structure with favorable risk/reward.`
+                            : isQqqSupportBounce
+                            ? `QQQ is testing low of day / support floor ($${qqqSupportFloor.toFixed(2)}). Do NOT panic-sell. Watch for 3-candle volume exhaustion.`
+                            : `QQQ is $${Math.abs(qqqVwapDiff).toFixed(2)} away from VWAP. Wait for pullback to VWAP before triggering calls.`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Structural Levels Table */}
+                    <div className="grid grid-cols-3 gap-2 text-center font-mono">
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                        <span className="text-[9.5px] text-slate-400 block uppercase">Trap Ceiling (High)</span>
+                        <span className="text-sm font-black text-rose-300">${qqq.dayHigh.toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-500 block">Do Not Chase</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-cyan-500/30">
+                        <span className="text-[9.5px] text-cyan-300 block uppercase">VWAP Mean</span>
+                        <span className="text-sm font-black text-cyan-400">${qqq.vwap.toFixed(2)}</span>
+                        <span className="text-[9px] text-cyan-300/70 block">
+                          {qqqVwapDiff >= 0 ? `+${qqqVwapDiff.toFixed(2)}` : qqqVwapDiff.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                        <span className="text-[9.5px] text-emerald-300 block uppercase">Support Floor (Bounce)</span>
+                        <span className="text-sm font-black text-emerald-400">${qqqSupportFloor.toFixed(2)}</span>
+                        <span className="text-[9px] text-emerald-400/70 block">PDC / LOD</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onOpenCopilot?.(`⚡ Should I enter QQQ right now? Current QQQ is $${qqq.price.toFixed(2)}, VWAP is $${qqq.vwap.toFixed(2)} (diff: ${qqqVwapDiff >= 0 ? "+" : ""}$${qqqVwapDiff.toFixed(2)}), Day High is $${qqq.dayHigh.toFixed(2)}, Support floor is $${qqqSupportFloor.toFixed(2)}. Audit my timing and tell me if it is safe.`)}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>Audit QQQ Timing</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenCopilot?.(`🛡️ What is today's QQQ support & VWAP? Explain why $${qqqSupportFloor.toFixed(2)} is the structural bounce level and what confirmation I need before entering.`)}
+                        className="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                      >
+                        <span>Support Logic</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* $200 Challenge Capital Protection Calculator */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-rose-950/30 border border-amber-500/40 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        💰 $200 Challenge Capital Guardian
+                      </span>
+                      <h3 className="text-sm font-mono font-bold text-white">
+                        The Mathematical Protocol: Never Lose 80% Again
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      Rule: Max 1 Contract • Entry Ask ≤ $2.00 • Mandatory -25% Hard Stop
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs font-mono">
+                    <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase block">1. Sizing Rule</span>
+                      <div className="text-base font-black text-white">$2.00 Max Ask</div>
+                      <div className="text-[10px] text-slate-400">1 Contract = $200 capital committed</div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/40 space-y-1">
+                      <span className="text-[10px] text-rose-300 uppercase block font-bold">2. Mandatory Hard Stop</span>
+                      <div className="text-base font-black text-rose-400">$1.50 (-25%)</div>
+                      <div className="text-[10px] text-rose-300/80">Max loss -$50. Preserves $150 (75%)</div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-1">
+                      <span className="text-[10px] text-emerald-300 uppercase block font-bold">3. Target 1 (+30%)</span>
+                      <div className="text-base font-black text-emerald-400">$2.60 (+$60)</div>
+                      <div className="text-[10px] text-emerald-300/80">Lock 50% &amp; move stop to Breakeven $2.00</div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/40 space-y-1">
+                      <span className="text-[10px] text-cyan-300 uppercase block font-bold">4. Target 2 (+65%)</span>
+                      <div className="text-base font-black text-cyan-400">$3.30 (+$130)</div>
+                      <div className="text-[10px] text-cyan-300/80">+65% portfolio growth on runners</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-950/70 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                    <div className="space-y-0.5 text-slate-300 text-[11px] max-w-2xl">
+                      <strong className="text-amber-300 uppercase block">💡 Why You Lost 80% Today (And How We Eliminated It):</strong>
+                      <p className="text-slate-400">
+                        You bought at the top (extended above VWAP), had no stop loss, let it drop -80% to $0.40, and panic-sold at the exact support floor ($768.40 = Prior Day Close + low of day) right before it reversed to $774 (+100%).
+                        With the <strong>-25% Hard Stop ($1.50)</strong>, you are cut early for -$50, retaining $150. You never suffer the emotional panic of holding down -80% into the reversal floor.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => onOpenCopilot?.("💰 $200 Challenge: Audit my risk management. If I enter a 0DTE SPY contract at $2.00, how should I manage the -25% hard stop ($1.50) and targets so I never lose 80% again?")}
+                      className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+                    >
+                      <Bot className="w-3.5 h-3.5" />
+                      <span>Audit $200 Challenge Plan</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* STRAIGHTFORWARD 9-COLUMN LIVE ALERT & EXECUTION TABLE */}
           {(() => {
             const topSetups = [

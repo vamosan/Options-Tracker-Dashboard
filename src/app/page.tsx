@@ -32,6 +32,7 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [username, setUsername] = useState<string>("default");
   const [isGeneralChatOpen, setIsGeneralChatOpen] = useState(false);
+  const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string>("");
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false);
   const [selectedPositionForReview, setSelectedPositionForReview] = useState<Position | null>(null);
 
@@ -374,11 +375,14 @@ export default function Home() {
 
             {/* 5. GEMINI AI COPILOT */}
             <button
-              onClick={() => setIsGeneralChatOpen(true)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-400 transition-all group shadow-[0_0_10px_rgba(79,70,229,0.1)]"
+              onClick={() => {
+                setCopilotInitialPrompt("");
+                setIsGeneralChatOpen(true);
+              }}
+              className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-400 transition-all group shadow-[0_0_10px_rgba(79,70,229,0.1)] cursor-pointer"
             >
               <Bot className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-black uppercase tracking-tight hidden sm:inline">Gemini</span>
+              <span className="text-xs font-black uppercase tracking-tight hidden sm:inline">AI Copilot</span>
             </button>
 
             <div className="flex items-center gap-1.5 ml-auto pl-1.5 border-l border-slate-800">
@@ -494,7 +498,15 @@ export default function Home() {
 
         {activeTab === "alpaca" && (
           <div className="animate-in slide-in-from-bottom max-w-[1400px]">
-            <AlpacaBotDashboard currentTab={alpacaTab} onTabChange={setAlpacaTab} onNavigateTab={setActiveTab} />
+            <AlpacaBotDashboard
+              currentTab={alpacaTab}
+              onTabChange={setAlpacaTab}
+              onNavigateTab={setActiveTab}
+              onOpenCopilot={(prompt) => {
+                setCopilotInitialPrompt(prompt || "");
+                setIsGeneralChatOpen(true);
+              }}
+            />
           </div>
         )}
 
@@ -507,6 +519,8 @@ export default function Home() {
         <GeneralGeminiChat
           isOpen={isGeneralChatOpen}
           onClose={() => setIsGeneralChatOpen(false)}
+          initialPrompt={copilotInitialPrompt}
+          onClearInitialPrompt={() => setCopilotInitialPrompt("")}
         />
 
         <MonthlyAnalytics

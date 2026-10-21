@@ -11,6 +11,7 @@ import { calculateGreeks, calculatePOP } from "@/lib/greeks";
 import { supabase } from "@/lib/supabase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { XMLParser } from "fast-xml-parser";
+import { fetchAlpacaStockSnapshots } from "@/lib/alpacaClient";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const USERS_DIR = path.join(DATA_DIR, "users");
@@ -583,18 +584,54 @@ export async function chatWithGeminiGeneral(history: { role: string; parts: { te
     const apiKey = process.env.GEMINI_API_KEY || "AIzaSyAi4fRfryZUUWBpbmmLEELr-mvJIU5vQzg";
     if (!apiKey) throw new Error("GEMINI_API_KEY not found");
 
-    console.log(`Gemini General Chat: Starting discussion with ${history.length} turns of history.`);
-
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+        // Fetch Real-Time Market Snapshots with true intraday VWAP
+        let marketTapeContext = "";
+        try {
+            const snaps = await fetchAlpacaStockSnapshots(['SPY', 'QQQ', 'NVDA', 'TSLA', 'META', 'AMZN', 'MSFT', 'AAPL', 'PLTR']);
+            if (snaps && Object.keys(snaps).length > 0) {
+                marketTapeContext = Object.entries(snaps).map(([sym, s]) => {
+                    const diffVwap = s.vwap ? (s.price - s.vwap).toFixed(2) : "0.00";
+                    const pctVwap = s.vwap ? (((s.price - s.vwap) / s.vwap) * 100).toFixed(2) : "0.00";
+                    const isAboveVwap = Number(diffVwap) >= 0;
+                    return `• ${sym}: Spot $${s.price.toFixed(2)} (${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(2)}%) | VWAP: $${s.vwap?.toFixed(2) || 'N/A'} (Diff: ${isAboveVwap ? '+' : ''}$${diffVwap} / ${pctVwap}%) | High: $${s.high.toFixed(2)} | Low: $${s.low.toFixed(2)} | Prev Close: $${s.prevClose.toFixed(2)}`;
+                }).join("\n");
+            }
+        } catch (snapErr) {
+            console.warn("Live tape snapshot error for AI chat:", snapErr);
+        }
+
         const systemContext = `
-            You are a professional options trader and market analyst AI assistant. 
-            You are chatting with a user who is using an Options Tracking dashboard.
-            Answer their general questions about options trading, market conditions, strategies, or any other relevant financial topics.
-            Be concise, professional, and helpful.
-            Acknowledge context with 'Understood' in the first turn.
+You are the "Gatekeeper AI Copilot & Trade Timing Auditor" on the Options Tracker Trading Desk.
+Your #1 SACRED MISSION is to protect the user's capital from:
+1. Entering trades at the wrong time (e.g. chasing calls at session highs or puts at session lows).
+2. "Hoping" on losing trades and holding through catastrophic drawdowns (-50% to -80%).
+3. Overleveraging small accounts (like $200 challenge accounts).
+
+CURRENT LIVE MARKET TAPE (Tick-by-tick prices, Highs, Lows, Prior Day Close, and True Intraday VWAP):
+${marketTapeContext || "Live tape active for SPY, QQQ, NVDA, TSLA, META, AMZN, MSFT, AAPL, PLTR"}
+
+CORE INSTITUTIONAL RULES YOU MUST STRICTLY ENFORCE:
+1. THE ANTI-CHASE RULE (Extension Check):
+   - If the user asks about buying CALLS, check distance from VWAP and session highs. If price is extended >$2.00 above VWAP or within 0.3% of the session high, WARN THEM BLUNTLY:
+     "🚫 VERDICT: DO NOT ENTER (EXTENDED NO-CHASE). You are buying at session highs. An intraday pullback to VWAP will crush 0DTE/short-term calls by 50%-80%. Wait for a pullback to support/VWAP."
+   - If buying PUTS: Never buy puts at the day's low when price is extended >$2.50 below VWAP.
+2. THE SUPPORT BOUNCE RULE:
+   - When price pulls back to Prior Day Close or a round number Gamma Wall (like SPY $768 or $770), do NOT tell them to catch a falling knife. Support is only confirmed AFTER sellers exhaust and a green reversal candle / higher low forms.
+3. THE MANDATORY HARD STOP (-20% to -25%):
+   - Never allow an 80% loss. Always state upfront: "If you enter here at $X, your MANDATORY HARD STOP is at $Y (-25%). Never hold past -25% hoping for a reversal."
+4. THE $200 CHALLENGE RISK CAP:
+   - On small accounts ($200): Maximum 1 contract, target entry ask between $1.50 - $2.50, and never risk more than $40-$50 (20% of account). Strongly recommend 1-2 DTE instead of pure 0DTE to prevent sudden theta death.
+
+WHEN ASKED "SHOULD I ENTER?", "IS THIS A GOOD ENTRY?", OR ANY TRADE TIMING QUESTION:
+Always format with:
+- 🏷️ **VERDICT:** [🚫 DO NOT ENTER (EXTENDED NO-CHASE) | 🛡️ SIT ON HANDS (PULLBACK / REVERSAL PENDING) | 🟢 CONFIRMED SAFE ENTRY ZONE]
+- 📐 **TIMING & EXTENSION:** Current price vs. VWAP, distance from high/low, and whether entering now is chasing.
+- 🎯 **TRADE & RISK PLAN:** Recommended strike, max entry ask, Target 1 (+30%), Target 2 (+65%), and MANDATORY HARD STOP (-20% to -25%).
+- 💡 **DISCIPLINE RULE:** A blunt reminder that hope is not a strategy.
         `;
 
         const initialHistory = [
@@ -604,7 +641,7 @@ export async function chatWithGeminiGeneral(history: { role: string; parts: { te
         let fullHistory = [...initialHistory];
 
         if (history.length === 0) {
-            fullHistory.push({ role: "model", parts: [{ text: "Understood. I am ready to discuss the market. How can I help you today?" }] });
+            fullHistory.push({ role: "model", parts: [{ text: "Understood. I am your Gatekeeper AI Copilot & Timing Auditor, powered by live market VWAP and anti-chase rules. I am ready to audit your trade setups and protect your capital." }] });
         } else {
             fullHistory = [...initialHistory, ...history];
         }
@@ -613,11 +650,8 @@ export async function chatWithGeminiGeneral(history: { role: string; parts: { te
             history: fullHistory
         });
 
-        console.log(`Gemini General Chat: Sending message - "${userMessage.substring(0, 50)}..."`);
         const result = await chat.sendMessage(userMessage);
         const responseText = result.response.text();
-        console.log(`Gemini General Chat: Received response (${responseText.length} chars)`);
-
         return responseText;
     } catch (error: any) {
         console.error("Gemini General Chat Critical Error:", error);
