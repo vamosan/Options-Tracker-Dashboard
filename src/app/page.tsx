@@ -7,7 +7,7 @@ import { PositionsTable } from "@/components/PositionsTable";
 import { Position, Trade } from "@/lib/types";
 import { fetchOptionPrice, getPortfolioData, savePositions, saveHistory, listProfiles, deleteTrade, analyzeTrade } from "./actions";
 import { getRecommendation } from "@/lib/intelligence";
-import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History, Zap } from "lucide-react";
+import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History, Zap, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileSelector } from "@/components/ProfileSelector";
 import { GeneralGeminiChat } from "@/components/GeneralGeminiChat";
@@ -292,6 +292,21 @@ export default function Home() {
             >
               <BarChart2 className="h-3.5 w-3.5" />
               <span className="text-xs font-black uppercase tracking-tight">Home</span>
+            </button>
+
+            {/* 1A. ANTI-CHASE RADAR & $200 CHALLENGE GUARDIAN */}
+            <button
+              onClick={() => {
+                setActiveTab("alpaca");
+                setAlpacaTab("SETUPS");
+                setTimeout(() => {
+                  document.getElementById("anti-chase-radar")?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              }}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_12px_rgba(6,182,212,0.25)] bg-cyan-500/15 hover:bg-cyan-500/25 border-2 border-cyan-400 text-cyan-200 font-bold cursor-pointer"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-black uppercase tracking-tight">🛡️ Anti-Chase Radar</span>
             </button>
 
             {/* 1A. DEDICATED 9-COLUMN ALERT TABLE TAB WITH DATE DROPDOWN */}
