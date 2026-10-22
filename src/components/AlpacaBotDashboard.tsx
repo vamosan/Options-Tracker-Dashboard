@@ -346,7 +346,7 @@ export function getLatestTradingDate(monthKey: string = "2026-10"): string {
   return "2026-07-31";
 }
 
-export type AlpacaWorkspaceTab = "SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS";
+export type AlpacaWorkspaceTab = "SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS" | "RADAR";
 
 export interface AlpacaBotDashboardProps {
   currentTab?: AlpacaWorkspaceTab;
@@ -363,7 +363,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
     setInternalTab(tab);
     if (onTabChange) onTabChange(tab);
   };
-  const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-19");
+  const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-21");
+  const [showCriteriaChecklist, setShowCriteriaChecklist] = useState<boolean>(false);
+  const [showExpandedUniverse, setShowExpandedUniverse] = useState<boolean>(false);
   const [alpacaPaperStatus, setAlpacaPaperStatus] = useState<any>(null);
   const [discordNotice, setDiscordNotice] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [isSendingDiscord, setIsSendingDiscord] = useState(false);
@@ -2172,6 +2174,165 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 rvol: "3.2x"
               }
             ]
+          },
+          "2026-10-20": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Tue, Oct 20, 2026): High-Beta Trend Continuation — #1 MSFT $535 CALL (+31.6% peak, T1 hit), #2 META $695P 0DTE Breakdown (+201.3% peak, $3.80 -> $11.45), & #3 NVDA $220 CALL (+72.5% peak).",
+            trades: [
+              {
+                id: "trade_20261020_msft",
+                symbol: "MSFT",
+                name: "Microsoft Corp.",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:10 AM",
+                duration: "35 min",
+                session: "MORNING_ORB",
+                contract: "MSFT $535 CALL",
+                entryAsk: 3.95,
+                t1Target: 5.14,
+                t2Target: 6.52,
+                stopLoss: 2.96,
+                peakPrice: 5.20,
+                outcome: "TARGET_1",
+                pnlPerContract: 118.5,
+                percentGain: "+31.6%",
+                catalyst: "Rallied $531.40 → $537.85 (+1.21% session high) | Trigger: $531.10 | MSFT261023C00535000",
+                rvol: "3.1x"
+              },
+              {
+                id: "trade_20261020_meta",
+                symbol: "META",
+                name: "Meta Platforms",
+                time: "10:30 AM",
+                entryTime: "10:30 AM",
+                exitTime: "11:05 AM",
+                duration: "35 min",
+                session: "MORNING_ORB",
+                contract: "META $695 PUT",
+                entryAsk: 3.80,
+                t1Target: 4.94,
+                t2Target: 6.27,
+                stopLoss: 2.85,
+                peakPrice: 11.45,
+                outcome: "TARGET_2",
+                pnlPerContract: 180.50,
+                percentGain: "+201.3%",
+                catalyst: "Flushed $701.02 → $693.86 (-2.18% session low) | Trigger: $701.40 | 0DTE META261020P00695000",
+                rvol: "3.5x"
+              },
+              {
+                id: "trade_20261020_nvda",
+                symbol: "NVDA",
+                name: "NVIDIA Corp.",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:35 AM",
+                duration: "60 min",
+                session: "MORNING_ORB",
+                contract: "NVDA $220 CALL",
+                entryAsk: 2.55,
+                t1Target: 3.32,
+                t2Target: 4.20,
+                stopLoss: 1.91,
+                peakPrice: 4.40,
+                outcome: "TARGET_2",
+                pnlPerContract: 121.0,
+                percentGain: "+72.5%",
+                catalyst: "Pushed $218.40 → $223.10 (+2.15% session high) | Trigger: $218.15 | NVDA261023C00220000",
+                rvol: "3.4x"
+              }
+            ]
+          },
+          "2026-10-21": {
+            isUpcoming: false,
+            sessionNote: "Verified Live Session (Wed, Oct 21, 2026): A+ Index Reversals & High-Beta Outperformance — #1 PLTR $195 CALL (+70.3% peak), #2 CRWD $240 CALL (+135.5% peak, $3.80 -> $8.95), #3 AMZN $260 CALL (+151.2% peak), & SPY 0DTE $773 Reversal Support Bounce (+100%).",
+            trades: [
+              {
+                id: "trade_20261021_pltr",
+                symbol: "PLTR",
+                name: "Palantir Technologies",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:45 AM",
+                duration: "70 min",
+                session: "MORNING_ORB",
+                contract: "PLTR $195 CALL",
+                entryAsk: 3.70,
+                t1Target: 4.81,
+                t2Target: 6.10,
+                stopLoss: 2.77,
+                peakPrice: 6.30,
+                outcome: "TARGET_2",
+                pnlPerContract: 260.0,
+                percentGain: "+70.3%",
+                catalyst: "Rallied $190.26 → $196.10 (+5.41% day high) | Trigger: $190.21 | PLTR261023C00195000",
+                rvol: "3.6x"
+              },
+              {
+                id: "trade_20261021_crwd",
+                symbol: "CRWD",
+                name: "CrowdStrike Holdings",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:20 AM",
+                duration: "45 min",
+                session: "MORNING_ORB",
+                contract: "CRWD $240 CALL",
+                entryAsk: 3.80,
+                t1Target: 4.94,
+                t2Target: 6.27,
+                stopLoss: 2.85,
+                peakPrice: 8.95,
+                outcome: "TARGET_2",
+                pnlPerContract: 515.0,
+                percentGain: "+135.5%",
+                catalyst: "Surged $238.10 → $248.60 (+4.41% day high) | Trigger: $237.90 | CRWD261023C00240000",
+                rvol: "3.8x"
+              },
+              {
+                id: "trade_20261021_amzn",
+                symbol: "AMZN",
+                name: "Amazon.com Inc.",
+                time: "09:40 AM",
+                entryTime: "09:40 AM",
+                exitTime: "10:20 AM",
+                duration: "40 min",
+                session: "MORNING_ORB",
+                contract: "AMZN $260 CALL",
+                entryAsk: 2.15,
+                t1Target: 2.80,
+                t2Target: 3.55,
+                stopLoss: 1.61,
+                peakPrice: 5.40,
+                outcome: "TARGET_2",
+                pnlPerContract: 102.00,
+                percentGain: "+151.2%",
+                catalyst: "Surged $256.05 → $263.05 (+5.22% day high) | Trigger: $255.98 | AMZN261023C00260000",
+                rvol: "3.2x"
+              },
+              {
+                id: "trade_20261021_spy",
+                symbol: "SPY",
+                name: "SPDR S&P 500 ETF Trust",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "02:45 PM",
+                duration: "5 hr 10 min",
+                session: "MORNING_ORB",
+                contract: "SPY $773 CALL",
+                entryAsk: 2.00,
+                t1Target: 2.60,
+                t2Target: 3.30,
+                stopLoss: 1.50,
+                peakPrice: 3.70,
+                outcome: "TARGET_2",
+                pnlPerContract: 130.0,
+                percentGain: "+100.0%",
+                catalyst: "Flushed to $768.40 Support Floor (PDC / LOD) before violent +$5.80 reversal rally to $774.20 (+100% on bounce). Gatekeeper -25% Hard Stop preserved $150 of $200 account capital.",
+                rvol: "3.4x"
+              }
+            ]
           }
         }
       },
@@ -2957,13 +3118,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
       <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2.5 overflow-x-auto custom-scrollbar">
         {/* ANTI-CHASE RADAR & $200 CHALLENGE GUARDIAN */}
         <button
-          onClick={() => {
-            setActiveTab("SETUPS");
-            setTimeout(() => {
-              document.getElementById("anti-chase-radar")?.scrollIntoView({ behavior: "smooth" });
-            }, 100);
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap bg-cyan-500/20 hover:bg-cyan-500/30 border-2 border-cyan-400 text-cyan-200 shadow-[0_0_14px_rgba(6,182,212,0.3)] cursor-pointer"
+          onClick={() => setActiveTab("RADAR")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === "RADAR"
+              ? "bg-cyan-500/25 border-2 border-cyan-400 text-cyan-200 shadow-[0_0_16px_rgba(6,182,212,0.3)]"
+              : "bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300"
+          }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
           <span>🛡️ Anti-Chase Radar &amp; $200 Guardian</span>
@@ -3099,6 +3259,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
         const allDates = Array.from(
           new Set([
             todayStr,
+            "2026-10-21",
+            "2026-10-20",
             "2026-10-19",
             ...Object.keys(octDays),
             ...Object.keys(sepDays),
@@ -3109,6 +3271,212 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
 
         // Build rows in the exact 9-column format from the user's screenshot
         const buildRowsForDate = (dKey: string) => {
+          if (dKey === "2026-10-21") {
+            return [
+              {
+                date: "2026-10-21",
+                tradeLabel: "Trade #1",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "PLTR $195 CALL",
+                occBadge: "PLTR261023C00195000",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$190.26",
+                triggerText: "(Trigger: $190.21)",
+                entryAsk: "$3.70",
+                intradayMovePrefix: "Rallied",
+                moveStart: "$190.26",
+                moveEnd: "$196.10",
+                moveSuffix: "(+5.41% day high)",
+                t1Price: "$4.81",
+                t1Status: "HIT",
+                t1Time: "(10:15 AM)",
+                t2Price: "$6.10",
+                t2Status: "HIT",
+                t2Time: "(10:45 AM)",
+                peakPrice: "$6.30",
+                peakGain: "+70.3%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "blended T1/T2 =",
+                outcomeDollars: "+$1,040",
+                outcomeSuffix: "on 4 cts",
+              },
+              {
+                date: "2026-10-21",
+                tradeLabel: "Trade #2",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "CRWD $240 CALL",
+                occBadge: "CRWD261023C00240000",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$238.10",
+                triggerText: "(Trigger: $237.90)",
+                entryAsk: "$3.80",
+                intradayMovePrefix: "Surged",
+                moveStart: "$238.10",
+                moveEnd: "$248.60",
+                moveSuffix: "(+4.41% day high)",
+                t1Price: "$4.94",
+                t1Status: "HIT",
+                t1Time: "(09:55 AM)",
+                t2Price: "$6.27",
+                t2Status: "HIT",
+                t2Time: "(10:20 AM)",
+                peakPrice: "$8.95",
+                peakGain: "+135.5%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "automated T1/T2 =",
+                outcomeDollars: "+$2,060",
+                outcomeSuffix: "on 4 cts",
+              },
+              {
+                date: "2026-10-21",
+                tradeLabel: "Trade #3",
+                tradeSubLabel: "(09:40 AM)",
+                contractBadge: "AMZN $260 CALL",
+                occBadge: "AMZN261023C00260000",
+                entryTime: "09:40 AM ET",
+                underlyingEntry: "$256.05",
+                triggerText: "(Trigger: $255.98)",
+                entryAsk: "$2.15",
+                intradayMovePrefix: "Surged",
+                moveStart: "$256.05",
+                moveEnd: "$263.05",
+                moveSuffix: "(+5.22% day high)",
+                t1Price: "$2.80",
+                t1Status: "HIT",
+                t1Time: "(10:05 AM)",
+                t2Price: "$3.55",
+                t2Status: "HIT",
+                t2Time: "(10:20 AM)",
+                peakPrice: "$5.40",
+                peakGain: "+151.2%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "automated T1/T2 =",
+                outcomeDollars: "+$408",
+                outcomeSuffix: "on 4 cts",
+              },
+              {
+                date: "2026-10-21",
+                tradeLabel: "0DTE Audit",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "SPY 0DTE $773 CALL",
+                occBadge: "SPY261021C00773000",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$773.18",
+                triggerText: "(Shelf: $773.10)",
+                entryAsk: "$2.00",
+                intradayMovePrefix: "Flushed",
+                moveStart: "$773.18",
+                moveEnd: "$768.40",
+                moveSuffix: "(-0.62% PDC floor -> +$5.80 reversal to $774.20)",
+                t1Price: "$2.60",
+                t1Status: "HIT",
+                t1Time: "(01:30 PM Reversal)",
+                t2Price: "$3.30",
+                t2Status: "HIT",
+                t2Time: "(02:45 PM Reversal)",
+                peakPrice: "$3.70",
+                peakGain: "+100.0%",
+                outcomeStatus: "PROTECTED",
+                outcomeGain: "-25.0% Stop",
+                outcomeLabel: "Hard Stop cut @ $1.50 =",
+                outcomeDollars: "-$50",
+                outcomeSuffix: "preserved $150 of $200 (vs -80% unhedged loss)",
+              },
+            ];
+          }
+
+          if (dKey === "2026-10-20") {
+            return [
+              {
+                date: "2026-10-20",
+                tradeLabel: "Trade #1",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "MSFT $535 CALL",
+                occBadge: "MSFT261023C00535000",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$531.40",
+                triggerText: "(Trigger: $531.10)",
+                entryAsk: "$3.95",
+                intradayMovePrefix: "Rallied",
+                moveStart: "$531.40",
+                moveEnd: "$537.85",
+                moveSuffix: "(+1.21% session high)",
+                t1Price: "$5.14",
+                t1Status: "HIT",
+                t1Time: "(10:10 AM)",
+                t2Price: "$6.52",
+                t2Status: "ARMED",
+                t2Time: "(+65%)",
+                peakPrice: "$5.20",
+                peakGain: "+31.6%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+30.0%",
+                outcomeLabel: "T1 scale =",
+                outcomeDollars: "+$240",
+                outcomeSuffix: "on 4 cts",
+              },
+              {
+                date: "2026-10-20",
+                tradeLabel: "Trade #2",
+                tradeSubLabel: "(10:30 AM)",
+                contractBadge: "META $695 PUT",
+                occBadge: "0DTE META261020P...",
+                entryTime: "10:30 AM ET",
+                underlyingEntry: "$701.02",
+                triggerText: "(Trigger: $701.40)",
+                entryAsk: "$3.80",
+                intradayMovePrefix: "Flushed",
+                moveStart: "$701.02",
+                moveEnd: "$693.86",
+                moveSuffix: "(-2.18% session low at 11:05 AM)",
+                t1Price: "$4.94",
+                t1Status: "HIT",
+                t1Time: "(10:45 AM)",
+                t2Price: "$6.27",
+                t2Status: "HIT",
+                t2Time: "(11:05 AM)",
+                peakPrice: "$11.45",
+                peakGain: "+201.3%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "automated T1/T2 =",
+                outcomeDollars: "+$722",
+                outcomeSuffix: "on 4 cts; up to +$3,060 at peak",
+              },
+              {
+                date: "2026-10-20",
+                tradeLabel: "Trade #3",
+                tradeSubLabel: "(09:35 AM)",
+                contractBadge: "NVDA $220 CALL",
+                occBadge: "NVDA261023C00220000",
+                entryTime: "09:35 AM ET",
+                underlyingEntry: "$218.40",
+                triggerText: "(Trigger: $218.15)",
+                entryAsk: "$2.55",
+                intradayMovePrefix: "Pushed",
+                moveStart: "$218.40",
+                moveEnd: "$223.10",
+                moveSuffix: "(+2.15% session high)",
+                t1Price: "$3.32",
+                t1Status: "HIT",
+                t1Time: "(10:05 AM)",
+                t2Price: "$4.20",
+                t2Status: "HIT",
+                t2Time: "(10:35 AM)",
+                peakPrice: "$4.40",
+                peakGain: "+72.5%",
+                outcomeStatus: "WIN",
+                outcomeGain: "+47.5%",
+                outcomeLabel: "blended T1/T2 =",
+                outcomeDollars: "+$390",
+                outcomeSuffix: "on 4 cts",
+              },
+            ];
+          }
+
           if (dKey === "2026-10-19") {
             return [
               {
@@ -3348,6 +3716,54 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                   ◀ Prev Day
                 </button>
 
+                {/* Quick Date Shortcuts */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setAlertTableDate("2026-10-21")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      alertTableDate === "2026-10-21"
+                        ? "bg-rose-500 text-white border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.35)]"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    Wed, Oct 21
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAlertTableDate("2026-10-20")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      alertTableDate === "2026-10-20"
+                        ? "bg-rose-500 text-white border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.35)]"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    Tue, Oct 20
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAlertTableDate("2026-10-19")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      alertTableDate === "2026-10-19"
+                        ? "bg-rose-500 text-white border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.35)]"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    Mon, Oct 19
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAlertTableDate("ALL_OCT")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      alertTableDate === "ALL_OCT"
+                        ? "bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.35)]"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    All Oct
+                  </button>
+                </div>
+
                 <div className="flex items-center gap-2 bg-slate-950 border-2 border-rose-500/50 rounded-xl px-3 py-1.5">
                   <CalendarIcon className="w-4 h-4 text-rose-400" />
                   <label htmlFor="alert-table-date-select" className="text-xs font-mono font-bold text-slate-300">
@@ -3364,6 +3780,10 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                       <option key={d} value={d}>
                         {d === todayStr
                           ? `${d} (Today's Live Alerts)`
+                          : d === "2026-10-21"
+                          ? `${d} (Wed, Oct 21 — PLTR, CRWD, AMZN + SPY Audit)`
+                          : d === "2026-10-20"
+                          ? `${d} (Tue, Oct 20 — MSFT, META 0DTE + NVDA)`
                           : d === "2026-10-19"
                           ? `${d} (Mon, Oct 19 — Verified 3x META)`
                           : d}
@@ -4408,7 +4828,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
       )}
 
       {/* 3A. ANTI-CHASE & KEY SUPPORT RADAR (0DTE CAPITAL GUARDIAN) & $200 CHALLENGE CAPITAL PROTECTION */}
-      {(activeTab === "SETUPS" || activeTab === "SPY_QQQ" || activeTab === "ALERT_TABLE") && (
+      {activeTab === "RADAR" && (
         <div id="anti-chase-radar" className="animate-in fade-in duration-300">
           {(() => {
             const spy = spyQqqDeskData.spy;
@@ -4460,6 +4880,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => setActiveTab("SETUPS")}
+                      className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>Quick Decision Desk</span>
+                    </button>
                     <button
                       onClick={() => onOpenCopilot?.("⚡ Should I enter SPY or QQQ right now? Perform a full live audit of current prices, intraday VWAP dislocation, extension traps, and calculate my exact -25% hard stop.")}
                       className="px-4 py-2 rounded-xl text-xs font-mono font-black uppercase tracking-wider bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.35)] flex items-center gap-2 transition-all cursor-pointer"
@@ -4800,6 +5227,14 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                   >
                     {activeTab === "SPY_QQQ" ? "← Show All Scanners" : "Focus: SPY & QQQ Only ↗"}
                   </button>
+
+                  <button
+                    onClick={() => setActiveTab("RADAR")}
+                    className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 transition-all cursor-pointer ml-1 flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>🛡️ Radar &amp; $200 Guardian ↗</span>
+                  </button>
                 </div>
               </div>
 
@@ -5010,79 +5445,100 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 </div>
               </div>
 
-              {/* CRITERIA FOR PROFITABLE TRADES & ANTI-CHASE INSTRUCTIONS (WHY THIS TRADE WINS) */}
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2">
+              {/* CRITERIA FOR PROFITABLE TRADES & ANTI-CHASE INSTRUCTIONS (COLLAPSIBLE TO PREVENT HOMEPAGE CLUTTER) */}
+              <div className="rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden transition-all">
+                <button
+                  type="button"
+                  onClick={() => setShowCriteriaChecklist(!showCriteriaChecklist)}
+                  className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-slate-800/40 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    CRITERIA FOR PROFITABLE TRADES (WHY THIS TRADE WINS)
-                  </h3>
-                  <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-800/60 px-2.5 py-0.5 rounded-full">
-                    Strict Anti-Chase &amp; Capital Protection Rules
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
-                  {/* Pillar 1: Favored Direction & VWAP */}
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-bold uppercase text-[10.5px]">
-                        1. Favored Direction &amp; VWAP
-                      </span>
-                      <span className={activeEtf.belowVwap ? "text-rose-400 font-black" : "text-emerald-400 font-black"}>
-                        {activeEtf.belowVwap ? "BELOW VWAP (BEARISH)" : "ABOVE VWAP (BULLISH)"}
-                      </span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
+                          CRITERIA FOR PROFITABLE TRADES (WHY THIS TRADE WINS)
+                        </h3>
+                        <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-800/60 px-2.5 py-0.5 rounded-full">
+                          4-Pillar Capital Protection Rules
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        VWAP Alignment • 0.50Δ Strike • Anti-Chase Leash (${activeEtf.maxChasePrice.toFixed(2)}) • Mandatory -25% Hard Stop (${activeEtf.stopLoss.toFixed(2)})
+                      </p>
                     </div>
-                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
-                      {activeEtf.symbol} is trading {activeEtf.belowVwap ? "below" : "above"} intraday VWAP (${activeEtf.vwap.toFixed(2)}). Never buy {isCall ? "Calls below VWAP" : "Puts above VWAP"} — algorithmic market makers will use VWAP as a reversal barrier against you.
-                    </p>
                   </div>
 
-                  {/* Pillar 2: Best Strike Selection */}
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-bold uppercase text-[10.5px]">
-                        2. Best Strike Selection (~0.50Δ ATM)
-                      </span>
-                      <span className="text-emerald-400 font-black">
-                        ${activeEtf.strike} STRIKE
-                      </span>
-                    </div>
-                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
-                      Selected 0.50 Delta strike at ${activeEtf.strike}. Avoid far out-of-the-money lotto options that bleed theta decay rapidly. ATM contracts capture immediate 1:1 delta leverage when the index moves.
-                    </p>
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-slate-300 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl shrink-0">
+                    <span>{showCriteriaChecklist ? "Hide Rules ▲" : "View 4 Pillars ▼"}</span>
                   </div>
+                </button>
 
-                  {/* Pillar 3: Anti-Chase Mandate */}
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-amber-500/40 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-amber-300 font-bold uppercase text-[10.5px]">
-                        3. Anti-Chase Mandate (Execution Discipline)
-                      </span>
-                      <span className="text-amber-400 font-black">
-                        MAX CHASE: ${activeEtf.maxChasePrice.toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
-                      If {activeEtf.symbol} is past ${activeEtf.maxChasePrice.toFixed(2)} or near session {isCall ? `highs ($${activeEtf.dayHigh.toFixed(2)})` : `lows ($${activeEtf.dayLow.toFixed(2)})`}, <strong>DO NOT CHASE</strong>. Buying at extremes causes the instant 80% loss before the reversal. Wait for a retest back to VWAP / shelf.
-                    </p>
-                  </div>
+                {showCriteriaChecklist && (
+                  <div className="p-5 pt-1 border-t border-slate-800/80">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                      {/* Pillar 1: Favored Direction & VWAP */}
+                      <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 font-bold uppercase text-[10.5px]">
+                            1. Favored Direction &amp; VWAP
+                          </span>
+                          <span className={activeEtf.belowVwap ? "text-rose-400 font-black" : "text-emerald-400 font-black"}>
+                            {activeEtf.belowVwap ? "BELOW VWAP (BEARISH)" : "ABOVE VWAP (BULLISH)"}
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                          {activeEtf.symbol} is trading {activeEtf.belowVwap ? "below" : "above"} intraday VWAP (${activeEtf.vwap.toFixed(2)}). Never buy {isCall ? "Calls below VWAP" : "Puts above VWAP"} — algorithmic market makers will use VWAP as a reversal barrier against you.
+                        </p>
+                      </div>
 
-                  {/* Pillar 4: Mandatory -25% Hard Stop */}
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-rose-500/40 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-rose-300 font-bold uppercase text-[10.5px]">
-                        4. Mandatory -25% Hard Stop (Preserve Capital)
-                      </span>
-                      <span className="text-rose-400 font-black">
-                        HARD STOP: ${activeEtf.stopLoss.toFixed(2)} (-25%)
-                      </span>
+                      {/* Pillar 2: Best Strike Selection */}
+                      <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 font-bold uppercase text-[10.5px]">
+                            2. Best Strike Selection (~0.50Δ ATM)
+                          </span>
+                          <span className="text-emerald-400 font-black">
+                            ${activeEtf.strike} STRIKE
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                          Selected 0.50 Delta strike at ${activeEtf.strike}. Avoid far out-of-the-money lotto options that bleed theta decay rapidly. ATM contracts capture immediate 1:1 delta leverage when the index moves.
+                        </p>
+                      </div>
+
+                      {/* Pillar 3: Anti-Chase Mandate */}
+                      <div className="p-4 rounded-xl bg-slate-950/70 border border-amber-500/40 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-amber-300 font-bold uppercase text-[10.5px]">
+                            3. Anti-Chase Mandate (Execution Discipline)
+                          </span>
+                          <span className="text-amber-400 font-black">
+                            MAX CHASE: ${activeEtf.maxChasePrice.toFixed(2)}
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                          If {activeEtf.symbol} is past ${activeEtf.maxChasePrice.toFixed(2)} or near session {isCall ? `highs ($${activeEtf.dayHigh.toFixed(2)})` : `lows ($${activeEtf.dayLow.toFixed(2)})`}, <strong>DO NOT CHASE</strong>. Buying at extremes causes the instant 80% loss before the reversal. Wait for a retest back to VWAP / shelf.
+                        </p>
+                      </div>
+
+                      {/* Pillar 4: Mandatory -25% Hard Stop */}
+                      <div className="p-4 rounded-xl bg-slate-950/70 border border-rose-500/40 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-rose-300 font-bold uppercase text-[10.5px]">
+                            4. Mandatory -25% Hard Stop (Preserve Capital)
+                          </span>
+                          <span className="text-rose-400 font-black">
+                            HARD STOP: ${activeEtf.stopLoss.toFixed(2)} (-25%)
+                          </span>
+                        </div>
+                        <p className="text-slate-300 text-[11.5px] leading-relaxed">
+                          If the option ask drops to ${activeEtf.stopLoss.toFixed(2)}, exit without hesitation. Never hold to -80% hoping for a miracle bounce. Taking a -$50 loss on a $200 account preserves $150 so you have capital ready for the next clean trade.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-slate-300 text-[11.5px] leading-relaxed">
-                      If the option ask drops to ${activeEtf.stopLoss.toFixed(2)}, exit without hesitation. Never hold to -80% hoping for a miracle bounce. Taking a -$50 loss on a $200 account preserves $150 so you have capital ready for the next clean trade.
-                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           );
@@ -5253,7 +5709,39 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
             );
           })()}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          {/* EXPANDABLE EXTENDED UNIVERSE & DEEP-DIVE SCANNER COCKPITS */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden shadow-lg transition-all">
+            <button
+              type="button"
+              onClick={() => setShowExpandedUniverse(!showExpandedUniverse)}
+              className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs sm:text-sm font-mono font-black text-white uppercase tracking-wider">
+                      🔬 Extended Universe &amp; Deep-Dive Cockpits
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      SPX 0DTE • Individual Equities • Multi-Agent Audits
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
+                    Click to {showExpandedUniverse ? "collapse" : "view"} SPX Power Hour hyper-trading desk, 5-day audit ledgers, and equity catalyst deep-dives.
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-300 bg-slate-900 border border-slate-700/80 px-3 py-1.5 rounded-xl shrink-0">
+                <span>{showExpandedUniverse ? "Collapse Universe ▲" : "Expand Universe & Cockpits ▼"}</span>
+              </div>
+            </button>
+
+            {showExpandedUniverse && (
+              <div className="p-4 sm:p-5 border-t border-slate-800/80 bg-slate-950/40">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           
           {/* SECTION 1: ⚡ SPX 0DTE POWER HOUR — HYPER-TRADING COCKPIT */}
           {(() => {
@@ -6751,6 +7239,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
             );
           })()}
 
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

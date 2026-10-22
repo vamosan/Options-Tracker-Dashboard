@@ -25,7 +25,7 @@ const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'alpaca' | 'dashboard' | 'powerhour'>('alpaca');
-  const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS">("SETUPS");
+  const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS" | "RADAR">("SETUPS");
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -298,12 +298,13 @@ export default function Home() {
             <button
               onClick={() => {
                 setActiveTab("alpaca");
-                setAlpacaTab("SETUPS");
-                setTimeout(() => {
-                  document.getElementById("anti-chase-radar")?.scrollIntoView({ behavior: "smooth" });
-                }, 100);
+                setAlpacaTab("RADAR");
               }}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_12px_rgba(6,182,212,0.25)] bg-cyan-500/15 hover:bg-cyan-500/25 border-2 border-cyan-400 text-cyan-200 font-bold cursor-pointer"
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_12px_rgba(6,182,212,0.25)] cursor-pointer ${
+                activeTab === "alpaca" && alpacaTab === "RADAR"
+                  ? "bg-cyan-500/25 border-2 border-cyan-400 text-cyan-200 font-bold"
+                  : "bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-200 font-bold"
+              }`}
             >
               <ShieldCheck className="h-3.5 w-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-black uppercase tracking-tight">🛡️ Anti-Chase Radar</span>
