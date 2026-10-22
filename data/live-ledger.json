@@ -1,5 +1,16 @@
 [
   {
+    "id": "trade_20261022_amd",
+    "date": "2026-10-22",
+    "symbol": "AMD",
+    "exitTime": "1:41 PM ET",
+    "peakPrice": 10,
+    "outcome": "TARGET_1",
+    "pnlPerContract": 370,
+    "percentGain": "+58.7%",
+    "winStatus": "WIN"
+  },
+  {
     "id": "trade_20261021_pltr",
     "date": "2026-10-21",
     "symbol": "PLTR",
