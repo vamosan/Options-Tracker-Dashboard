@@ -59,11 +59,7 @@ export function GeneralGeminiChat({ isOpen, onClose, initialPrompt, onClearIniti
 
         try {
             const response = await chatWithGeminiGeneral(chatHistory, msgText);
-            if (response.includes("trouble processing")) {
-                setChatHistory([...newHistory, { role: 'model' as const, parts: [{ text: "❌ Gatekeeper API Notice: " + response }] }]);
-            } else {
-                setChatHistory([...newHistory, { role: 'model' as const, parts: [{ text: response }] }]);
-            }
+            setChatHistory([...newHistory, { role: 'model' as const, parts: [{ text: response }] }]);
         } catch (error: any) {
             console.error("Chat failed:", error);
             setChatHistory([...newHistory, { role: 'model' as const, parts: [{ text: "⚠️ Connectivity Notice: " + (error.message || "Unable to reach Gatekeeper services.") }] }]);

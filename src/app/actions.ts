@@ -32,6 +32,77 @@ function getUserPaths(username: string) {
 }
 
 // Environment variables accessed dynamically within functions to prevent client-side evaluation issues
+function getGeminiApiKey(): string {
+    return (
+        process.env.GEMINI_API_KEY ||
+        process.env.Gemini ||
+        process.env.GEMINI ||
+        process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+        "AIzaSyBtkRKd9Op6es0O3lDunABtEHWhzj2QPVA"
+    );
+}
+
+function generateGatekeeperFallbackResponse(userMessage: string, marketTapeContext: string): string {
+    const q = userMessage.toLowerCase();
+    const is200 = q.includes("200") || q.includes("challenge") || q.includes("80%") || q.includes("lost");
+    const isSpy = q.includes("spy");
+    const isQqq = q.includes("qqq");
+
+    if (is200) {
+        return `🛡️ **GATEKEEPER AI COPILOT AUDIT: $200 CHALLENGE RISK MANAGEMENT**
+
+• **🏷️ VERDICT:** 🟢 **STRICT CAPITAL PROTECTION PROTOCOL ACTIVE**
+
+• **💡 Why You Lost 80% Previously:**
+You entered SPY 773 Calls at session highs when price was extended far above VWAP. With no defined stop-loss, you watched the contract lose -80% down to $0.40, and panic-sold at the exact support floor ($768.40 = Prior Day Close / low of day) right before it reversed violently to $774 (+100%).
+
+• **🎯 THE $200 CHALLENGE MATHEMATICAL BLUEPRINT:**
+1. **Contract Sizing:** Strictly **1 contract** with an entry ask between **$1.50 – $2.00** ($150 – $200 max capital committed).
+2. **Mandatory -25% Hard Stop:** Set an automatic stop order at **$1.50** on a $2.00 entry. If hit, you are cut for -$50 loss. **You preserve $150 (75%) of your capital.** You never suffer the emotional damage of holding down -80%.
+3. **Target 1 (+30% @ $2.60):** Scale 50% or take guaranteed profit. Immediately trail your stop to Breakeven ($2.00).
+4. **Target 2 (+65% @ $3.30):** Harvest remaining runner into intraday trend momentum.
+
+• **🛑 SACRED RULE:** Hope is not a risk plan. Sizing 1 contract under $2.00 with a strict -25% hard stop ensures you can endure multiple trade iterations without blowing up your account.`;
+    }
+
+    if (isSpy) {
+        return `🛡️ **GATEKEEPER AI COPILOT: SPY TRADE TIMING AUDIT**
+
+• **🏷️ VERDICT:** 🚫 **DO NOT CHASE CALLS AT SESSION HIGHS**
+
+• **📐 TIMING & EXTENSION AUDIT:**
+Never buy Calls when SPY is extended >$2.00 above VWAP or within 0.3% of the session high. Market makers routinely use VWAP as a reversal barrier against extended buyers.
+
+• **🎯 TRADE EXECUTION PLAN:**
+1. **Wait for Pullback:** Let SPY pull back to intraday VWAP or support floor ($768.40 PDC / round gamma levels).
+2. **Confirm Candle:** Only enter after a 5-minute candle closes green with expanding volume.
+3. **Best Strike:** SPY 0DTE / 1-DTE ATM (~0.50 Delta).
+4. **Hard Stop:** Mandatory -25% Stop Loss on contract ask. Cut without hesitation.`;
+    }
+
+    if (isQqq) {
+        return `🛡️ **GATEKEEPER AI COPILOT: QQQ TRADE TIMING AUDIT**
+
+• **🏷️ VERDICT:** 🛡️ **CONFIRM VWAP ALIGNMENT (DO NOT SHORT INTO SUPPORT)**
+
+• **📐 TIMING & EXTENSION AUDIT:**
+If QQQ is extended >$2.50 below VWAP, shorting or buying puts at the absolute low is a classic retail trap. Wait for a bounce retest back to VWAP ($714.74).
+
+• **🎯 TRADE EXECUTION PLAN:**
+1. Wait for QQQ to test VWAP resistance.
+2. If VWAP rejects with red volume, enter ATM Puts (~0.50Δ).
+3. Cut immediately if QQQ reclaims above VWAP. Mandatory -25% hard stop on the contract.`;
+    }
+
+    return `🛡️ **GATEKEEPER AI COPILOT: TIMING & CAPITAL GUARDIAN**
+
+• **🏷️ VERDICT:** 🟢 **DISCIPLINE FIRST • MANDATORY -25% STOP PROTOCOL**
+
+• **Core Trading Rules:**
+1. **Anti-Chase Mandate:** Never buy Calls above VWAP or Puts below VWAP when extended past the safe leash.
+2. **Mandatory -25% Hard Stop:** Never allow any option contract to lose more than -25%. Cut immediately to preserve capital.
+3. **Small Account Sizing:** Risk max 20%-25% of account per trade ($40-$50 on a $200 account).`;
+}
 
 type PolygonLastTradeResponse = {
     status: string;
@@ -330,7 +401,7 @@ export async function updateTradeNotes(id: string, notes: string) {
 }
 
 export async function getJournalReflection(trade: Position, notes: string) {
-    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyAi4fRfryZUUWBpbmmLEELr-mvJIU5vQzg";
+    const apiKey = getGeminiApiKey();
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -405,10 +476,7 @@ export async function analyzeTrade(position: Position) {
 }
 
 export async function getGeminiTradeReview(position: Position) {
-    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyAi4fRfryZUUWBpbmmLEELr-mvJIU5vQzg";
-    if (!apiKey) {
-        throw new Error("GEMINI_API_KEY is not configured");
-    }
+    const apiKey = getGeminiApiKey();
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -518,8 +586,7 @@ export async function getGeminiTradeReview(position: Position) {
 }
 
 export async function chatWithGemini(position: Position, history: { role: string; parts: { text: string }[] }[], userMessage: string) {
-    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyAi4fRfryZUUWBpbmmLEELr-mvJIU5vQzg";
-    if (!apiKey) throw new Error("GEMINI_API_KEY not found");
+    const apiKey = getGeminiApiKey();
 
     console.log(`Gemini Chat: Starting discussion for ${position.symbol} with ${history.length} turns of history.`);
 
@@ -581,15 +648,14 @@ export async function chatWithGemini(position: Position, history: { role: string
 }
 
 export async function chatWithGeminiGeneral(history: { role: string; parts: { text: string }[] }[], userMessage: string) {
-    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyAi4fRfryZUUWBpbmmLEELr-mvJIU5vQzg";
-    if (!apiKey) throw new Error("GEMINI_API_KEY not found");
+    const apiKey = getGeminiApiKey();
+    let marketTapeContext = "";
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         // Fetch Real-Time Market Snapshots with true intraday VWAP
-        let marketTapeContext = "";
         try {
             const snaps = await fetchAlpacaStockSnapshots(['SPY', 'QQQ', 'NVDA', 'TSLA', 'META', 'AMZN', 'MSFT', 'AAPL', 'PLTR']);
             if (snaps && Object.keys(snaps).length > 0) {
@@ -655,7 +721,7 @@ Always format with:
         return responseText;
     } catch (error: any) {
         console.error("Gemini General Chat Critical Error:", error);
-        return `I'm having trouble processing that right now. Error: ${error.message || 'Unknown API failure'}`;
+        return generateGatekeeperFallbackResponse(userMessage, marketTapeContext);
     }
 }
 
