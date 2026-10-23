@@ -11,6 +11,34 @@
     "winStatus": "WIN"
   },
   {
+    "id": "trade_20261022_tsla",
+    "date": "2026-10-22",
+    "symbol": "TSLA",
+    "contract": "TSLA $370P",
+    "entryTime": "09:35 AM ET",
+    "exitTime": "11:05 AM ET",
+    "entryPrice": 4.37,
+    "peakPrice": 7.45,
+    "outcome": "TARGET_2",
+    "pnlPerContract": 284,
+    "percentGain": "+70.5%",
+    "winStatus": "WIN"
+  },
+  {
+    "id": "trade_20261022_avgo",
+    "date": "2026-10-22",
+    "symbol": "AVGO",
+    "contract": "AVGO $325P",
+    "entryTime": "09:35 AM ET",
+    "exitTime": "10:35 AM ET",
+    "entryPrice": 1.00,
+    "peakPrice": 1.75,
+    "outcome": "TARGET_2",
+    "pnlPerContract": 65,
+    "percentGain": "+75.0%",
+    "winStatus": "WIN"
+  },
+  {
     "id": "trade_20261021_pltr",
     "date": "2026-10-21",
     "symbol": "PLTR",
