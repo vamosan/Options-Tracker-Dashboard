@@ -39,6 +39,48 @@
     "winStatus": "WIN"
   },
   {
+    "id": "trade_20261022_spy",
+    "date": "2026-10-22",
+    "symbol": "SPY",
+    "contract": "SPY $772 CALL",
+    "entryTime": "10:15 AM ET",
+    "exitTime": "10:55 AM ET",
+    "entryPrice": 1.90,
+    "peakPrice": 2.75,
+    "outcome": "TARGET_1",
+    "pnlPerContract": 57,
+    "percentGain": "+44.7%",
+    "winStatus": "WIN"
+  },
+  {
+    "id": "trade_20261022_crwd",
+    "date": "2026-10-22",
+    "symbol": "CRWD",
+    "contract": "CRWD $242.5 CALL",
+    "entryTime": "09:35 AM ET",
+    "exitTime": "10:30 AM ET",
+    "entryPrice": 3.20,
+    "peakPrice": 4.70,
+    "outcome": "TARGET_2",
+    "pnlPerContract": 150,
+    "percentGain": "+46.8%",
+    "winStatus": "WIN"
+  },
+  {
+    "id": "trade_20261022_qqq",
+    "date": "2026-10-22",
+    "symbol": "QQQ",
+    "contract": "QQQ $715 PUT",
+    "entryTime": "11:25 AM ET",
+    "exitTime": "12:10 PM ET",
+    "entryPrice": 2.10,
+    "peakPrice": 2.85,
+    "outcome": "TARGET_1",
+    "pnlPerContract": 63,
+    "percentGain": "+35.7%",
+    "winStatus": "WIN"
+  },
+  {
     "id": "trade_20261021_pltr",
     "date": "2026-10-21",
     "symbol": "PLTR",

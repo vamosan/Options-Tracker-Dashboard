@@ -74,6 +74,9 @@ export async function sendDiscordWebhook(
  */
 export async function sendTradeEntryCallout(trade: {
   tradeNumber?: number;
+  badgeLabel?: string;
+  tradeDescription?: string;
+  color?: number;
   symbol: string;
   contract: string;
   occSymbol?: string;
@@ -114,13 +117,17 @@ export async function sendTradeEntryCallout(trade: {
     : `Confirmed breakout @ \`${spotStr}\``);
 
   const embed: DiscordEmbed = {
-    title: `Trade #${tradeNum} (${trade.entryTime}) • ${cleanContract}`,
-    description: `**LIVE ALPACA PAPER ENTRY EXECUTED (${qty} Contracts)**`,
-    color: 0x10B981,
+    title: trade.badgeLabel
+      ? `${trade.badgeLabel} (${trade.entryTime}) • ${cleanContract}`
+      : `Trade #${tradeNum} (${trade.entryTime}) • ${cleanContract}`,
+    description: trade.tradeDescription || `**LIVE ALPACA PAPER ENTRY EXECUTED (${qty} Contracts)**`,
+    color: trade.color || 0x10B981,
     fields: [
       {
-        name: "Trade #",
-        value: `**Trade #${tradeNum}** (\`${trade.entryTime}\`)`,
+        name: trade.badgeLabel ? "Setup Type" : "Trade #",
+        value: trade.badgeLabel
+          ? `**${trade.badgeLabel}** (\`${trade.entryTime}\`)`
+          : `**Trade #${tradeNum}** (\`${trade.entryTime}\`)`,
         inline: true,
       },
       {
