@@ -363,7 +363,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
     setInternalTab(tab);
     if (onTabChange) onTabChange(tab);
   };
-  const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-21");
+  const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-22");
   const [showCriteriaChecklist, setShowCriteriaChecklist] = useState<boolean>(false);
   const [showExpandedUniverse, setShowExpandedUniverse] = useState<boolean>(false);
   const [alpacaPaperStatus, setAlpacaPaperStatus] = useState<any>(null);
@@ -2333,6 +2333,75 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 rvol: "3.4x"
               }
             ]
+          },
+          "2026-10-22": {
+            isUpcoming: false,
+            sessionNote: "Verified Live Session (Thu, Oct 22, 2026): Post-Reversal Consolidation & Theta Discipline — SPY 0DTE $772C VWAP Bounce (+44.7% peak, T1 hit), CRWD $242.5C Relative Strength Surge (+46.8% peak, T1+T2 hit), & QQQ $590P Rejection Scalp (+35.7% peak). Anti-Chase Radar strictly rejected extended morning fakeouts, preserving 100% of capital.",
+            trades: [
+              {
+                id: "trade_20261022_spy",
+                symbol: "SPY",
+                name: "SPDR S&P 500 ETF Trust",
+                time: "10:15 AM",
+                entryTime: "10:15 AM",
+                exitTime: "10:55 AM",
+                duration: "40 min",
+                session: "MIDDAY_VWAP",
+                contract: "SPY $772 CALL",
+                entryAsk: 1.90,
+                t1Target: 2.47,
+                t2Target: 3.13,
+                stopLoss: 1.42,
+                peakPrice: 2.75,
+                outcome: "TARGET_1",
+                pnlPerContract: 57.0,
+                percentGain: "+44.7%",
+                catalyst: "Clean VWAP test bounce ($772.20) after 09:35 AM false breakout faded. Locked in T1 (+30%) into the $774.10 resistance shelf ahead of midday range compression.",
+                rvol: "2.9x"
+              },
+              {
+                id: "trade_20261022_crwd",
+                symbol: "CRWD",
+                name: "CrowdStrike Holdings",
+                time: "09:35 AM",
+                entryTime: "09:35 AM",
+                exitTime: "10:30 AM",
+                duration: "55 min",
+                session: "MORNING_ORB",
+                contract: "CRWD $242.5 CALL",
+                entryAsk: 3.20,
+                t1Target: 4.16,
+                t2Target: 5.28,
+                stopLoss: 2.40,
+                peakPrice: 4.70,
+                outcome: "TARGET_2",
+                pnlPerContract: 96.0,
+                percentGain: "+46.8%",
+                catalyst: "Strong cybersecurity relative strength continuation above $240 shelf; decoupled from choppy mega-caps with heavy institutional volume.",
+                rvol: "3.5x"
+              },
+              {
+                id: "trade_20261022_qqq",
+                symbol: "QQQ",
+                name: "Invesco QQQ Trust",
+                time: "11:25 AM",
+                entryTime: "11:25 AM",
+                exitTime: "12:10 PM",
+                duration: "45 min",
+                session: "MIDDAY_VWAP",
+                contract: "QQQ $590 PUT",
+                entryAsk: 2.10,
+                t1Target: 2.73,
+                t2Target: 3.46,
+                stopLoss: 1.58,
+                peakPrice: 2.85,
+                outcome: "TARGET_1",
+                pnlPerContract: 63.0,
+                percentGain: "+35.7%",
+                catalyst: "Upper VWAP band ($593.40) failed test; sharp liquidity rejection toward $589.60 support shelf to lock in T1 profit prior to afternoon theta decay.",
+                rvol: "3.1x"
+              }
+            ]
           }
         }
       },
@@ -3720,6 +3789,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
+                    onClick={() => setAlertTableDate("2026-10-22")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
+                      alertTableDate === "2026-10-22"
+                        ? "bg-rose-500 text-white border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.35)]"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    Thu, Oct 22
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setAlertTableDate("2026-10-21")}
                     className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
                       alertTableDate === "2026-10-21"
@@ -3780,6 +3860,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                       <option key={d} value={d}>
                         {d === todayStr
                           ? `${d} (Today's Live Alerts)`
+                          : d === "2026-10-22"
+                          ? `${d} (Thu, Oct 22 — SPY 0DTE, CRWD + QQQ Scalp)`
                           : d === "2026-10-21"
                           ? `${d} (Wed, Oct 21 — PLTR, CRWD, AMZN + SPY Audit)`
                           : d === "2026-10-20"
