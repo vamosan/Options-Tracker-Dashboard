@@ -443,7 +443,7 @@ export function calculateQuarterKellySizing(
   target1: number,
   target2: number,
   stopLoss: number,
-  accountEquity: number = 10000,
+  accountEquity: number = 2000,
   maxPortfolioRiskPct: number = 0.05
 ): KellySizingResult {
   const p = Math.max(0.55, Math.min(0.98, convictionScore / 100));
@@ -462,12 +462,12 @@ export function calculateQuarterKellySizing(
   // Quarter-Kelly for capital preservation (never bet full Kelly on options)
   const quarterKelly = fullKelly * 0.25;
 
-  // Max dollar risk permitted on this trade (e.g. 5% of bankroll = $500 on $10k)
+  // Max dollar risk permitted on this trade (5% of bankroll = $100 on $2,000 challenge)
   const maxDollarRisk = Math.round(accountEquity * maxPortfolioRiskPct);
 
-  // Recommended contracts based on riskPerContract, capped at max safe limit (1 to 4 contracts)
+  // Recommended contracts based on riskPerContract, capped at max safe limit (1 to 2 contracts for $2,000 challenge)
   let recContracts = Math.floor(maxDollarRisk / riskPerContract);
-  recContracts = Math.max(1, Math.min(4, recContracts));
+  recContracts = Math.max(1, Math.min(2, recContracts));
 
   // If conviction is below 80, reduce to 1 contract
   if (convictionScore < 80) recContracts = 1;

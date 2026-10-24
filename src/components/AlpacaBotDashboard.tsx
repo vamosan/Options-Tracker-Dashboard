@@ -625,7 +625,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
 
   // Multi-Month Calendar State
   const [selectedMonth, setSelectedMonth] = useState<"2026-10" | "2026-09" | "2026-08" | "2026-07">("2026-10");
-  const [simContractQty, setSimContractQty] = useState<number>(3);
+  const [simContractQty, setSimContractQty] = useState<number>(1);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(() => getLatestTradingDate("2026-10"));
   const [showRulesInfo, setShowRulesInfo] = useState<boolean>(true);
   const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
@@ -4392,8 +4392,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
 
         return (
           <div className="space-y-4">
-            {/* EXECUTIVE P&L OVERVIEW: DAY vs WEEKLY vs MONTHLY (The 3 Overview Columns) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* EXECUTIVE P&L OVERVIEW: DAY vs WEEKLY vs MONTHLY vs $2,000 CHALLENGE */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Column 1: Day P&L */}
               <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl relative overflow-hidden">
                 <div className="flex items-center justify-between">
@@ -4456,6 +4456,25 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center justify-between">
                   <span>Record: <strong className="text-white">{monthlyWins}W - {allOctTrades.length - monthlyWins}L</strong></span>
                   <span>Month: <strong className="text-slate-300">October 2026</strong></span>
+                </div>
+              </div>
+
+              {/* Column 4: $2,000 Live Challenge Tracker */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950/30 to-slate-900 border border-indigo-500/40 shadow-xl relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-black uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                    🚀 $2,000 Pilot Challenge
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                    Armed for Mon, Oct 26
+                  </span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight mt-1 text-amber-300">
+                  $2,000.00
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Size: <strong className="text-white">1x – 2x Cts</strong></span>
+                  <span>Stop: <strong className="text-rose-400">-25% ($50-$75 max)</strong></span>
                 </div>
               </div>
             </div>

@@ -142,7 +142,7 @@ async function handleCron(request: Request) {
                     catalyst: s.catalyst,
                     convictionScore: s.convictionScore,
                     riskBadge: s.riskOfficer.badge,
-                    recommendedContracts: s.kellySizing?.recommendedContracts || 4,
+                    recommendedContracts: s.kellySizing?.recommendedContracts || 1,
                     pillarSummary: `Trend: +${s.pillars.trend} | Mom: +${s.pillars.momentum} | Macro: ${s.pillars.macro >= 0 ? '+' : ''}${s.pillars.macro}`
                 }))
             });
@@ -318,7 +318,8 @@ async function handleCron(request: Request) {
                             (forceTest && testStep === 'entry' && entriesDispatchedThisTick < 1)
                         ) {
                             // AUTOMATIC ALPACA PAPER EXECUTION UPON SIGNAL FIRE + PILLAR 3 LIVE OPRA SPREAD VERIFICATION
-                            const orderQty = setup.kellySizing?.recommendedContracts || 3;
+                            // Sized for $2,000 Account Challenge: 1 to 2 contracts strictly capped
+                            const orderQty = Math.max(1, Math.min(2, setup.kellySizing?.recommendedContracts || 1));
                             const alpacaOrder = await placeAlpacaPaperOptionOrder({
                                 underlying: sym,
                                 strike: setup.strike,
