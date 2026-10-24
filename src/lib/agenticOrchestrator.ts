@@ -13,12 +13,13 @@ export interface WatchlistCandidate {
 }
 
 export const SECTOR_AGNOSTIC_UNIVERSE: WatchlistCandidate[] = [
+  // --- Group 1: AI, Hardware & Semiconductors ---
   {
-    symbol: "PLTR",
-    name: "Palantir Technologies",
-    sector: "Enterprise AI & Defense",
-    catalyst: "Commercial AIP Bootcamps Deliver 85% Conversion + US SOCOM $178M Contract",
-    rvolExpectation: "3.6x"
+    symbol: "NVDA",
+    name: "NVIDIA Corp.",
+    sector: "AI & Semi",
+    catalyst: "Blackwell Ultra GB200 Volume Shipments Accelerated; Hyperscaler Capex Raised +$32B",
+    rvolExpectation: "3.4x"
   },
   {
     symbol: "AMD",
@@ -28,61 +29,47 @@ export const SECTOR_AGNOSTIC_UNIVERSE: WatchlistCandidate[] = [
     rvolExpectation: "2.9x"
   },
   {
-    symbol: "NVDA",
-    name: "NVIDIA Corp.",
+    symbol: "AVGO",
+    name: "Broadcom Inc.",
     sector: "AI & Semi",
-    catalyst: "Blackwell Ultra GB200 Volume Shipments Accelerated; Hyperscaler Capex Raised +$32B",
-    rvolExpectation: "3.4x"
+    catalyst: "Custom AI ASIC Hyperscaler Order Backlog Record Expansion",
+    rvolExpectation: "2.8x"
   },
   {
-    symbol: "META",
-    name: "Meta Platforms",
-    sector: "Cloud & Big Tech",
-    catalyst: "Llama 4 Open Multi-Modal Release + AI Ad Monetization ROAS Surge",
-    rvolExpectation: "3.1x"
-  },
-  {
-    symbol: "CRWD",
-    name: "CrowdStrike Holdings",
-    sector: "Cybersecurity",
-    catalyst: "Falcon Identity & Next-Gen SIEM Attain DoD FedRAMP High Authorization",
-    rvolExpectation: "2.8x",
-    quarantineBeforeTimeVal: 935 // Avoid 09:32 false opening wicks
-  },
-  {
-    symbol: "CVS",
-    name: "CVS Health Corp.",
-    sector: "Defensive Healthcare",
-    catalyst: "Pharmacy Services Margin Beat + CMS Star Ratings Settlement Reversal",
-    rvolExpectation: "3.2x",
-    quarantineBeforeTimeVal: 1015 // Strict Defensive Quarantine
-  },
-  {
-    symbol: "LLY",
-    name: "Eli Lilly & Co.",
-    sector: "Healthcare & Biotech",
-    catalyst: "$5.3B Manufacturing Facility Online + Medicare Part D Incretin Coverage Expansion",
+    symbol: "ARM",
+    name: "ARM Holdings",
+    sector: "AI & Semi",
+    catalyst: "Next-Gen v9 Architecture Royalty Rate Doubling & Data Center Compute Expansion",
     rvolExpectation: "2.9x"
   },
   {
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    sector: "Autonomous Fleet & EV",
-    catalyst: "FSD V13 Commercial Autonomous Fleet 50M Miles + Megapack Revenue Surge",
-    rvolExpectation: "3.2x"
+    symbol: "MRVL",
+    name: "Marvell Technology",
+    sector: "AI & Semi",
+    catalyst: "Electro-Optics & Custom Accelerated Compute ASIC Deployments Surging",
+    rvolExpectation: "3.0x"
+  },
+  {
+    symbol: "SMCI",
+    name: "Super Micro Computer",
+    sector: "AI & Semi",
+    catalyst: "Direct Liquid Cooling (DLC) Rack Scale GPU Server Deployments Scaling",
+    rvolExpectation: "3.5x"
+  },
+
+  // --- Group 2: Cloud, Big Tech & Enterprise Software ---
+  {
+    symbol: "MSFT",
+    name: "Microsoft Corp.",
+    sector: "Cloud & Enterprise AI",
+    catalyst: "Azure AI Hypergrowth & Copilot Enterprise Seat Monetization",
+    rvolExpectation: "2.8x"
   },
   {
     symbol: "AAPL",
     name: "Apple Inc.",
     sector: "Consumer Tech & AI",
     catalyst: "Apple Intelligence Global Rollout & Record High Services ARR",
-    rvolExpectation: "2.8x"
-  },
-  {
-    symbol: "MSFT",
-    name: "Microsoft Corp.",
-    sector: "Cloud & Enterprise AI",
-    catalyst: "Azure AI Hypergrowth & Copilot Enterprise Seat Monetization",
     rvolExpectation: "2.8x"
   },
   {
@@ -93,10 +80,197 @@ export const SECTOR_AGNOSTIC_UNIVERSE: WatchlistCandidate[] = [
     rvolExpectation: "2.8x"
   },
   {
-    symbol: "AVGO",
-    name: "Broadcom Inc.",
-    sector: "AI & Semi",
-    catalyst: "Custom AI ASIC Hyperscaler Order Backlog Record Expansion",
+    symbol: "META",
+    name: "Meta Platforms",
+    sector: "Cloud & Big Tech",
+    catalyst: "Llama 4 Open Multi-Modal Release + AI Ad Monetization ROAS Surge",
+    rvolExpectation: "3.1x"
+  },
+  {
+    symbol: "GOOGL",
+    name: "Alphabet Inc.",
+    sector: "Cloud & Enterprise AI",
+    catalyst: "Gemini Enterprise Workspace API Subscriptions & Cloud Growth Beat",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "NFLX",
+    name: "Netflix Inc.",
+    sector: "Cloud & Big Tech",
+    catalyst: "Ad-Tier Subscriber Acceleration, Live Sports Rights & Operating Margin Record",
+    rvolExpectation: "3.1x"
+  },
+
+  // --- Group 3: Cybersecurity & Defense Intelligence ---
+  {
+    symbol: "PLTR",
+    name: "Palantir Technologies",
+    sector: "Enterprise AI & Defense",
+    catalyst: "Commercial AIP Bootcamps Deliver 85% Conversion + US SOCOM $178M Contract",
+    rvolExpectation: "3.6x"
+  },
+  {
+    symbol: "CRWD",
+    name: "CrowdStrike Holdings",
+    sector: "Cybersecurity",
+    catalyst: "Falcon Identity & Next-Gen SIEM Attain DoD FedRAMP High Authorization",
+    rvolExpectation: "2.8x",
+    quarantineBeforeTimeVal: 935 // Avoid 09:32 false opening wicks
+  },
+  {
+    symbol: "PANW",
+    name: "Palo Alto Networks",
+    sector: "Cybersecurity",
+    catalyst: "Enterprise XSIAM Platformization Delivering 35% ARR Expansion",
+    rvolExpectation: "2.9x"
+  },
+  {
+    symbol: "FTNT",
+    name: "Fortinet Inc.",
+    sector: "Cybersecurity",
+    catalyst: "Secure SASE Cloud Architecture Adoption & Enterprise Firewall Upgrades",
+    rvolExpectation: "2.8x"
+  },
+
+  // --- Group 4: Healthcare, Biotech & MedTech (Decoupled Alpha) ---
+  {
+    symbol: "LLY",
+    name: "Eli Lilly & Co.",
+    sector: "Healthcare & Biotech",
+    catalyst: "$5.3B Manufacturing Facility Online + Medicare Part D Incretin Coverage Expansion",
+    rvolExpectation: "2.9x"
+  },
+  {
+    symbol: "CVS",
+    name: "CVS Health Corp.",
+    sector: "Defensive Healthcare",
+    catalyst: "Pharmacy Services Margin Beat + CMS Star Ratings Settlement Reversal",
+    rvolExpectation: "3.2x",
+    quarantineBeforeTimeVal: 1015 // Strict Defensive Quarantine
+  },
+  {
+    symbol: "UNH",
+    name: "UnitedHealth Group",
+    sector: "Healthcare & Biotech",
+    catalyst: "Optum Health Care Services Acceleration & Medical Loss Ratio Stabilization",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "ISRG",
+    name: "Intuitive Surgical",
+    sector: "Healthcare & Biotech",
+    catalyst: "da Vinci 5 Multi-Port Robotic Surgical Procedure Volumes Exceed Guidance",
+    rvolExpectation: "3.0x"
+  },
+  {
+    symbol: "VRTX",
+    name: "Vertex Pharmaceuticals",
+    sector: "Healthcare & Biotech",
+    catalyst: "Commercial Non-Opioid Pain Management Launch & Casgevy Global Rollout",
+    rvolExpectation: "2.9x"
+  },
+
+  // --- Group 5: High-Beta, FinTech & Consumer Discretionary ---
+  {
+    symbol: "TSLA",
+    name: "Tesla Inc.",
+    sector: "Autonomous Fleet & EV",
+    catalyst: "FSD V13 Commercial Autonomous Fleet 50M Miles + Megapack Revenue Surge",
+    rvolExpectation: "3.2x"
+  },
+  {
+    symbol: "COIN",
+    name: "Coinbase Global",
+    sector: "High-Beta & FinTech",
+    catalyst: "Institutional Custody AUM Expansion & High Crypto Volatility Transaction Fee Surge",
+    rvolExpectation: "3.5x"
+  },
+  {
+    symbol: "UBER",
+    name: "Uber Technologies",
+    sector: "Autonomous Fleet & EV",
+    catalyst: "Autonomous Robotaxi Partnerships & Mobility Free Cash Flow Record Beat",
+    rvolExpectation: "2.9x"
+  },
+  {
+    symbol: "BABA",
+    name: "Alibaba Group",
+    sector: "Cloud & E-Commerce",
+    catalyst: "Aliyun Cloud AI Infrastructure Growth & Global E-Commerce Turnaround",
+    rvolExpectation: "3.0x"
+  },
+  {
+    symbol: "PYPL",
+    name: "PayPal Holdings",
+    sector: "High-Beta & FinTech",
+    catalyst: "Fastlane Guest Checkout Conversion Beats & Venmo Monetization Acceleration",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "ABNB",
+    name: "Airbnb Inc.",
+    sector: "High-Beta & FinTech",
+    catalyst: "International Cross-Border Nights Booked Acceleration & Share Repurchase Ramp",
+    rvolExpectation: "2.8x"
+  },
+
+  // --- Group 6: Macro, Industrials, Energy & Financial Giants ---
+  {
+    symbol: "BA",
+    name: "Boeing Co.",
+    sector: "Industrial & Defense",
+    catalyst: "737 MAX Commercial Delivery Schedule Acceleration & DoD Defense Backlog",
+    rvolExpectation: "3.2x"
+  },
+  {
+    symbol: "DIS",
+    name: "Walt Disney Co.",
+    sector: "Media & Entertainment",
+    catalyst: "Direct-to-Consumer Streaming Operating Income Expansion & Theme Park Capex",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "JPM",
+    name: "JPMorgan Chase",
+    sector: "Financials & Banking",
+    catalyst: "Investment Banking Fee Surge & Net Interest Margin Resilience",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "XOM",
+    name: "ExxonMobil",
+    sector: "Energy & Commodities",
+    catalyst: "Pioneer Natural Resources Permian Basin Synergies & Offshore Guyana Cash Flow",
+    rvolExpectation: "2.8x"
+  },
+  {
+    symbol: "CAT",
+    name: "Caterpillar Inc.",
+    sector: "Industrial & Defense",
+    catalyst: "AI Data Center Power Generation Turbine Demand & Global Infrastructure Spend",
+    rvolExpectation: "2.8x"
+  },
+
+  // --- Group 7: Core Index & Volatility Benchmarks ---
+  {
+    symbol: "SPY",
+    name: "SPDR S&P 500 ETF Trust",
+    sector: "Index ETF",
+    catalyst: "Institutional Broad Market Benchmark • Morning ORB & Late Power Hour Shelves",
+    rvolExpectation: "2.5x"
+  },
+  {
+    symbol: "QQQ",
+    name: "Invesco QQQ Trust",
+    sector: "Index ETF",
+    catalyst: "Nasdaq 100 Mega-Cap Benchmark • High-Gamma Morning Reversals & Scalps",
+    rvolExpectation: "2.6x"
+  },
+  {
+    symbol: "IWM",
+    name: "iShares Russell 2000 ETF",
+    sector: "Index ETF",
+    catalyst: "Small-Cap High-Beta Index • Rate Cut Multiplier & Breadth Expansion",
     rvolExpectation: "2.8x"
   }
 ];
@@ -432,7 +606,21 @@ export function structureSetup(
     riskBadge = `QUARANTINE ENFORCED (< ${candidate.quarantineBeforeTimeVal >= 1000 ? `${candidate.quarantineBeforeTimeVal.toString().slice(0, 2)}:${candidate.quarantineBeforeTimeVal.toString().slice(2)}` : candidate.quarantineBeforeTimeVal} AM ET)`;
     devilsAdvocateCritique = `Defensive Stock Quarantine: Historical failure mode when entered before 10:15 AM ET. 100% win rate requires waiting for midday consolidation box breach with confirmed RVOL >= 3.0x.`;
   } else if (direction === "PUT") {
-    if (changePct <= -0.80 && currentPrice <= trigger) {
+    // 4b. Beta-Trend Alignment Gate: Veto/Lock out high-beta tech puts when broader tech/QQQ is bullish
+    const isTechOrHighBeta =
+      candidate.sector === "AI & Semi" ||
+      candidate.sector === "Autonomous Fleet & EV" ||
+      candidate.sector === "Cloud & Big Tech" ||
+      candidate.sector === "Cloud & Enterprise AI" ||
+      candidate.sector === "Consumer Tech & AI" ||
+      candidate.sector === "Cloud & E-Commerce" ||
+      candidate.sector === "High-Beta & FinTech";
+
+    if (isTechOrHighBeta && macroScore > 0 && changePct > -1.5) {
+      riskStatus = "LEASH_WARNING";
+      riskBadge = "INDEX ALIGNMENT LOCKOUT: TECH SQUEEZE RISK";
+      devilsAdvocateCritique = `Devil's Advocate Lockout: Broader tech/market is bullish/risk-on (Macro Score: +${macroScore}). High-beta tech puts carry severe short-squeeze risk (as observed in TSLA vs QQQ divergence); prioritize non-correlated sectors (Healthcare, Biotech, Energy) for breakdown puts unless deep relative weakness (< -1.5%) is confirmed.`;
+    } else if (changePct <= -0.80 && currentPrice <= trigger) {
       riskStatus = "CLEARED";
       riskBadge = "BEARISH BREAKDOWN PUT QUALIFIED";
       devilsAdvocateCritique = `Devil's Advocate Clearance (PUT): ${candidate.symbol} broke below its $${trigger.toFixed(2)} morning support shelf (${changePct.toFixed(2)}% intraday distribution below Open & Previous Close). High-conviction relative weakness breakdown.`;

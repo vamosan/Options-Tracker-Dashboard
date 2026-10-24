@@ -8,26 +8,56 @@ const DATA_URL = 'https://data.alpaca.markets/v2';
 const OPTIONS_DATA_URL = 'https://data.alpaca.markets/v1beta1';
 const TRADING_URL = 'https://paper-api.alpaca.markets/v2';
 
-// High-conviction institutional universe across Tech, Semi, Cyber, Healthcare, Energy & Finance
+// High-conviction institutional Elite 35 universe across 6 sectors + Index ETFs
 const CORE_UNIVERSE = [
-    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3020.0, defaultPrice: 228.60, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
-    { symbol: 'AAPL', name: 'Apple', defaultCap: 3450.0, defaultPrice: 339.90, catalyst: 'Apple Intelligence Global Launch & Record Services' },
-    { symbol: 'MSFT', name: 'Microsoft', defaultCap: 3180.0, defaultPrice: 506.00, catalyst: 'Copilot Enterprise ARR Surge & Azure AI Hypergrowth' },
-    { symbol: 'TSLA', name: 'Tesla', defaultCap: 810.0, defaultPrice: 359.80, catalyst: 'Full Self-Driving V13 FSD Commercial Ramp & Energy Storage Surge' },
-    { symbol: 'AMZN', name: 'Amazon', defaultCap: 1990.0, defaultPrice: 246.10, catalyst: 'AWS Cloud Compute Acceleration & Prime Logistics Margin Beat' },
-    { symbol: 'META', name: 'Meta Platforms', defaultCap: 1440.0, defaultPrice: 718.00, catalyst: 'Llama 4 Open Foundation Model & AI Ad Optimization Surge' },
-    { symbol: 'GOOGL', name: 'Alphabet', defaultCap: 2050.0, defaultPrice: 340.70, catalyst: 'Gemini Enterprise Workspace API Subscriptions Exceed Target' },
-    { symbol: 'AMD', name: 'AMD', defaultCap: 380.0, defaultPrice: 598.00, catalyst: 'Instinct MI350 GPU Cloud Hyperscaler Deployment' },
-    { symbol: 'AVGO', name: 'Broadcom', defaultCap: 805.0, defaultPrice: 172.50, catalyst: 'Custom AI ASIC Hyperscaler Order Backlog Record' },
-    { symbol: 'PLTR', name: 'Palantir', defaultCap: 184.0, defaultPrice: 186.40, catalyst: 'Enterprise AIP Bootcamps Commercial Surge & Defense Contract' },
-    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 66.8, defaultPrice: 251.70, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP Authorization' },
+    // Group 1: AI, Hardware & Semiconductors
+    { symbol: 'NVDA', name: 'NVIDIA', defaultCap: 3020.0, defaultPrice: 218.60, catalyst: 'Blackwell GPU High-Volume Delivery Acceleration' },
+    { symbol: 'AMD', name: 'AMD', defaultCap: 380.0, defaultPrice: 528.00, catalyst: 'Instinct MI350 GPU Cloud Hyperscaler Deployment' },
+    { symbol: 'AVGO', name: 'Broadcom', defaultCap: 805.0, defaultPrice: 325.50, catalyst: 'Custom AI ASIC Hyperscaler Order Backlog Record' },
+    { symbol: 'ARM', name: 'ARM Holdings', defaultCap: 146.0, defaultPrice: 148.50, catalyst: 'Next-Gen v9 Architecture Royalty Rate Doubling' },
+    { symbol: 'MRVL', name: 'Marvell Technology', defaultCap: 82.0, defaultPrice: 88.40, catalyst: 'Electro-Optics & Custom Accelerated Compute Deployments' },
+    { symbol: 'SMCI', name: 'Super Micro Computer', defaultCap: 28.0, defaultPrice: 48.20, catalyst: 'Direct Liquid Cooling (DLC) Rack Scale Server Deployments' },
+
+    // Group 2: Cloud, Big Tech & Enterprise Software
+    { symbol: 'MSFT', name: 'Microsoft', defaultCap: 3180.0, defaultPrice: 524.50, catalyst: 'Copilot Enterprise ARR Surge & Azure AI Hypergrowth' },
+    { symbol: 'AAPL', name: 'Apple', defaultCap: 3450.0, defaultPrice: 347.80, catalyst: 'Apple Intelligence Global Launch & Record Services' },
+    { symbol: 'AMZN', name: 'Amazon', defaultCap: 1990.0, defaultPrice: 258.10, catalyst: 'AWS Cloud Compute Acceleration & Prime Logistics Margin Beat' },
+    { symbol: 'META', name: 'Meta Platforms', defaultCap: 1440.0, defaultPrice: 702.00, catalyst: 'Llama 4 Open Foundation Model & AI Ad Optimization Surge' },
+    { symbol: 'GOOGL', name: 'Alphabet', defaultCap: 2050.0, defaultPrice: 192.70, catalyst: 'Gemini Enterprise Workspace API Subscriptions Exceed Target' },
+    { symbol: 'NFLX', name: 'Netflix', defaultCap: 310.0, defaultPrice: 760.00, catalyst: 'Ad-Tier Subscriber Acceleration & Operating Margin Expansion' },
+
+    // Group 3: Cybersecurity & Defense Intelligence
+    { symbol: 'PLTR', name: 'Palantir', defaultCap: 184.0, defaultPrice: 196.40, catalyst: 'Enterprise AIP Bootcamps Commercial Surge & Defense Contract' },
+    { symbol: 'CRWD', name: 'CrowdStrike', defaultCap: 66.8, defaultPrice: 242.70, catalyst: 'Enterprise Falcon Adoption & Federal FedRAMP Authorization' },
     { symbol: 'PANW', name: 'Palo Alto Networks', defaultCap: 122.0, defaultPrice: 385.00, catalyst: 'Platformization Strategy Delivering 35% ARR Expansion' },
+    { symbol: 'FTNT', name: 'Fortinet', defaultCap: 68.0, defaultPrice: 84.50, catalyst: 'Secure SASE Architecture & Enterprise Firewall Upgrades' },
+
+    // Group 4: Healthcare, Biotech & MedTech (Decoupled Alpha)
+    { symbol: 'LLY', name: 'Eli Lilly', defaultCap: 875.0, defaultPrice: 1285.50, catalyst: 'Incretin Weight-Loss Manufacturing Expansion & Medicare Coverage' },
+    { symbol: 'CVS', name: 'CVS Health', defaultCap: 73.5, defaultPrice: 92.00, catalyst: 'Pharmacy Services Margin Expansion & Guidance Beat' },
+    { symbol: 'UNH', name: 'UnitedHealth Group', defaultCap: 540.0, defaultPrice: 585.00, catalyst: 'Optum Health Care Services Acceleration & MLR Stabilization' },
+    { symbol: 'ISRG', name: 'Intuitive Surgical', defaultCap: 185.0, defaultPrice: 510.00, catalyst: 'da Vinci 5 Robotic Surgical Procedure Volumes Exceed Guidance' },
+    { symbol: 'VRTX', name: 'Vertex Pharma', defaultCap: 118.0, defaultPrice: 465.00, catalyst: 'Commercial Non-Opioid Pain Launch & Casgevy Global Rollout' },
+
+    // Group 5: High-Beta, FinTech & Consumer Discretionary
+    { symbol: 'TSLA', name: 'Tesla', defaultCap: 810.0, defaultPrice: 368.80, catalyst: 'Full Self-Driving V13 Commercial Fleet & Energy Storage Surge' },
     { symbol: 'COIN', name: 'Coinbase', defaultCap: 45.0, defaultPrice: 182.40, catalyst: 'Institutional Custody AUM & Crypto ETF Clearing Volume Surge' },
-    { symbol: 'ARM', name: 'ARM Holdings', defaultCap: 146.0, defaultPrice: 141.50, catalyst: 'Next-Gen v9 Architecture Royalty Rate Doubling' },
-    { symbol: 'CVS', name: 'CVS Health', defaultCap: 73.5, defaultPrice: 88.00, catalyst: 'Pharmacy Services Margin Expansion & Guidance Beat' },
-    { symbol: 'LLY', name: 'Eli Lilly', defaultCap: 875.0, defaultPrice: 924.50, catalyst: 'Incretin Weight-Loss Manufacturing Expansion & Medicare Coverage' },
-    { symbol: 'JPM', name: 'JPMorgan Chase', defaultCap: 615.0, defaultPrice: 215.20, catalyst: 'Investment Banking Advisory Fees Surge & Net Interest Margin Beat' },
-    { symbol: 'XOM', name: 'ExxonMobil', defaultCap: 465.0, defaultPrice: 116.80, catalyst: 'Pioneer Natural Resources Permian Synergies Acceleration' }
+    { symbol: 'UBER', name: 'Uber Technologies', defaultCap: 172.0, defaultPrice: 82.50, catalyst: 'Autonomous Robotaxi Partnerships & Mobility Free Cash Flow Beat' },
+    { symbol: 'BABA', name: 'Alibaba Group', defaultCap: 245.0, defaultPrice: 104.00, catalyst: 'Aliyun Cloud AI Infrastructure Growth & Global Turnaround' },
+    { symbol: 'PYPL', name: 'PayPal Holdings', defaultCap: 85.0, defaultPrice: 81.20, catalyst: 'Fastlane Guest Checkout Conversion Beats & Venmo Growth' },
+    { symbol: 'ABNB', name: 'Airbnb', defaultCap: 92.0, defaultPrice: 142.00, catalyst: 'International Cross-Border Nights Booked Acceleration' },
+
+    // Group 6: Macro, Industrials, Energy & Financial Giants
+    { symbol: 'BA', name: 'Boeing', defaultCap: 125.0, defaultPrice: 162.00, catalyst: 'Commercial Aircraft Delivery Acceleration & DoD Backlog' },
+    { symbol: 'DIS', name: 'Walt Disney', defaultCap: 195.0, defaultPrice: 105.00, catalyst: 'Direct-to-Consumer Streaming Profitability & Theme Park Capex' },
+    { symbol: 'JPM', name: 'JPMorgan Chase', defaultCap: 615.0, defaultPrice: 228.20, catalyst: 'Investment Banking Advisory Fees Surge & Net Interest Margin Beat' },
+    { symbol: 'XOM', name: 'ExxonMobil', defaultCap: 465.0, defaultPrice: 122.80, catalyst: 'Pioneer Natural Resources Permian Synergies Acceleration' },
+    { symbol: 'CAT', name: 'Caterpillar', defaultCap: 198.0, defaultPrice: 405.00, catalyst: 'AI Data Center Power Generation Turbine Demand' },
+
+    // Group 7: Core Index & Volatility Benchmarks
+    { symbol: 'SPY', name: 'SPDR S&P 500 ETF', defaultCap: 580000.0, defaultPrice: 760.00, catalyst: 'Institutional Broad Market Benchmark' },
+    { symbol: 'QQQ', name: 'Invesco QQQ Trust', defaultCap: 290000.0, defaultPrice: 704.00, catalyst: 'Nasdaq 100 Mega-Cap Benchmark' },
+    { symbol: 'IWM', name: 'iShares Russell 2000', defaultCap: 75000.0, defaultPrice: 228.00, catalyst: 'Small-Cap High-Beta Index Benchmark' }
 ];
 
 export async function GET() {
