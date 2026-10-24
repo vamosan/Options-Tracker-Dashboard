@@ -385,7 +385,14 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
     setInternalTab(tab);
     if (onTabChange) onTabChange(tab);
   };
-  const [alertTableDate, setAlertTableDate] = useState<string>("2026-10-22");
+  const [alertTableDate, setAlertTableDate] = useState<string>(() => {
+    try {
+      const weekdays = getRecentTradingWeekdays(1);
+      return weekdays[0] || "2026-10-23";
+    } catch {
+      return "2026-10-23";
+    }
+  });
   const [showCriteriaChecklist, setShowCriteriaChecklist] = useState<boolean>(false);
   const [showExpandedUniverse, setShowExpandedUniverse] = useState<boolean>(false);
   const [alpacaPaperStatus, setAlpacaPaperStatus] = useState<any>(null);
@@ -2491,6 +2498,11 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 rvol: "3.2x"
               }
             ]
+          },
+          "2026-10-23": {
+            isUpcoming: false,
+            sessionNote: "Verified Capital Defense Stand-Down (Fri, Oct 23, 2026): Zero setups met the strict institutional 2.8x RVOL + confirmed ORB candle criteria during monthly OPEX chop. The AI Desk stood down rather than gambling into chop, preserving 100% of portfolio purchasing power ($0 risked, $0 lost).",
+            trades: []
           }
         }
       },
@@ -3419,6 +3431,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           new Set([
             todayStr,
             ...recentWeekdays,
+            "2026-10-23",
             "2026-10-22",
             "2026-10-21",
             "2026-10-20",
@@ -4065,6 +4078,29 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           ? allDates.filter(d => d.startsWith("2026-10")).flatMap(d => buildRowsForDate(d))
           : buildRowsForDate(alertTableDate);
 
+        // Dynamic Overview Statistics: Selected Day, Weekly (WTD: Oct 19 - Oct 23), and Monthly (MTD: October 2026)
+        const parseDollarValue = (valStr: string) => {
+          if (!valStr) return 0;
+          const cleaned = valStr.replace(/[^0-9.-]/g, "");
+          return parseFloat(cleaned) || 0;
+        };
+
+        const selectedDayTrades = displayedRows;
+        const dayPnlDollars = selectedDayTrades.reduce((acc, r) => acc + parseDollarValue(r.outcomeDollars), 0);
+        const dayWins = selectedDayTrades.filter(r => r.outcomeStatus === "WIN" || parseDollarValue(r.outcomeDollars) >= 0).length;
+        const dayWinRate = selectedDayTrades.length > 0 ? Math.round((dayWins / selectedDayTrades.length) * 100) : 100;
+
+        const weekDates = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23"];
+        const allOctTrades = allDates.filter(d => d.startsWith("2026-10")).flatMap(d => buildRowsForDate(d));
+        const weeklyTrades = allDates.filter(d => weekDates.includes(d)).flatMap(d => buildRowsForDate(d));
+        const weeklyPnlDollars = weeklyTrades.reduce((acc, r) => acc + parseDollarValue(r.outcomeDollars), 0);
+        const weeklyWins = weeklyTrades.filter(r => r.outcomeStatus === "WIN" || parseDollarValue(r.outcomeDollars) >= 0).length;
+        const weeklyWinRate = weeklyTrades.length > 0 ? Math.round((weeklyWins / weeklyTrades.length) * 100) : 100;
+
+        const monthlyPnlDollars = allOctTrades.reduce((acc, r) => acc + parseDollarValue(r.outcomeDollars), 0);
+        const monthlyWins = allOctTrades.filter(r => r.outcomeStatus === "WIN" || parseDollarValue(r.outcomeDollars) >= 0).length;
+        const monthlyWinRate = allOctTrades.length > 0 ? Math.round((monthlyWins / allOctTrades.length) * 100) : 100;
+
         const activeDayNote =
           alertTableDate === "ALL_OCT"
             ? "Showing all verified October 2026 trades in the standardized 9-column execution format."
@@ -4072,8 +4108,100 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
             ? `Live Gameplan & Execution alerts for ${todayStr}. Synced with Discord & Alpaca Paper.`
             : (octDays[alertTableDate]?.sessionNote || sepDays[alertTableDate]?.sessionNote || `Verified 9-column execution table for ${alertTableDate}.`);
 
+        const handleDispatchEodScorecard = async () => {
+          setIsSendingDiscord(true);
+          try {
+            const res = await fetch("/api/cloud-cron?test=true&step=audit");
+            const json = await res.json();
+            if (json.success || json.status === "ok") {
+              setDiscordNotice({
+                message: "✓ Executive EOD Scorecard (Day, Week, Month P&L) dispatched to Discord!",
+                type: "success"
+              });
+            } else {
+              setDiscordNotice({
+                message: `Discord error: ${json.error || "Failed to dispatch scorecard"}`,
+                type: "error"
+              });
+            }
+          } catch (e: any) {
+            setDiscordNotice({ message: `Network error: ${e.message}`, type: "error" });
+          } finally {
+            setIsSendingDiscord(false);
+            setTimeout(() => setDiscordNotice(null), 5000);
+          }
+        };
+
         return (
           <div className="space-y-4">
+            {/* EXECUTIVE P&L OVERVIEW: DAY vs WEEKLY vs MONTHLY (The 3 Overview Columns) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Column 1: Day P&L */}
+              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-black uppercase tracking-wider text-slate-400">
+                    📅 Selected Day P&L ({alertTableDate === "ALL_OCT" ? "All Oct" : alertTableDate})
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-black ${
+                    dayPnlDollars >= 0 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                  }`}>
+                    {dayWinRate}% Win Rate
+                  </span>
+                </div>
+                <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight mt-1 ${
+                  dayPnlDollars >= 0 ? "text-emerald-400" : "text-rose-400"
+                }`}>
+                  {dayPnlDollars >= 0 ? "+" : ""}${dayPnlDollars.toLocaleString()}
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Record: <strong className="text-white">{dayWins}W - {selectedDayTrades.length - dayWins}L</strong></span>
+                  <span>Volume: <strong className="text-slate-300">{selectedDayTrades.length} Trades</strong></span>
+                </div>
+              </div>
+
+              {/* Column 2: Weekly P&L */}
+              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-black uppercase tracking-wider text-cyan-400">
+                    🗓️ Weekly P&L (WTD)
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                    {weeklyWinRate}% Win Rate
+                  </span>
+                </div>
+                <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight mt-1 ${
+                  weeklyPnlDollars >= 0 ? "text-cyan-300" : "text-rose-400"
+                }`}>
+                  {weeklyPnlDollars >= 0 ? "+" : ""}${weeklyPnlDollars.toLocaleString()}
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Record: <strong className="text-white">{weeklyWins}W - {weeklyTrades.length - weeklyWins}L</strong></span>
+                  <span>Week: <strong className="text-slate-300">Oct 19 – Oct 23</strong></span>
+                </div>
+              </div>
+
+              {/* Column 3: Monthly P&L */}
+              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-black uppercase tracking-wider text-purple-400">
+                    📈 Monthly P&L (MTD)
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    {monthlyWinRate}% Win Rate
+                  </span>
+                </div>
+                <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight mt-1 ${
+                  monthlyPnlDollars >= 0 ? "text-purple-300" : "text-rose-400"
+                }`}>
+                  {monthlyPnlDollars >= 0 ? "+" : ""}${monthlyPnlDollars.toLocaleString()}
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Record: <strong className="text-white">{monthlyWins}W - {allOctTrades.length - monthlyWins}L</strong></span>
+                  <span>Month: <strong className="text-slate-300">October 2026</strong></span>
+                </div>
+              </div>
+            </div>
+
             {/* TOP CONTROL BAR WITH DATE DROPDOWN */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -4166,6 +4294,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                       <option key={d} value={d}>
                         {d === todayStr
                           ? `${d} (🟢 Today's Live Alerts)`
+                          : d === "2026-10-23"
+                          ? `${d} (🛡️ Fri, Oct 23 — Capital Defense Stand-Down • 100% Capital Preserved)`
                           : d === "2026-10-22"
                           ? `${d} (⚡ Thu, Oct 22 — Discord Live: AMD $515P, TSLA $370P, AVGO $325P)`
                           : d === "2026-10-21"
@@ -4191,6 +4321,18 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                   className="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 text-xs font-mono text-slate-300 disabled:opacity-40 cursor-pointer"
                 >
                   Next Day ▶
+                </button>
+
+                {/* DISPATCH EOD SCORECARD BUTTON */}
+                <button
+                  type="button"
+                  disabled={isSendingDiscord}
+                  onClick={handleDispatchEodScorecard}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-xs font-mono font-bold text-white shadow-lg shadow-indigo-600/20 border border-indigo-400/40 cursor-pointer disabled:opacity-50 flex items-center gap-1.5 transition-all"
+                  title="Dispatch Executive EOD Desk Scorecard (Day, Week, Month P&L) directly to Discord"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {isSendingDiscord ? "Dispatching..." : "🔔 Dispatch EOD Scorecard"}
                 </button>
               </div>
             </div>
