@@ -7,7 +7,7 @@ import { PositionsTable } from "@/components/PositionsTable";
 import { Position, Trade } from "@/lib/types";
 import { fetchOptionPrice, getPortfolioData, savePositions, saveHistory, listProfiles, deleteTrade, analyzeTrade } from "./actions";
 import { getRecommendation } from "@/lib/intelligence";
-import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History, Zap, ShieldCheck } from "lucide-react";
+import { Activity, DollarSign, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, BarChart2, Calendar, Bot, Home as HomeIcon, History, Zap, ShieldCheck, Rocket } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileSelector } from "@/components/ProfileSelector";
 import { GeneralGeminiChat } from "@/components/GeneralGeminiChat";
@@ -25,7 +25,7 @@ const MANUAL_PRICES_KEY = 'options_tracker_overrides';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'alpaca' | 'dashboard' | 'powerhour'>('alpaca');
-  const [alpacaTab, setAlpacaTab] = useState<"SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS" | "RADAR">("SETUPS");
+  const [alpacaTab, setAlpacaTab] = useState<"CHALLENGE" | "SETUPS" | "ALERT_TABLE" | "SPY_QQQ" | "CALENDAR" | "POSITIONS" | "SIGNALS" | "ANALYTICS" | "LOGS" | "RADAR">("CHALLENGE");
   const [positions, setPositions] = useState<Position[]>([]);
   const [closedPositions, setClosedPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
@@ -294,7 +294,23 @@ export default function Home() {
               <span className="text-xs font-black uppercase tracking-tight">Home</span>
             </button>
 
-            {/* 1A. ANTI-CHASE RADAR & $200 CHALLENGE GUARDIAN */}
+            {/* 1A. DEDICATED $2,000 CHALLENGE & POSITIONS */}
+            <button
+              onClick={() => {
+                setActiveTab("alpaca");
+                setAlpacaTab("CHALLENGE");
+              }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all group shadow-[0_0_12px_rgba(245,158,11,0.25)] cursor-pointer ${
+                activeTab === "alpaca" && alpacaTab === "CHALLENGE"
+                  ? "bg-amber-500/25 border-2 border-amber-400 text-amber-200 font-bold"
+                  : "bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold"
+              }`}
+            >
+              <Rocket className="h-3.5 w-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-black uppercase tracking-tight">🚀 $2,000 Challenge</span>
+            </button>
+
+            {/* 1B. ANTI-CHASE RADAR & $200 CHALLENGE GUARDIAN */}
             <button
               onClick={() => {
                 setActiveTab("alpaca");
