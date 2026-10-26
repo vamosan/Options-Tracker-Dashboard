@@ -1,5 +1,16 @@
 [
   {
+    "id": "trade_20261026_spx",
+    "date": "2026-10-26",
+    "symbol": "SPX",
+    "exitTime": "3:25 PM ET",
+    "peakPrice": 0.92,
+    "outcome": "STOPPED",
+    "pnlPerContract": -64,
+    "percentGain": "-69.6%",
+    "winStatus": "LOSS"
+  },
+  {
     "id": "trade_20261023_lly",
     "date": "2026-10-23",
     "timestamp": "2026-10-23T09:38:00Z",
