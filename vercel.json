@@ -7,35 +7,31 @@
     "crons": [
         {
             "path": "/api/cloud-cron",
-            "schedule": "15 13,14 * * 1-5"
+            "schedule": "15 13 * * 1-5"
         },
         {
             "path": "/api/cloud-cron",
-            "schedule": "35 13,14 * * 1-5"
+            "schedule": "35 13 * * 1-5"
         },
         {
             "path": "/api/cloud-cron",
-            "schedule": "30 19,20 * * 1-5"
+            "schedule": "30 19 * * 1-5"
         },
         {
             "path": "/api/cloud-cron",
-            "schedule": "35 19,20 * * 1-5"
+            "schedule": "35 19 * * 1-5"
         },
         {
             "path": "/api/cloud-cron",
-            "schedule": "37 19,20 * * 1-5"
+            "schedule": "37 19 * * 1-5"
         },
         {
             "path": "/api/cloud-cron",
-            "schedule": "40 19,20 * * 1-5"
+            "schedule": "40 19 * * 1-5"
         },
         {
             "path": "/api/cloud-cron",
-            "schedule": "50 19,20 * * 1-5"
-        },
-        {
-            "path": "/api/cloud-cron",
-            "schedule": "05 20,21 * * 1-5"
+            "schedule": "50 19 * * 1-5"
         }
     ]
 }
