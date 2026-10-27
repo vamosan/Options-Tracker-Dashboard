@@ -9,7 +9,7 @@ import {
   Calendar as CalendarIcon, ChevronLeft, ArrowDownRight,
   Layers, Check, Sparkles, AlertCircle, HelpCircle,
   TrendingDown, Info, Send, Bell, Globe, Compass, Search, ChevronDown, ChevronUp, Trash2,
-  BrainCircuit, Scale, Bot, Rocket
+  BrainCircuit, Scale, Bot, Rocket, ShieldAlert
 } from "lucide-react";
 import { PROSPECTIVE_STOCKS, CURRENT_MARKET_OUTLOOK, ProspectiveStock, MarketOutlookData } from "@/lib/prospectiveStocks";
 
@@ -3531,8 +3531,51 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           return acc + diff;
         }, 0);
 
-        // 2. Realized P&L from closed trades
-        const challengeRealizedPnl = closedTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
+        // 2. Parse Realized P&L directly from Alpaca Paper broker filled orders
+        const recentOrders: any[] = alpacaPaperStatus?.recentOrders || [];
+        const filledBuys = recentOrders.filter((o: any) => o.side === 'buy' && o.status === 'filled');
+        const filledSells = recentOrders.filter((o: any) => o.side === 'sell' && o.status === 'filled');
+
+        const alpacaClosedTrades: any[] = filledBuys.map((b: any) => {
+          const matchSell = filledSells.find((s: any) => s.symbol === b.symbol && new Date(s.createdAt) >= new Date(b.createdAt));
+          const entryPrice = parseFloat(b.filledAvgPrice) || 0;
+          const exitPrice = matchSell ? (parseFloat(matchSell.filledAvgPrice) || entryPrice) : null;
+          const isClosed = matchSell !== undefined && exitPrice !== null;
+          const occMatch = String(b.symbol || '').match(/^([A-Z]+)(\d{6})([CP])(\d{8})$/);
+          const underlying = occMatch ? occMatch[1] : b.symbol;
+          const direction = occMatch ? (occMatch[3] === 'P' ? 'PUT' : 'CALL') : 'CALL';
+          const strike = occMatch ? parseInt(occMatch[4], 10) / 1000 : 0;
+          const qty = parseInt(b.qty, 10) || 1;
+          const pnl = isClosed ? Math.round((exitPrice - entryPrice) * qty * 100 * 100) / 100 : 0;
+          const pnlPct = isClosed && entryPrice > 0 ? Math.round(((exitPrice - entryPrice) / entryPrice) * 1000) / 10 : 0;
+
+          return {
+            id: `alp_trade_${b.id}`,
+            symbol: `${underlying} $${strike} ${direction}`,
+            underlying,
+            occSymbol: b.symbol,
+            direction,
+            strike,
+            qty,
+            entryPrice,
+            exitPrice: exitPrice || entryPrice,
+            isClosed,
+            pnl,
+            pnlPct,
+            entryTime: b.createdAt ? new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '09:38 AM',
+            exitTime: matchSell?.createdAt ? new Date(matchSell.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Closed',
+            date: b.createdAt ? String(b.createdAt).slice(0, 10) : '2026-10-27',
+            status: isClosed ? (pnl >= 0 ? 'TARGET HIT' : 'STOPPED OUT') : 'OPEN'
+          };
+        }).filter((t: any) => t.isClosed);
+
+        // Combine Alpaca broker trades with existing closedTrades
+        const combinedClosed = [
+          ...alpacaClosedTrades,
+          ...closedTrades.filter(ct => !alpacaClosedTrades.some((at: any) => at.underlying === ct.underlying && Math.abs(at.entryPrice - ct.entryPrice) < 0.01))
+        ];
+
+        const challengeRealizedPnl = combinedClosed.reduce((acc: number, t: any) => acc + (t.pnl || 0), 0);
         const challengeTotalPnl = challengeRealizedPnl + challengeUnrealizedPnl;
         const currentChallengeEquity = Math.round((startingBankroll + challengeTotalPnl) * 100) / 100;
         const returnPct = Math.round((challengeTotalPnl / startingBankroll) * 1000) / 10;
@@ -3541,8 +3584,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
         const cashBufferAvailable = Math.max(0, currentChallengeEquity - capitalInOpenPositions);
         const cashBufferPct = currentChallengeEquity > 0 ? Math.round((cashBufferAvailable / currentChallengeEquity) * 100) : 100;
 
-        const challengeClosedCount = closedTrades.length;
-        const challengeWins = closedTrades.filter(t => (t.pnl || 0) > 0).length;
+        const challengeClosedCount = combinedClosed.length;
+        const challengeWins = combinedClosed.filter((t: any) => (t.pnl || 0) > 0).length;
 
         return (
           <div className="space-y-6">
@@ -3799,7 +3842,110 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
               )}
             </div>
 
-            {/* 4. THE 4 INSTITUTIONAL RULES FOR THE $2,000 CHALLENGE */}
+            {/* 3B. CHALLENGE EXECUTION JOURNAL & BROKER FILLED TRADES */}
+            <div className="rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden space-y-0">
+              <div className="p-4 bg-slate-900/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider font-mono">
+                    Challenge Execution Journal &amp; Closed Fills ({combinedClosed.length})
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Alpaca Paper Synced
+                  </span>
+                </div>
+
+                <div className="text-xs font-mono text-slate-400">
+                  Total Realized: <strong className={challengeRealizedPnl >= 0 ? "text-emerald-400" : "text-rose-400"}>
+                    {challengeRealizedPnl >= 0 ? "+" : ""}${challengeRealizedPnl.toFixed(2)}
+                  </strong>
+                </div>
+              </div>
+
+              {combinedClosed.length === 0 ? (
+                <div className="p-8 text-center text-xs font-mono text-slate-400">
+                  No completed trades recorded yet. Bot will record executed orders upon target hit or stop exit.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-slate-900/90 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-3 px-4">Date / Time</th>
+                        <th className="py-3 px-4">Contract / Symbol</th>
+                        <th className="py-3 px-4">Side / Size</th>
+                        <th className="py-3 px-4">Entry Fill</th>
+                        <th className="py-3 px-4">Exit Fill</th>
+                        <th className="py-3 px-4 text-right">Realized P&amp;L</th>
+                        <th className="py-3 px-4 text-center">Status / Trigger</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80">
+                      {combinedClosed.map((t: any) => {
+                        const isWin = (t.pnl || 0) >= 0;
+                        const isCall = t.direction === "CALL" || t.symbol?.includes("CALL") || t.symbol?.includes("Call");
+
+                        return (
+                          <tr key={t.id} className="hover:bg-slate-900/50 transition-colors">
+                            <td className="py-3 px-4 text-slate-300">
+                              <span className="block font-bold text-white">{t.date}</span>
+                              <span className="text-[10px] text-slate-400">{t.entryTime} → {t.exitTime}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="font-bold text-white block">{t.symbol || t.underlying}</span>
+                              <span className="text-[10px] text-slate-400 font-sans">{t.occSymbol || "Alpaca Live Order"}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                isCall ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                              }`}>
+                                {isCall ? "CALL" : "PUT"} • {t.qty || 1}x Ct
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 font-bold text-slate-300">
+                              ${Number(t.entryPrice || 0).toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 font-bold text-white">
+                              ${Number(t.exitPrice || 0).toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-bold">
+                              <span className={isWin ? "text-emerald-400" : "text-rose-400"}>
+                                {isWin ? "+" : ""}${Number(t.pnl || 0).toFixed(2)}
+                              </span>
+                              <span className={`block text-[10px] ${isWin ? "text-emerald-400/80" : "text-rose-400/80"}`}>
+                                ({t.pnlPct !== undefined ? (t.pnlPct >= 0 ? `+${t.pnlPct}%` : `${t.pnlPct}%`) : t.pnlPercent || "0.0%"})
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
+                                isWin 
+                                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" 
+                                  : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                              }`}>
+                                {t.status || (isWin ? "TARGET HIT" : "STOPPED")}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* CHALLENGE RISK ALLOCATION CALLOUT */}
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs font-mono">
+              <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold text-amber-300 block uppercase">
+                  $2,000 Challenge Execution Guard Active
+                </span>
+                <p className="text-slate-300 font-sans text-xs leading-relaxed">
+                  <strong>Strict Budget Ceiling Enforced:</strong> Setups with option premiums exceeding <strong>$3.50 ($350/contract)</strong> are automatically disqualified to prevent single-contract over-allocation. Positions are strictly limited to <strong>1 active trade at a time</strong>, <strong>1 contract max</strong>, and <strong>-25% hard stops</strong> ($50–$75 max dollar risk).
+                </p>
+              </div>
+            </div>
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3">
               <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider font-mono flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />

@@ -433,6 +433,10 @@ export async function fetchTodayAlpacaOptionTrades(
         const parsed = parseOcc(o.symbol);
         if (!parsed || map.has(parsed.underlying)) continue;
         const fillPrice = parseFloat(o.filled_avg_price) || 2.5;
+        const matchingSell = orders.find(
+          (so) => so.side === 'sell' && so.status === 'filled' && so.symbol === o.symbol
+        );
+        const exitPrice = matchingSell ? (parseFloat(matchingSell.filled_avg_price) || fillPrice) : fillPrice;
         map.set(parsed.underlying, {
           underlying: parsed.underlying,
           occSymbol: o.symbol,
@@ -440,8 +444,8 @@ export async function fetchTodayAlpacaOptionTrades(
           strike: parsed.strike,
           qty: Math.abs(parseInt(o.qty, 10) || 1),
           avgEntryPrice: Math.round(fillPrice * 100) / 100,
-          currentPrice: Math.round(fillPrice * 100) / 100,
-          status: 'FILLED_TODAY',
+          currentPrice: Math.round(exitPrice * 100) / 100,
+          status: matchingSell ? 'CLOSED_TODAY' : 'FILLED_TODAY',
         });
       }
     }

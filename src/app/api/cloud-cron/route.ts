@@ -317,9 +317,23 @@ async function handleCron(request: Request) {
                             (isSafeEntry && entriesDispatchedThisTick < 1 && totalEntriesToday < MAX_DAILY_ENTRIES) ||
                             (forceTest && testStep === 'entry' && entriesDispatchedThisTick < 1)
                         ) {
+                            // $2,000 Challenge Budget Guard: reject any contract with ask > $3.50 ($350)
+                            if (setup.entryAsk > 3.50 && !forceTest) {
+                                logs.push(`[Challenge Budget Guard] ${sym} option ask $${setup.entryAsk.toFixed(2)} exceeds $3.50 ceiling for $2,000 account. Disqualified.`);
+                                continue;
+                            }
+
+                            // $2,000 Challenge Concurrency Guard: max 1 active open position at a time to preserve cash buffer
+                            const currentAlpacaTrades = await fetchTodayAlpacaOptionTrades(todayStr);
+                            const hasActiveOpenAlpaca = Array.from(currentAlpacaTrades.values()).some(t => t.status === 'OPEN_POSITION');
+                            if (hasActiveOpenAlpaca && !forceTest) {
+                                logs.push(`[Challenge Concurrency Guard] Already holding active open position on Alpaca Paper. Holding cash cushion.`);
+                                continue;
+                            }
+
                             // AUTOMATIC ALPACA PAPER EXECUTION UPON SIGNAL FIRE + PILLAR 3 LIVE OPRA SPREAD VERIFICATION
-                            // Sized for $2,000 Account Challenge: 1 to 2 contracts strictly capped
-                            const orderQty = Math.max(1, Math.min(2, setup.kellySizing?.recommendedContracts || 1));
+                            // Sized for $2,000 Account Challenge: 1 contract (max 2 if ask < $1.50)
+                            const orderQty = setup.entryAsk < 1.50 ? Math.min(2, setup.kellySizing?.recommendedContracts || 1) : 1;
                             const alpacaOrder = await placeAlpacaPaperOptionOrder({
                                 underlying: sym,
                                 strike: setup.strike,
@@ -639,12 +653,20 @@ async function handleCron(request: Request) {
 
                 if (!hasEntryFired) {
                     if (isConfirmedEntry) {
-                        // Automatically place Alpaca Paper Order for ETF 0DTE proxy
+                        // $2,000 Challenge Concurrency Guard: max 1 active open position at a time
+                        const currentTradesFor0Dte = await fetchTodayAlpacaOptionTrades(todayStr);
+                        const isHoldingPos = Array.from(currentTradesFor0Dte.values()).some(t => t.status === 'OPEN_POSITION');
+                        if (isHoldingPos && !forceTest) {
+                            logs.push(`[Challenge Concurrency Guard] Already holding active open position. Suppressed ${sym} 0DTE entry.`);
+                            continue;
+                        }
+
+                        // Automatically place Alpaca Paper Order for ETF 0DTE proxy: strictly 1 contract for $2,000 challenge
                         const alpacaOrder = await placeAlpacaPaperOptionOrder({
                             underlying: sym,
                             strike: strike,
                             direction: direction,
-                            qty: 3,
+                            qty: 1,
                             allowZeroDte: true,
                         });
 
@@ -656,7 +678,7 @@ async function handleCron(request: Request) {
 
                         await sendTradeEntryCallout({
                             badgeLabel: "⚡ Index 0DTE",
-                            tradeDescription: `**⚡ TACTICAL INDEX 0DTE MOMENTUM PLAY (3 Contracts)**`,
+                            tradeDescription: `**⚡ TACTICAL INDEX 0DTE MOMENTUM PLAY (1 Contract • $2,000 Challenge)**`,
                             color: isPut ? 0xF43F5E : 0x10B981,
                             symbol: sym,
                             contract: contract,
@@ -825,13 +847,13 @@ async function handleCron(request: Request) {
                         const entryAsk = directSignal?.entryAsk || 3.70;
                         const minsRemaining = Math.max(1, 40 - minutes);
 
-                        // Automatically place SPY 0DTE proxy Paper Option Order on Alpaca
+                        // Automatically place SPY 0DTE proxy Paper Option Order on Alpaca (1 contract for $2k challenge)
                         const spyStrike = Math.round(spxSpot / 10);
                         const spyOrder = await placeAlpacaPaperOptionOrder({
                             underlying: 'SPY',
                             strike: spyStrike,
                             direction: callSide ? 'CALL' : 'PUT',
-                            qty: 3,
+                            qty: 1,
                             allowZeroDte: true,
                         });
 

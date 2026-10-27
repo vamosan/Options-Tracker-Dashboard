@@ -465,12 +465,19 @@ export function calculateQuarterKellySizing(
   // Max dollar risk permitted on this trade (5% of bankroll = $100 on $2,000 challenge)
   const maxDollarRisk = Math.round(accountEquity * maxPortfolioRiskPct);
 
-  // Recommended contracts based on riskPerContract, capped at max safe limit (1 to 2 contracts for $2,000 challenge)
-  let recContracts = Math.floor(maxDollarRisk / riskPerContract);
-  recContracts = Math.max(1, Math.min(2, recContracts));
+  // Strict $2,000 Challenge Budget Ceiling:
+  // For a $2,000 cash account, option ask MUST never exceed $3.50 ($350/contract).
+  // Expensive options (like $12.00 PANW) consume >60% of total bankroll and are strictly disqualified.
+  const isBudgetViable = accountEquity > 3000 || entryAsk <= 3.50;
 
-  // If conviction is below 80, reduce to 1 contract
-  if (convictionScore < 80) recContracts = 1;
+  let recContracts = 0;
+  if (isBudgetViable) {
+    recContracts = Math.floor(maxDollarRisk / riskPerContract);
+    // On $2k account, strictly cap at 1 contract (allow 2 only if premium is under $1.50)
+    const maxAllowedContracts = accountEquity <= 2500 ? (entryAsk < 1.50 ? 2 : 1) : 4;
+    recContracts = Math.max(1, Math.min(maxAllowedContracts, recContracts));
+    if (convictionScore < 80) recContracts = 1;
+  }
 
   const edgePercent = Math.round(((p * b - q) / b) * 1000) / 10;
 
@@ -866,6 +873,11 @@ export async function runAgenticDailyConsensus(timeVal: number = 930): Promise<A
           setup.target2,
           setup.stopLoss
         );
+        if (setup.kellySizing.recommendedContracts === 0) {
+          setup.riskOfficer.status = "VETOED";
+          setup.riskOfficer.badge = "BUDGET OVERFLOW (Ask > $3.50 max for $2k Account)";
+          setup.riskOfficer.devilsAdvocateCritique = `Disqualified for $2,000 Challenge: Option ask ($${setup.entryAsk.toFixed(2)}) exceeds the $3.50 ($350) single-contract budget ceiling. Preserving bankroll for affordable, high-gamma setups.`;
+        }
       }
     })
   );
