@@ -1,5 +1,16 @@
 [
   {
+    "id": "trade_20261030_ftnt",
+    "date": "2026-10-30",
+    "symbol": "FTNT",
+    "exitTime": "2:20 PM ET",
+    "peakPrice": 0.62,
+    "outcome": "STOPPED",
+    "pnlPerContract": -60,
+    "percentGain": "-96.8%",
+    "winStatus": "LOSS"
+  },
+  {
     "id": "trade_20261029_spy_tactical",
     "date": "2026-10-29",
     "timestamp": "2026-10-29T18:44:05.919Z",
