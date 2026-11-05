@@ -1,5 +1,16 @@
 [
   {
+    "id": "trade_20261105_spx",
+    "date": "2026-11-05",
+    "symbol": "SPX",
+    "exitTime": "3:24 PM ET",
+    "peakPrice": 3.3,
+    "outcome": "STOPPED",
+    "pnlPerContract": -123,
+    "percentGain": "-37.3%",
+    "winStatus": "LOSS"
+  },
+  {
     "id": "trade_20261030_ftnt",
     "date": "2026-10-30",
     "symbol": "FTNT",
