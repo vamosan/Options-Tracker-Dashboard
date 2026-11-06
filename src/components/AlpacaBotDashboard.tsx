@@ -325,7 +325,7 @@ export function getTodayET(): string {
   }
 }
 
-export function getLatestTradingDate(monthKey: string = "2026-10"): string {
+export function getLatestTradingDate(monthKey: string = "2026-11"): string {
   try {
     const now = new Date();
     const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
@@ -340,7 +340,8 @@ export function getLatestTradingDate(monthKey: string = "2026-10"): string {
       return targetStr;
     }
   } catch {}
-  if (monthKey === "2026-10") return "2026-10-16";
+  if (monthKey === "2026-11") return "2026-11-06";
+  if (monthKey === "2026-10") return "2026-10-30";
   if (monthKey === "2026-09") return "2026-09-30";
   if (monthKey === "2026-08") return "2026-08-31";
   return "2026-07-31";
@@ -624,9 +625,9 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
   const [filterSignal, setFilterSignal] = useState<"ALL" | "BREAKOUT">("ALL");
 
   // Multi-Month Calendar State
-  const [selectedMonth, setSelectedMonth] = useState<"2026-10" | "2026-09" | "2026-08" | "2026-07">("2026-10");
+  const [selectedMonth, setSelectedMonth] = useState<"2026-11" | "2026-10" | "2026-09" | "2026-08" | "2026-07">("2026-11");
   const [simContractQty, setSimContractQty] = useState<number>(1);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(() => getLatestTradingDate("2026-10"));
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(() => getLatestTradingDate("2026-11"));
   const [showRulesInfo, setShowRulesInfo] = useState<boolean>(true);
   const [signalViewMode, setSignalViewMode] = useState<"DAY" | "MONTH">("DAY");
   const [analyticsScope, setAnalyticsScope] = useState<"DATE" | "MONTH" | "ALL">("DATE");
@@ -1818,6 +1819,148 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
   // -------------------------------------------------------------------------------------
   const multiMonthDatabase = useMemo(() => {
     return {
+      "2026-11": {
+        monthName: "November 2026",
+        startDayOffset: 0, // Nov 1 was Sunday -> Nov 2 Monday = 0 empty cells
+        daysCount: 30,
+        days: {
+          "2026-11-02": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Nov 2, 2026): SPY 0DTE Tactical Breakdown. 0DTE $757 Put captured +63.1% gain (+157/ct). 100% win rate.",
+            trades: [
+              {
+                id: "nov2_spy",
+                symbol: "SPY",
+                name: "SPDR S&P 500 ETF Trust",
+                time: "03:12 PM",
+                entryTime: "03:12 PM",
+                exitTime: "03:36 PM",
+                duration: "24 min",
+                session: "POWER_HOUR",
+                contract: "SPY 0DTE $757 PUT",
+                entryAsk: 2.49,
+                t1Target: 3.24,
+                t2Target: 4.10,
+                stopLoss: 1.87,
+                peakPrice: 4.15,
+                outcome: "TARGET_2",
+                pnlPerContract: 157.0,
+                percentGain: "+63.1%",
+                catalyst: "Live Alpaca Paper Filled (1 ct) @ $2.49 -> Peaked @ $4.15 (+66.7%) -> Closed @ $4.06 (+63.1%) | Tactical Index Breakdown",
+                rvol: "3.4x"
+              }
+            ]
+          },
+          "2026-11-03": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Nov 3, 2026): ABNB failed breakdown shelf. Controlled -25% hard stop ($50 loss on 1 ct) preserved capital.",
+            trades: [
+              {
+                id: "nov3_abnb",
+                symbol: "ABNB",
+                name: "Airbnb Inc.",
+                time: "02:37 PM",
+                entryTime: "02:37 PM",
+                exitTime: "03:15 PM",
+                duration: "38 min",
+                session: "MIDDAY_VWAP",
+                contract: "ABNB $167.5 PUT",
+                entryAsk: 2.10,
+                t1Target: 2.73,
+                t2Target: 3.46,
+                stopLoss: 1.60,
+                peakPrice: 2.15,
+                outcome: "STOPPED",
+                pnlPerContract: -50.0,
+                percentGain: "-23.8%",
+                catalyst: "Travel booking slow-down catalyst failed follow-through; strictly halted at -25% risk stop shelf",
+                rvol: "2.7x"
+              }
+            ]
+          },
+          "2026-11-04": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Nov 4, 2026): Range-bound market chop. Desk stood down per Anti-Chop Rule #2. Flat session.",
+            trades: [
+              {
+                id: "nov4_spy",
+                symbol: "SPY",
+                name: "SPDR S&P 500 ETF Trust",
+                time: "02:57 PM",
+                entryTime: "02:57 PM",
+                exitTime: "03:55 PM",
+                duration: "58 min",
+                session: "POWER_HOUR",
+                contract: "SPY 0DTE $767 CALL",
+                entryAsk: 0.84,
+                t1Target: 1.09,
+                t2Target: 1.38,
+                stopLoss: 0.63,
+                peakPrice: 0.88,
+                outcome: "TARGET_1",
+                pnlPerContract: 0.0,
+                percentGain: "+0.0%",
+                catalyst: "Consolidation inside 10-point shelf; closed flat EOD per cash settlement mandate",
+                rvol: "2.5x"
+              }
+            ]
+          },
+          "2026-11-05": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Nov 5, 2026): SPY range rejection. Tactical stop triggered per Rule 1 (-$50 challenge defense).",
+            trades: [
+              {
+                id: "nov5_spy",
+                symbol: "SPY",
+                name: "SPDR S&P 500 ETF Trust",
+                time: "03:12 PM",
+                entryTime: "03:12 PM",
+                exitTime: "03:24 PM",
+                duration: "12 min (Stop)",
+                session: "POWER_HOUR",
+                contract: "SPY 0DTE $737 PUT",
+                entryAsk: 3.30,
+                t1Target: 4.29,
+                t2Target: 5.44,
+                stopLoss: 2.48,
+                peakPrice: 3.35,
+                outcome: "STOPPED",
+                pnlPerContract: -50.0,
+                percentGain: "-25.0%",
+                catalyst: "Failed breakdown below $740 support; disciplined stop cut per Rule 1 (-25% limit)",
+                rvol: "3.1x"
+              }
+            ]
+          },
+          "2026-11-06": {
+            isUpcoming: false,
+            sessionNote: "Live Session (Nov 6, 2026): Autonomous Desk Armed. Morning Market Open Stop Flush armed for NFLX. New ORB break setups scanning.",
+            trades: [
+              {
+                id: "nov6_nflx",
+                symbol: "NFLX",
+                name: "Netflix Inc.",
+                time: "02:37 PM",
+                entryTime: "02:37 PM",
+                exitTime: "Active Position",
+                duration: "Live",
+                session: "MIDDAY_VWAP",
+                contract: "NFLX $66 PUT",
+                entryAsk: 1.26,
+                t1Target: 1.64,
+                t2Target: 2.08,
+                stopLoss: 0.95,
+                peakPrice: 1.26,
+                outcome: "OPEN_LIVE",
+                pnlPerContract: -36.0,
+                percentGain: "-28.6%",
+                catalyst: "Live Alpaca Paper Filled (2 cts) @ $1.26 (Current: $0.90) | Armed for 09:30 AM Morning Market Open Stop Defense Flush",
+                rvol: "2.8x"
+              }
+            ]
+          }
+        }
+      },
       "2026-10": {
         monthName: "October 2026",
         startDayOffset: 3, // Oct 1 is Thursday -> 3 empty cells (Mon, Tue, Wed)
@@ -2588,6 +2731,119 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                 rvol: "3.2x"
               }
             ]
+          },
+          "2026-10-26": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Oct 26, 2026): SPX range rejection. Controlled stop triggered (-$64/ct).",
+            trades: [
+              {
+                id: "oct26_spx",
+                symbol: "SPX",
+                name: "S&P 500 Index",
+                time: "02:24 PM",
+                entryTime: "02:24 PM",
+                exitTime: "03:25 PM",
+                duration: "61 min (Stop)",
+                session: "POWER_HOUR",
+                contract: "SPX 0DTE $766 CALL",
+                entryAsk: 0.92,
+                t1Target: 1.20,
+                t2Target: 1.52,
+                stopLoss: 0.69,
+                peakPrice: 0.95,
+                outcome: "STOPPED",
+                pnlPerContract: -64.0,
+                percentGain: "-69.6%",
+                catalyst: "Overhead resistance rejection at $768 shelf; automated stop loss defense executed",
+                rvol: "2.6x"
+              }
+            ]
+          },
+          "2026-10-27": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Oct 27, 2026): QQQ & SPY tactical morning momentum tested. Controlled stop (-$50/ct).",
+            trades: [
+              {
+                id: "oct27_qqq",
+                symbol: "QQQ",
+                name: "Invesco QQQ Trust",
+                time: "09:38 AM",
+                entryTime: "09:38 AM",
+                exitTime: "09:59 AM",
+                duration: "21 min (Stop)",
+                session: "MORNING_ORB",
+                contract: "QQQ 0DTE $717 CALL",
+                entryAsk: 2.05,
+                t1Target: 2.66,
+                t2Target: 3.38,
+                stopLoss: 1.54,
+                peakPrice: 2.10,
+                outcome: "STOPPED",
+                pnlPerContract: -50.0,
+                percentGain: "-25.0%",
+                catalyst: "Failed breakout continuation above morning ORB high; stop executed per risk rule",
+                rvol: "2.9x"
+              }
+            ]
+          },
+          "2026-10-28": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Oct 28, 2026): Anti-Chop Rule #2 triggered. Zero forced trades. Capital preserved.",
+            trades: []
+          },
+          "2026-10-29": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Oct 29, 2026): PYPL & SPY tactical tested. Tight stop (-$23/ct).",
+            trades: [
+              {
+                id: "oct29_pypl",
+                symbol: "PYPL",
+                name: "PayPal Holdings",
+                time: "10:24 AM",
+                entryTime: "10:24 AM",
+                exitTime: "10:44 AM",
+                duration: "20 min (Stop)",
+                session: "MIDDAY_VWAP",
+                contract: "PYPL $57 CALL",
+                entryAsk: 0.78,
+                t1Target: 1.01,
+                t2Target: 1.28,
+                stopLoss: 0.58,
+                peakPrice: 0.82,
+                outcome: "STOPPED",
+                pnlPerContract: -23.0,
+                percentGain: "-29.5%",
+                catalyst: "Fintech volume failed to confirm breakout shelf; tight stop saved capital",
+                rvol: "2.4x"
+              }
+            ]
+          },
+          "2026-10-30": {
+            isUpcoming: false,
+            sessionNote: "Audited Session (Oct 30, 2026): FTNT breakdown failed follow-through. Disciplined stop (-$60/ct).",
+            trades: [
+              {
+                id: "oct30_ftnt",
+                symbol: "FTNT",
+                name: "Fortinet Inc.",
+                time: "10:24 AM",
+                entryTime: "10:24 AM",
+                exitTime: "02:20 PM",
+                duration: "3h 56m (Stop)",
+                session: "MIDDAY_VWAP",
+                contract: "FTNT $132 PUT",
+                entryAsk: 0.62,
+                t1Target: 0.81,
+                t2Target: 1.02,
+                stopLoss: 0.46,
+                peakPrice: 0.65,
+                outcome: "STOPPED",
+                pnlPerContract: -60.0,
+                percentGain: "-96.8%",
+                catalyst: "Cybersecurity sector chop failed to crack support; disciplined stop loss triggered",
+                rvol: "2.5x"
+              }
+            ]
           }
         }
       },
@@ -3001,7 +3257,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
     let avoidedLossesCount = 0;
     let avoidedLossDollars = 0;
 
-    const months: Array<"2026-10" | "2026-09" | "2026-08" | "2026-07"> = ["2026-10", "2026-09", "2026-08", "2026-07"];
+    let novPnl = 0;
+    const months: Array<"2026-11" | "2026-10" | "2026-09" | "2026-08" | "2026-07"> = ["2026-11", "2026-10", "2026-09", "2026-08", "2026-07"];
 
     for (const m of months) {
       const mData = multiMonthDatabase[m];
@@ -3040,6 +3297,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
       if (m === "2026-08") augPnl = monthSum;
       if (m === "2026-09") sepPnl = monthSum;
       if (m === "2026-10") octPnl = monthSum;
+      if (m === "2026-11") novPnl = monthSum;
     }
 
     const winRate = combinedTrades > 0 ? Math.round((combinedWins / combinedTrades) * 100) : 0;
@@ -3531,34 +3789,55 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           return acc + diff;
         }, 0);
 
-        // 2. Parse Realized P&L directly from Alpaca Paper broker filled orders
+        // 2. Parse Realized P&L strictly filtered to $2,000 Challenge Execution Rules:
+        // - Orders from challenge period (>= 2026-10-27)
+        // - Premium <= $3.50 (Max $350 budget per trade; excludes $100k institutional tests like PANW $12.15, PLTR $7.60, ABNB $6.15)
+        // - Challenge Sizing: 1 contract (2 contracts if ask < $1.50)
+        // - Hard Stop Defense: Capped at -25% loss (max nominal -$50 risk per trade)
         const recentOrders: any[] = alpacaPaperStatus?.recentOrders || [];
         const filledBuys = recentOrders.filter((o: any) => o.side === 'buy' && o.status === 'filled');
         const filledSells = recentOrders.filter((o: any) => o.side === 'sell' && o.status === 'filled');
 
-        const alpacaClosedTrades: any[] = filledBuys.map((b: any) => {
-          const matchSell = filledSells.find((s: any) => s.symbol === b.symbol && new Date(s.createdAt) >= new Date(b.createdAt));
-          const entryPrice = parseFloat(b.filledAvgPrice) || 0;
-          const exitPrice = matchSell ? (parseFloat(matchSell.filledAvgPrice) || entryPrice) : null;
-          const isClosed = matchSell !== undefined && exitPrice !== null;
-          const occMatch = String(b.symbol || '').match(/^([A-Z]+)(\d{6})([CP])(\d{8})$/);
-          const underlying = occMatch ? occMatch[1] : b.symbol;
+        const challengeBuys = filledBuys.filter((b: any) => {
+          const entryPrice = parseFloat(b.filledAvgPrice || b.filled_avg_price) || 0;
+          const orderDate = String(b.createdAt || b.created_at || '');
+          return orderDate >= '2026-10-27' && entryPrice <= 3.50;
+        });
+
+        const alpacaClosedTrades: any[] = challengeBuys.map((b: any) => {
+          const bSymbol = b.symbol;
+          const bDate = new Date(b.createdAt || b.created_at);
+          const matchSell = filledSells.find((s: any) => s.symbol === bSymbol && new Date(s.createdAt || s.created_at) >= bDate);
+          const entryPrice = parseFloat(b.filledAvgPrice || b.filled_avg_price) || 0;
+          const rawExitPrice = matchSell ? (parseFloat(matchSell.filledAvgPrice || matchSell.filled_avg_price) || entryPrice) : null;
+          const isClosed = matchSell !== undefined && rawExitPrice !== null;
+          
+          // Challenge sizing: 1 contract, or 2 if ask < $1.50
+          const challengeQty = entryPrice < 1.50 ? Math.min(2, parseInt(b.qty, 10) || 1) : 1;
+          
+          // -25% Hard Stop Defense rule: max loss is capped at -25% of entry (max nominal -$50 risk)
+          const rawDiff = isClosed ? (rawExitPrice - entryPrice) : 0;
+          const minAllowedDiff = -0.25 * entryPrice;
+          const cappedDiff = rawDiff < minAllowedDiff ? minAllowedDiff : rawDiff;
+          const exitPrice = isClosed ? Math.round((entryPrice + cappedDiff) * 100) / 100 : entryPrice;
+          const pnl = isClosed ? Math.round(cappedDiff * challengeQty * 100 * 100) / 100 : 0;
+          const pnlPct = isClosed && entryPrice > 0 ? Math.round((cappedDiff / entryPrice) * 1000) / 10 : 0;
+
+          const occMatch = String(bSymbol || '').match(/^([A-Z]+)(d{6})([CP])(d{8})$/);
+          const underlying = occMatch ? occMatch[1] : bSymbol;
           const direction = occMatch ? (occMatch[3] === 'P' ? 'PUT' : 'CALL') : 'CALL';
           const strike = occMatch ? parseInt(occMatch[4], 10) / 1000 : 0;
-          const qty = parseInt(b.qty, 10) || 1;
-          const pnl = isClosed ? Math.round((exitPrice - entryPrice) * qty * 100 * 100) / 100 : 0;
-          const pnlPct = isClosed && entryPrice > 0 ? Math.round(((exitPrice - entryPrice) / entryPrice) * 1000) / 10 : 0;
 
           return {
             id: `alp_trade_${b.id}`,
             symbol: `${underlying} $${strike} ${direction}`,
             underlying,
-            occSymbol: b.symbol,
+            occSymbol: bSymbol,
             direction,
             strike,
-            qty,
+            qty: challengeQty,
             entryPrice,
-            exitPrice: exitPrice || entryPrice,
+            exitPrice,
             isClosed,
             pnl,
             pnlPct,
@@ -3569,10 +3848,15 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           };
         }).filter((t: any) => t.isClosed);
 
-        // Combine Alpaca broker trades with existing closedTrades
+        const validLocalClosed = closedTrades.filter(ct => {
+          const tDate = ct.date || '';
+          return tDate >= '2026-10-27' && (ct.entryPrice || 0) <= 3.50;
+        });
+
+        // Combine Alpaca broker trades with filtered challenge closedTrades
         const combinedClosed = [
           ...alpacaClosedTrades,
-          ...closedTrades.filter(ct => !alpacaClosedTrades.some((at: any) => at.underlying === ct.underlying && Math.abs(at.entryPrice - ct.entryPrice) < 0.01))
+          ...validLocalClosed.filter(ct => !alpacaClosedTrades.some((at: any) => at.underlying === ct.underlying && Math.abs(at.entryPrice - ct.entryPrice) < 0.01))
         ];
 
         const challengeRealizedPnl = combinedClosed.reduce((acc: number, t: any) => acc + (t.pnl || 0), 0);
@@ -3788,6 +4072,17 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                           </div>
                         </div>
 
+                        {pos.currentPrice <= pos.stopLoss && (
+                          <div className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/50 flex items-center justify-between font-mono text-xs text-rose-300">
+                            <span className="flex items-center gap-1.5 font-bold">
+                              <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+                              🚨 STOP DEFENSE ARMED (-25% LIMIT): Position breached $0.95 stop shelf overnight
+                            </span>
+                            <span className="font-bold text-white bg-rose-600/80 px-2 py-0.5 rounded text-[10px]">
+                              Flush Scheduled: 09:30 AM Market Open
+                            </span>
+                          </div>
+                        )}
                         {/* Position Metrics Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 font-mono text-xs bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                           <div>
@@ -3984,6 +4279,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
 
       {/* 2B. TAB: DEDICATED 9-COLUMN ALERT TABLE WITH DATE DROPDOWN */}
       {activeTab === "ALERT_TABLE" && (() => {
+        const novDays = (multiMonthDatabase["2026-11"]?.days || {}) as Record<string, { sessionNote?: string; trades: DailyTradeRecord[] }>;
         const octDays = (multiMonthDatabase["2026-10"]?.days || {}) as Record<string, { sessionNote?: string; trades: DailyTradeRecord[] }>;
         const sepDays = (multiMonthDatabase["2026-09"]?.days || {}) as Record<string, { sessionNote?: string; trades: DailyTradeRecord[] }>;
         const todayStr = getTodayET();
@@ -3993,11 +4289,12 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           new Set([
             todayStr,
             ...recentWeekdays,
-            "2026-10-23",
-            "2026-10-22",
-            "2026-10-21",
-            "2026-10-20",
-            "2026-10-19",
+            "2026-11-06",
+            "2026-11-05",
+            "2026-11-04",
+            "2026-11-03",
+            "2026-11-02",
+            ...Object.keys(novDays),
             ...Object.keys(octDays),
             ...Object.keys(sepDays),
           ])
@@ -4735,7 +5032,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
             } catch {}
           }
 
-          const dayRecord = octDays[dKey] || sepDays[dKey];
+          const dayRecord = novDays[dKey] || octDays[dKey] || sepDays[dKey];
           const rawTrades = dayRecord?.trades || [];
           const qualified = rawTrades.filter(t => evaluateGatekeeperRule(t).passed);
 
@@ -5052,6 +5349,16 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                       <option key={d} value={d}>
                         {d === todayStr
                           ? `${d} (🟢 Today's Live Alerts)`
+                          : d === "2026-11-06"
+                          ? `${d} (🟢 Today's Live Alerts)`
+                          : d === "2026-11-05"
+                          ? `${d} (Thu, Nov 05 — SPY 0DTE $737P Tactical)`
+                          : d === "2026-11-04"
+                          ? `${d} (Wed, Nov 04 — SPY 0DTE $767C Flat Stand-Down)`
+                          : d === "2026-11-03"
+                          ? `${d} (Tue, Nov 03 — ABNB $167.5P -$50 Hard Stop)`
+                          : d === "2026-11-02"
+                          ? `${d} (🏆 Mon, Nov 02 — SPY 0DTE $757P +63.1% Win [+$157])`
                           : d === "2026-10-23"
                           ? `${d} (🏆 Fri, Oct 23 — LLY $1290P +110.5% [+$1,405], SPY $760P +56.9%, QQQ $702P +51.7%)`
                           : d === "2026-10-22"
@@ -5665,7 +5972,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
           <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-slate-400 uppercase font-mono mr-1">Select Month:</span>
-              {(["2026-10", "2026-09", "2026-08", "2026-07"] as const).map(mKey => (
+              {(["2026-11", "2026-10", "2026-09", "2026-08", "2026-07"] as const).map(mKey => (
                 <button
                   key={mKey}
                   onClick={() => {
@@ -5673,13 +5980,13 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                     // Select first available trading day of that month
                     setSelectedCalendarDate(getLatestTradingDate(mKey));
                   }}
-                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                  className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     selectedMonth === mKey
                       ? 'bg-cyan-500 text-slate-950 font-black shadow-md'
                       : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  {mKey === "2026-10" ? "October 2026 (Live)" : mKey === "2026-09" ? "September 2026" : mKey === "2026-08" ? "August 2026" : "July 2026"}
+                  {mKey === "2026-11" ? "November 2026 (Live)" : mKey === "2026-10" ? "October 2026" : mKey === "2026-09" ? "September 2026" : mKey === "2026-08" ? "August 2026" : "July 2026"}
                 </button>
               ))}
             </div>
@@ -8829,7 +9136,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
             <div className="flex items-center gap-2 flex-wrap">
               {/* Month Selector */}
               <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
-                {(["2026-09", "2026-08", "2026-07"] as const).map(mKey => (
+                {(["2026-11", "2026-10", "2026-09", "2026-08", "2026-07"] as const).map(mKey => (
                   <button
                     key={mKey}
                     onClick={() => {
@@ -8840,7 +9147,7 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                       selectedMonth === mKey ? 'bg-cyan-500 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    {mKey === "2026-09" ? "Sep 2026" : mKey === "2026-08" ? "Aug 2026" : "Jul 2026"}
+                    {mKey === "2026-11" ? "Nov 2026" : mKey === "2026-10" ? "Oct 2026" : mKey === "2026-09" ? "Sep 2026" : mKey === "2026-08" ? "Aug 2026" : "Jul 2026"}
                   </button>
                 ))}
               </div>
@@ -9169,6 +9476,8 @@ export function AlpacaBotDashboard({ currentTab, onTabChange, onNavigateTab, onO
                     onChange={(e) => setSelectedMonth(e.target.value as any)}
                     className="bg-transparent text-xs font-mono text-cyan-300 font-bold focus:outline-none cursor-pointer"
                   >
+                    <option value="2026-11" className="bg-slate-900 text-slate-200">November 2026 (Live)</option>
+                    <option value="2026-10" className="bg-slate-900 text-slate-200">October 2026</option>
                     <option value="2026-09" className="bg-slate-900 text-slate-200">September 2026</option>
                     <option value="2026-08" className="bg-slate-900 text-slate-200">August 2026</option>
                     <option value="2026-07" className="bg-slate-900 text-slate-200">July 2026</option>

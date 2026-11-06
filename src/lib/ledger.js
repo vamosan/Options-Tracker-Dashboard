@@ -1,13 +1,19 @@
 const path = require('path');
 const fs = require('fs');
 
-const LEDGER_FILE = path.resolve(process.cwd(), 'data', 'live-ledger.json');
+const BUNDLED_LEDGER = path.resolve(process.cwd(), 'data', 'live-ledger.json');
+const TMP_LEDGER = '/tmp/live-ledger.json';
 const RAW_GITHUB_URL = "https://raw.githubusercontent.com/vamosan/Options-Tracker-Dashboard/main/data/live-ledger.json";
 
 function readLocalLedger() {
     try {
-        if (fs.existsSync(LEDGER_FILE)) {
-            const raw = fs.readFileSync(LEDGER_FILE, 'utf-8');
+        if (process.env.VERCEL && fs.existsSync(TMP_LEDGER)) {
+            const raw = fs.readFileSync(TMP_LEDGER, 'utf-8');
+            const data = JSON.parse(raw);
+            if (Array.isArray(data) && data.length > 0) return data;
+        }
+        if (fs.existsSync(BUNDLED_LEDGER)) {
+            const raw = fs.readFileSync(BUNDLED_LEDGER, 'utf-8');
             return JSON.parse(raw);
         }
     } catch (e) {
@@ -18,7 +24,8 @@ function readLocalLedger() {
 
 function writeLocalLedger(data) {
     try {
-        fs.writeFileSync(LEDGER_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        const dest = process.env.VERCEL ? TMP_LEDGER : BUNDLED_LEDGER;
+        fs.writeFileSync(dest, JSON.stringify(data, null, 2), 'utf-8');
         return true;
     } catch (e) {
         console.warn("Failed to write local ledger file:", e.message);

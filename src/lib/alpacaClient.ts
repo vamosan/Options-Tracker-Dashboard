@@ -783,8 +783,8 @@ export async function manageAlpacaPaperPositions(
         continue;
       }
 
-      // 5. End-of-Day Cash Settlement (15:55 PM ET onwards)
-      if (timeVal >= 1555 && timeVal <= 1600) {
+      // 5. End-of-Day Cash Settlement (15:55 PM ET onwards) or Market Open Morning Stop Flush (09:30 - 09:40 AM)
+      if ((timeVal >= 1555 && timeVal <= 1600) || (timeVal >= 930 && timeVal <= 940 && pnlRatio <= -0.15)) {
         const closeRes = await fetch(
           `${ALPACA_PAPER_TRADING_URL}/positions/${encodeURIComponent(occSymbol)}`,
           { method: 'DELETE', headers }
@@ -827,7 +827,7 @@ export async function fetchAlpacaPaperPortfolio() {
         cache: 'no-store',
         signal: AbortSignal.timeout(3500),
       }),
-      fetch(`${ALPACA_PAPER_TRADING_URL}/orders?status=all&limit=15`, {
+      fetch(`${ALPACA_PAPER_TRADING_URL}/orders?status=all&limit=100`, {
         headers,
         cache: 'no-store',
         signal: AbortSignal.timeout(3500),
